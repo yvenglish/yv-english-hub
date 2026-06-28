@@ -10,6 +10,7 @@ export default function AdminHub() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('students');
   const [students, setStudents] = useState([]);
+  const [studentSearch, setStudentSearch] = useState('');
   const [loading, setLoading] = useState(false);
   
   // Global Data for Dashboard
@@ -17,6 +18,7 @@ export default function AdminHub() {
 
   // Student Profiles
   const [editingStudent, setEditingStudent] = useState(null);
+  const [studentToDelete, setStudentToDelete] = useState(null);
   const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
 
   // Weeks State
@@ -32,6 +34,7 @@ export default function AdminHub() {
   // Daily State
   const [dailySubTab, setDailySubTab] = useState('bank');
   const [bankItems, setBankItems] = useState([]);
+  const [dailySearch, setDailySearch] = useState('');
   const [editingBankItem, setEditingBankItem] = useState(null);
   const [dailyTitle, setDailyTitle] = useState('');
   const [dailyTags, setDailyTags] = useState('');
@@ -44,18 +47,21 @@ export default function AdminHub() {
   const [vocabSubTab, setVocabSubTab] = useState('words'); // 'words', 'decks', 'assign'
   
   const [vocabWords, setVocabWords] = useState([]);
+  const [vocabWordSearch, setVocabWordSearch] = useState('');
   const [editingWord, setEditingWord] = useState(null);
   const [wordTerm, setWordTerm] = useState('');
   const [wordTranslation, setWordTranslation] = useState('');
   const [wordImage, setWordImage] = useState('');
   
   const [decks, setDecks] = useState([]);
+  const [deckWordSearch, setDeckWordSearch] = useState('');
   const [editingDeck, setEditingDeck] = useState(null);
   const [deckTitle, setDeckTitle] = useState('');
   const [deckDescription, setDeckDescription] = useState('');
   const [deckWordIds, setDeckWordIds] = useState([]); 
   
-  const [vocabAssignStudent, setVocabAssignStudent] = useState('');
+  const [assignWordSearch, setAssignWordSearch] = useState('');
+  const [vocabAssignStudents, setVocabAssignStudents] = useState([]);
   const [vocabAssignType, setVocabAssignType] = useState('deck');
   const [vocabAssignDeckId, setVocabAssignDeckId] = useState('');
   const [vocabAssignWordIds, setVocabAssignWordIds] = useState([]);
@@ -83,12 +89,12 @@ export default function AdminHub() {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'vocabulary' && vocabSubTab === 'assign' && vocabAssignStudent) {
+    if (activeTab === 'vocabulary' && vocabSubTab === 'assign' && vocabAssignStudents.length === 1) {
       fetchVocabAssignments();
     } else {
       setStudentVocabAssignments([]);
     }
-  }, [activeTab, vocabSubTab, vocabAssignStudent]);
+  }, [activeTab, vocabSubTab, vocabAssignStudents]);
 
   useEffect(() => {
     if (activeTab === 'daily' && dailySubTab === 'schedule' && scheduleStudent) {
@@ -106,6 +112,18 @@ export default function AdminHub() {
       const studentList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setStudents(studentList);
     } catch (err) { console.error(err); } 
+    setLoading(false);
+  };
+
+  const confirmDeleteStudent = async () => {
+    if (!studentToDelete) return;
+    setLoading(true);
+    try {
+      await deleteDoc(doc(db, 'users', studentToDelete.id));
+      setStudentToDelete(null);
+      setEditingStudent(null);
+      fetchStudents();
+    } catch (err) { console.error(err); }
     setLoading(false);
   };
 
@@ -163,9 +181,10 @@ export default function AdminHub() {
   };
 
   const fetchVocabAssignments = async () => {
+    if (vocabAssignStudents.length !== 1) return;
     setLoading(true);
     try {
-      const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', vocabAssignStudent));
+      const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', vocabAssignStudents[0]));
       const snap = await getDocs(q);
       setStudentVocabAssignments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (err) { console.error(err); }
@@ -388,22 +407,24 @@ export default function AdminHub() {
   };
 
   const handleSaveVocabAssign = async () => {
-    if (!vocabAssignStudent) return alert('Selecione o aluno!');
+    if (vocabAssignStudents.length === 0) return alert('Selecione pelo menos um aluno!');
     if (vocabAssignType === 'deck' && !vocabAssignDeckId) return alert('Selecione um deck!');
     if (vocabAssignType === 'words' && vocabAssignWordIds.length === 0) return alert('Selecione pelo menos 1 palavra!');
     
     setLoading(true);
     try {
-      const payload = {
-        studentId: vocabAssignStudent,
-        type: vocabAssignType,
-        deckId: vocabAssignType === 'deck' ? vocabAssignDeckId : null,
-        wordIds: vocabAssignType === 'words' ? vocabAssignWordIds : null,
-        createdAt: new Date().toISOString()
-      };
-      await addDoc(collection(db, 'vocab_assignments'), payload);
+      for (const studentId of vocabAssignStudents) {
+        const payload = {
+          studentId: studentId,
+          type: vocabAssignType,
+          deckId: vocabAssignType === 'deck' ? vocabAssignDeckId : null,
+          wordIds: vocabAssignType === 'words' ? vocabAssignWordIds : null,
+          createdAt: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'vocab_assignments'), payload);
+      }
       setVocabAssignDeckId(''); setVocabAssignWordIds([]);
-      fetchVocabAssignments();
+      if (vocabAssignStudents.length === 1) fetchVocabAssignments();
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -503,6 +524,25 @@ export default function AdminHub() {
 
       <main style={{ maxWidth: 1040, margin: '0 auto', padding: '34px 20px' }}>
         
+        {studentToDelete && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ background: 'var(--paper)', padding: 30, borderRadius: 16, maxWidth: 400, width: '100%', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+              <h2 style={{ margin: '0 0 15px', color: 'red' }}>Excluir Aluno?</h2>
+              <p style={{ margin: '0 0 20px', lineHeight: 1.5 }}>
+                Tem certeza que deseja excluir o aluno <strong>{studentToDelete.name}</strong>?
+                <br /><br />
+                <span style={{ fontSize: '0.85rem', color: 'var(--amber)' }}>
+                  Atenção: Excluir um aluno aqui apagará seu perfil e histórico de estudos, mas <strong>não exclui</strong> sua conta do Firebase Auth (o login). Isso deve ser feito manualmente no painel do Firebase se desejar revogar o acesso completamente.
+                </span>
+              </p>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button onClick={() => setStudentToDelete(null)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Cancelar</button>
+                <button disabled={loading} onClick={confirmDeleteStudent} style={{ padding: '10px 20px', background: 'red', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Sim, Excluir</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {alerts.length > 0 && (
           <div style={{ background: '#FFF8EC', border: '1px solid var(--amber)', padding: 15, borderRadius: 16, marginBottom: 25, display: 'flex', alignItems: 'center', gap: 15 }}>
             <span style={{ fontSize: '1.5rem' }}>⚠️</span>
@@ -528,6 +568,7 @@ export default function AdminHub() {
             <h2>Gestão de Alunos</h2>
             
             <div style={{ marginBottom: 20 }}>
+              <input type="text" placeholder="Buscar aluno (nome ou email)..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 15 }} />
               <button onClick={() => window.open('https://console.firebase.google.com/u/0/project/yv-hub-2253d/authentication/users?hl=pt-br', '_blank')} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>
                 + Adicionar Aluno no Banco
               </button>
@@ -548,16 +589,19 @@ export default function AdminHub() {
                     <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Dia de Vencimento da Mensalidade</label>
                     <input type="number" min="1" max="31" placeholder="Ex: 5" value={editingStudent.dueDate || ''} onChange={e => setEditingStudent({...editingStudent, dueDate: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
                   </div>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <button onClick={async () => { await updateDoc(doc(db, 'users', editingStudent.id), { name: editingStudent.name, plan: editingStudent.plan, active: editingStudent.active, dueDate: editingStudent.dueDate || null }); setEditingStudent(null); fetchStudents(); }} style={{ padding: '10px 20px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>
-                    <button onClick={() => setEditingStudent(null)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 8, cursor: 'pointer' }}>Cancelar</button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={async () => { await updateDoc(doc(db, 'users', editingStudent.id), { name: editingStudent.name, plan: editingStudent.plan, active: editingStudent.active, dueDate: editingStudent.dueDate || null }); setEditingStudent(null); fetchStudents(); }} style={{ padding: '10px 20px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>
+                      <button onClick={() => setEditingStudent(null)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 8, cursor: 'pointer' }}>Cancelar</button>
+                    </div>
+                    <button onClick={() => setStudentToDelete(editingStudent)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Excluir Aluno</button>
                   </div>
                 </div>
               </div>
             )}
 
             <div style={{ display: 'grid', gap: 14 }}>
-              {students.map(student => (
+              {students.filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase()) || s.email.toLowerCase().includes(studentSearch.toLowerCase())).map(student => (
                 <div key={student.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 20, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 16 }}>
                   <div>
                     <h3 style={{ margin: '0 0 4px' }}>{student.name} {!student.active && <span style={{ background: '#ff4d4d', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: 4, fontWeight: 'bold' }}>INATIVO</span>}</h3>
@@ -586,7 +630,7 @@ export default function AdminHub() {
                 <textarea value={weekDescription} onChange={e => setWeekDescription(e.target.value)} rows="3" placeholder="Descrição" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}></textarea>
                 <select value={weekStudent} onChange={e => setWeekStudent(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}>
                   <option value="">Selecione um aluno...</option>
-                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {students.filter(s => s.active).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
                 <div style={{ padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
                   <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>Links Extras</h4>
@@ -677,7 +721,8 @@ export default function AdminHub() {
                 </div>
 
                 <div style={{ display: 'grid', gap: 14 }}>
-                  {bankItems.map(item => (
+                  <input type="text" placeholder="Buscar no banco (título ou tag)..." value={dailySearch} onChange={e => setDailySearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
+                  {bankItems.filter(item => (item.title || '').toLowerCase().includes(dailySearch.toLowerCase()) || (item.tags || '').toLowerCase().includes(dailySearch.toLowerCase())).map(item => (
                     <div key={item.id} style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <div>
@@ -701,7 +746,7 @@ export default function AdminHub() {
                 <div style={{ padding: 20, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 16, marginBottom: 30 }}>
                   <select value={scheduleStudent} onChange={e => setScheduleStudent(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: '1rem' }}>
                     <option value="">Selecione um aluno...</option>
-                    {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    {students.filter(s => s.active).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
 
@@ -762,7 +807,8 @@ export default function AdminHub() {
                 </div>
 
                 <div style={{ display: 'grid', gap: 14 }}>
-                  {vocabWords.map(w => (
+                  <input type="text" placeholder="Buscar palavra no banco..." value={vocabWordSearch} onChange={e => setVocabWordSearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
+                  {vocabWords.filter(w => w.term.toLowerCase().includes(vocabWordSearch.toLowerCase()) || w.translation.toLowerCase().includes(vocabWordSearch.toLowerCase())).map(w => (
                     <div key={w.id} style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
                         {w.imageUrl && <img src={w.imageUrl} alt={w.term} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8 }} />}
@@ -791,8 +837,9 @@ export default function AdminHub() {
                     
                     <div style={{ padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
                       <h4 style={{ margin: '0 0 10px' }}>Selecionar Palavras ({deckWordIds.length})</h4>
+                      <input type="text" placeholder="Buscar palavra..." value={deckWordSearch} onChange={e => setDeckWordSearch(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 10 }} />
                       <div style={{ maxHeight: 200, overflowY: 'auto', display: 'grid', gap: 8 }}>
-                        {vocabWords.map(w => (
+                        {vocabWords.filter(w => w.term.toLowerCase().includes(deckWordSearch.toLowerCase()) || w.translation.toLowerCase().includes(deckWordSearch.toLowerCase())).map(w => (
                           <label key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                             <input 
                               type="checkbox" 
@@ -835,13 +882,30 @@ export default function AdminHub() {
             {vocabSubTab === 'assign' && (
               <div>
                 <div style={{ padding: 20, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 16, marginBottom: 30 }}>
-                  <select value={vocabAssignStudent} onChange={e => setVocabAssignStudent(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: '1rem' }}>
-                    <option value="">Selecione um aluno...</option>
-                    {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <h4 style={{ margin: 0 }}>Selecionar Alunos ({vocabAssignStudents.length})</h4>
+                    {vocabAssignStudents.length > 0 && (
+                      <button onClick={() => setVocabAssignStudents([])} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>Limpar Seleção</button>
+                    )}
+                  </div>
+                  <div style={{ maxHeight: 200, overflowY: 'auto', display: 'grid', gap: 8, padding: 10, background: 'var(--paper)', borderRadius: 8, border: '1px solid var(--line)' }}>
+                    {students.filter(s => s.active).map(s => (
+                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '5px 0' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={vocabAssignStudents.includes(s.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setVocabAssignStudents([...vocabAssignStudents, s.id]);
+                            else setVocabAssignStudents(vocabAssignStudents.filter(id => id !== s.id));
+                          }}
+                        />
+                        {s.name}
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
-                {vocabAssignStudent && (
+                {vocabAssignStudents.length > 0 && (
                   <>
                     <div style={{ padding: 20, border: '1px dashed var(--plum)', borderRadius: 16, marginBottom: 30 }}>
                       <div style={{ display: 'flex', gap: 20, marginBottom: 15 }}>
@@ -863,8 +927,9 @@ export default function AdminHub() {
                       ) : (
                         <div style={{ padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, marginBottom: 15 }}>
                           <h4 style={{ margin: '0 0 10px' }}>Selecionar Palavras</h4>
+                          <input type="text" placeholder="Buscar palavra..." value={assignWordSearch} onChange={e => setAssignWordSearch(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 10 }} />
                           <div style={{ maxHeight: 200, overflowY: 'auto', display: 'grid', gap: 8 }}>
-                            {vocabWords.map(w => (
+                            {vocabWords.filter(w => w.term.toLowerCase().includes(assignWordSearch.toLowerCase()) || w.translation.toLowerCase().includes(assignWordSearch.toLowerCase())).map(w => (
                               <label key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                                 <input 
                                   type="checkbox" 
@@ -886,25 +951,31 @@ export default function AdminHub() {
                       </button>
                     </div>
 
-                    <div style={{ display: 'grid', gap: 10 }}>
-                      <h3 style={{ margin: '0 0 10px' }}>Atribuições Deste Aluno</h3>
-                      {studentVocabAssignments.map(assign => (
-                        <div key={assign.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
-                          <div>
-                            <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 99, background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', fontWeight: 'bold' }}>
-                              {assign.type === 'deck' ? 'DECK' : 'PALAVRAS SOLTAS'}
-                            </span>
-                            <p style={{ margin: '8px 0 0', fontWeight: 'bold' }}>
-                              {assign.type === 'deck' 
-                                ? (decks.find(d => d.id === assign.deckId)?.title || 'Deck Excluído')
-                                : `${assign.wordIds?.length || 0} palavras selecionadas`
-                              }
-                            </p>
+                    {vocabAssignStudents.length === 1 ? (
+                      <div style={{ display: 'grid', gap: 10 }}>
+                        <h3 style={{ margin: '0 0 10px' }}>Atribuições Deste Aluno</h3>
+                        {studentVocabAssignments.map(assign => (
+                          <div key={assign.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 99, background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', fontWeight: 'bold' }}>
+                                {assign.type === 'deck' ? 'DECK' : 'PALAVRAS SOLTAS'}
+                              </span>
+                              <p style={{ margin: '8px 0 0', fontWeight: 'bold' }}>
+                                {assign.type === 'deck' 
+                                  ? (decks.find(d => d.id === assign.deckId)?.title || 'Deck Excluído')
+                                  : `${assign.wordIds?.length || 0} palavras selecionadas`
+                                }
+                              </p>
+                            </div>
+                            <button onClick={() => handleDeleteVocabAssign(assign.id)} style={{ border: 'none', background: 'none', color: 'red', textDecoration: 'underline', cursor: 'pointer' }}>Remover</button>
                           </div>
-                          <button onClick={() => handleDeleteVocabAssign(assign.id)} style={{ border: 'none', background: 'none', color: 'red', textDecoration: 'underline', cursor: 'pointer' }}>Remover</button>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ padding: 15, background: '#FFF8EC', border: '1px solid var(--amber)', borderRadius: 12, color: 'var(--amber)', fontWeight: 'bold', textAlign: 'center' }}>
+                        Modo em lote ativado. Você está atribuindo material para {vocabAssignStudents.length} alunos simultaneamente.
+                      </div>
+                    )}
                   </>
                 )}
               </div>
