@@ -1,13 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function WrittenMode({ deck, onFinish }) {
+  const { updateFlashcardProgress } = useAuth();
+
+  const [cards, setCards] = useState(deck.words);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputValue, setInputValue] = useState('');
   const [status, setStatus] = useState('typing'); // 'typing', 'correct', 'wrong'
   const [score, setScore] = useState(0);
   const inputRef = useRef(null);
 
-  const currentCard = deck.words[currentIndex];
+  const currentCard = cards[currentIndex];
 
   useEffect(() => {
     if (status === 'typing' && inputRef.current) {
@@ -15,12 +19,15 @@ export default function WrittenMode({ deck, onFinish }) {
     }
   }, [currentIndex, status]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputValue.trim() || status !== 'typing') return;
 
     const isMatch = inputValue.trim().toLowerCase() === currentCard.term.toLowerCase();
     
+    // Save to SRS
+    await updateFlashcardProgress(currentCard.id, isMatch ? 2 : 0);
+
     if (isMatch) {
       setStatus('correct');
       setScore(s => s + 1);
@@ -28,21 +35,25 @@ export default function WrittenMode({ deck, onFinish }) {
     } else {
       setStatus('wrong');
       playAudio(); // hear the correct word
+      // Errou: manda pro fim da fila (apenas uma vez)
+      if (!currentCard.isRetry) {
+        setCards(prev => [...prev, { ...currentCard, isRetry: true }]);
+      }
     }
   };
 
   const handleNext = () => {
     setStatus('typing');
     setInputValue('');
-    if (currentIndex < deck.words.length - 1) {
+    if (currentIndex < cards.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      onFinish({ score: score + (status === 'correct' ? 1 : 0), total: deck.words.length });
+      onFinish({ score: score + (status === 'correct' ? 1 : 0), total: cards.length });
     }
   };
 
   const playAudio = () => {
-    if ('speechSynthesis' in window) {
+    if ('speechSynthesis' in window && currentCard) {
       const utterance = new SpeechSynthesisUtterance(currentCard.term);
       utterance.lang = 'en-US';
       window.speechSynthesis.speak(utterance);
@@ -55,7 +66,10 @@ export default function WrittenMode({ deck, onFinish }) {
     <div style={{ width: 'min(100%, 600px)', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
         <span>Revisão Escrita</span>
-        <span>{currentIndex + 1} / {deck.words.length}</span>
+        <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
+          <span>{currentIndex + 1} / {cards.length}</span>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>Sair</button>
+        </div>
       </div>
 
       <div style={{ 

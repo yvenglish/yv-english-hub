@@ -36,11 +36,9 @@ export default function Library() {
       const targetEp = episodes.find(e => e.id === location.state.openEpisodeId);
       if (targetEp) {
         setSelectedEpisode(targetEp);
-        // Clean up state so a refresh doesn't reopen it
-        navigate('.', { replace: true, state: {} });
       }
     }
-  }, [location.state, episodes, navigate]);
+  }, [location.state?.openEpisodeId, episodes]);
 
   const favorites = userData?.libraryFavorites || [];
   const completed = userData?.libraryProgress || [];
@@ -62,7 +60,10 @@ export default function Library() {
     return (
       <EpisodePlayer 
         episode={selectedEpisode} 
-        onBack={() => setSelectedEpisode(null)} 
+        onBack={() => {
+          setSelectedEpisode(null);
+          navigate(location.pathname, { replace: true, state: {} });
+        }} 
         isFavorite={favorites.includes(selectedEpisode.id)}
         isCompleted={completed.includes(selectedEpisode.id)}
         onToggleFavorite={() => toggleLibraryFavorite(selectedEpisode.id)}

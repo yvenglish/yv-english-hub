@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../config/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection, query, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection, query, limit, where } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -149,6 +149,73 @@ export function AuthProvider({ children }) {
     setUserData({ ...userData, libraryProgress: newProg });
   };
 
+  const updateFlashcardProgress = async (wordId, score) => {
+    if (!currentUser) return;
+    
+    const docRef = doc(db, `users/${currentUser.uid}/flashcard_progress`, wordId);
+    const docSnap = await getDoc(docRef);
+    
+    let interval = 0;
+    let repetitions = 0;
+    let easeFactor = 2.5;
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      repetitions = data.repetitions || 0;
+      interval = data.interval || 0;
+      easeFactor = data.easeFactor || 2.5;
+    }
+
+    if (score === 0) {
+      repetitions = 0;
+      interval = 1;
+    } else {
+      repetitions += 1;
+      if (repetitions === 1) {
+        interval = 1;
+      } else if (repetitions === 2) {
+        interval = 2; // Acertou -> aparece em 2 dias
+      } else {
+        interval = Math.round(interval * easeFactor);
+      }
+      
+      easeFactor = easeFactor + (0.1 - (3 - score) * (0.08 + (3 - score) * 0.02));
+      if (easeFactor < 1.3) easeFactor = 1.3;
+    }
+
+    const nextDate = new Date();
+    if (score > 0) {
+      nextDate.setDate(nextDate.getDate() + interval);
+    }
+    const nextReviewDate = nextDate.toISOString().split('T')[0];
+
+    await setDoc(docRef, {
+      interval,
+      repetitions,
+      easeFactor,
+      nextReviewDate,
+      lastReviewed: new Date().toISOString()
+    }, { merge: true });
+  };
+
+  const getDueFlashcards = async () => {
+    if (!currentUser) return [];
+    
+    // Build query for cards due today or earlier
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayStr = today.toISOString().split('T')[0];
+    
+    const q = query(
+      collection(db, `users/${currentUser.uid}/flashcard_progress`),
+      where('nextReviewDate', '<=', todayStr)
+    );
+    
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => ({ wordId: doc.id, ...doc.data() }));
+  };
+
+
   const value = {
     currentUser,
     userData,
@@ -157,7 +224,9 @@ export function AuthProvider({ children }) {
     resetPassword,
     recordStudy,
     toggleLibraryFavorite,
-    toggleLibraryProgress
+    toggleLibraryProgress,
+    updateFlashcardProgress,
+    getDueFlashcards
   };
 
   return (

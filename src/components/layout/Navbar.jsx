@@ -36,8 +36,8 @@ export default function Navbar() {
           getDocs(collection(db, 'weeks')),
           getDocs(collection(db, 'library_episodes'))
         ]);
-        const weeks = weeksSnap.docs.map(d => ({ id: d.id, type: 'week', ...d.data() }));
-        const libs = libSnap.docs.map(d => ({ id: d.id, type: 'library', ...d.data() }));
+        const weeks = weeksSnap.docs.map(d => ({ id: d.id, ...d.data(), searchType: 'week' }));
+        const libs = libSnap.docs.map(d => ({ id: d.id, ...d.data(), searchType: 'library' }));
         setSearchData([...weeks, ...libs]);
       } catch (err) {
         console.error('Error fetching search data:', err);
@@ -58,9 +58,9 @@ export default function Navbar() {
   const handleResultClick = (item) => {
     setIsDropdownOpen(false);
     setSearchQuery('');
-    if (item.type === 'week') {
+    if (item.searchType === 'week') {
       navigate('/', { state: { openWeekId: item.id } });
-    } else if (item.type === 'library') {
+    } else if (item.searchType === 'library') {
       navigate('/library', { state: { openEpisodeId: item.id } });
     }
   };
@@ -225,15 +225,15 @@ export default function Navbar() {
                   {getFilteredResults().map(item => (
                     <div 
                       key={item.id} 
-                      onClick={() => handleResultClick(item)}
+                      onMouseDown={(e) => { e.preventDefault(); handleResultClick(item); }}
                       style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{item.title}</strong>
-                        <span style={{ fontSize: '0.65rem', background: item.type === 'week' ? 'rgba(200, 136, 58, 0.2)' : 'rgba(138, 124, 255, 0.2)', color: item.type === 'week' ? 'var(--amber)' : 'var(--purple)', padding: '2px 8px', borderRadius: 99, textTransform: 'uppercase', fontWeight: 800 }}>
-                          {item.type === 'week' ? 'Semana' : 'Biblioteca'}
+                        <span style={{ fontSize: '0.65rem', background: item.searchType === 'week' ? 'rgba(200, 136, 58, 0.2)' : 'rgba(138, 124, 255, 0.2)', color: item.searchType === 'week' ? 'var(--amber)' : 'var(--purple)', padding: '2px 8px', borderRadius: 99, textTransform: 'uppercase', fontWeight: 800 }}>
+                          {item.searchType === 'week' ? 'Semana' : 'Biblioteca'}
                         </span>
                       </div>
                       <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

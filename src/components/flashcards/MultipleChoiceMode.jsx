@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
+  const { updateFlashcardProgress } = useAuth();
+
+  const [cards, setCards] = useState(deck.words);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [options, setOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
   const [isCorrect, setIsCorrect] = useState(null);
   const [score, setScore] = useState(0);
 
-  const currentCard = deck.words[currentIndex];
+  const currentCard = cards[currentIndex];
 
   useEffect(() => {
     if (currentCard) {
@@ -37,28 +41,39 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
     setOptions(allOptions);
   };
 
-  const handleSelect = (opt) => {
+  const handleSelect = async (opt) => {
     if (selectedOption) return; // Prevent double click
     setSelectedOption(opt);
     
-    if (opt === currentCard.translation) {
+    const isAnsCorrect = opt === currentCard.translation;
+    
+    // Save to SRS (Score 2 for correct in multiple choice, 0 for wrong)
+    await updateFlashcardProgress(currentCard.id, isAnsCorrect ? 2 : 0);
+
+    let nextCards = cards;
+    if (isAnsCorrect) {
       setIsCorrect(true);
       setScore(s => s + 1);
     } else {
       setIsCorrect(false);
+      // Errou: manda para o fim da fila (apenas uma vez)
+      if (!currentCard.isRetry) {
+        nextCards = [...cards, { ...currentCard, isRetry: true }];
+        setCards(nextCards);
+      }
     }
     
     setTimeout(() => {
-      if (currentIndex < deck.words.length - 1) {
+      if (currentIndex < nextCards.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        onFinish({ score: score + (opt === currentCard.translation ? 1 : 0), total: deck.words.length });
+        onFinish({ score: score + (isAnsCorrect ? 1 : 0), total: cards.length });
       }
     }, 1500);
   };
 
   const playAudio = () => {
-    if ('speechSynthesis' in window) {
+    if ('speechSynthesis' in window && currentCard) {
       const utterance = new SpeechSynthesisUtterance(currentCard.term);
       utterance.lang = 'en-US';
       window.speechSynthesis.speak(utterance);
@@ -71,7 +86,10 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
     <div style={{ width: 'min(100%, 600px)', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
         <span>Múltiplas Respostas</span>
-        <span>{currentIndex + 1} / {deck.words.length}</span>
+        <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
+          <span>{currentIndex + 1} / {cards.length}</span>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>Sair</button>
+        </div>
       </div>
 
       <div style={{ 

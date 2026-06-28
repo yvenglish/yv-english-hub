@@ -1,24 +1,42 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ClassicMode({ deck, onFinish }) {
+  const { updateFlashcardProgress } = useAuth();
+  
+  // Create a local state to allow appending cards that the user got wrong
+  const [cards, setCards] = useState(deck.words);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showBack, setShowBack] = useState(false);
 
   const handleFlip = () => setShowBack(!showBack);
   
-  const handleNext = () => {
+  const handleNext = async (score) => {
+    const currentCard = cards[currentIndex];
+    
+    // Save to Firestore SRS
+    await updateFlashcardProgress(currentCard.id, score);
+
     setShowBack(false);
-    if (currentIndex < deck.words.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+    
+    let nextCards = cards;
+    if (score === 0 && !currentCard.isRetry) {
+      // Errou: adiciona a carta no final do array para rever ainda hoje (apenas uma vez)
+      nextCards = [...cards, { ...currentCard, isRetry: true }];
+      setCards(nextCards);
+    }
+
+    if (currentIndex < nextCards.length - 1) {
+      setCurrentIndex(prev => prev + 1);
     } else {
       onFinish();
     }
   };
 
-  const currentCard = deck.words[currentIndex];
+  const currentCard = cards[currentIndex];
 
   const playAudio = () => {
-    if ('speechSynthesis' in window) {
+    if ('speechSynthesis' in window && currentCard) {
       const utterance = new SpeechSynthesisUtterance(currentCard.term);
       utterance.lang = 'en-US';
       window.speechSynthesis.speak(utterance);
@@ -31,7 +49,10 @@ export default function ClassicMode({ deck, onFinish }) {
     <div style={{ width: 'min(100%, 500px)', perspective: 1000, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
         <span>Flashcard Clássico</span>
-        <span>{currentIndex + 1} / {deck.words.length}</span>
+        <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
+          <span>{currentIndex + 1} / {cards.length}</span>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>Sair</button>
+        </div>
       </div>
 
       <div 
@@ -65,10 +86,10 @@ export default function ClassicMode({ deck, onFinish }) {
 
       {showBack && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 24 }}>
-          <button onClick={() => handleNext()} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#ff4d4d', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>Errei</button>
-          <button onClick={() => handleNext()} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#ff9933', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>Difícil</button>
-          <button onClick={() => handleNext()} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#4caf50', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>Bom</button>
-          <button onClick={() => handleNext()} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#2196f3', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>Fácil</button>
+          <button onClick={() => handleNext(0)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#ff4d4d', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>Errei</button>
+          <button onClick={() => handleNext(1)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#ff9933', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>Difícil</button>
+          <button onClick={() => handleNext(2)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#4caf50', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>Bom</button>
+          <button onClick={() => handleNext(3)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#2196f3', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>Fácil</button>
         </div>
       )}
     </div>

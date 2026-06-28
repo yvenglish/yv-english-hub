@@ -11,7 +11,7 @@ import WrittenMode from '../components/flashcards/WrittenMode';
 
 export default function Flashcards() {
   const navigate = useNavigate();
-  const { currentUser, userData, recordStudy } = useAuth();
+  const { currentUser, userData, recordStudy, getDueFlashcards } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list', 'mode_select', 'playing'
@@ -86,6 +86,21 @@ export default function Flashcards() {
         });
       }
 
+      // 5. Fetch Daily Review (Spaced Repetition)
+      const dueFlashcards = await getDueFlashcards();
+      if (dueFlashcards.length > 0) {
+        const dueWords = dueFlashcards.map(df => allWords.find(w => w.id === df.wordId)).filter(Boolean);
+        if (dueWords.length > 0) {
+          builtDecks.unshift({
+            id: 'daily_review_deck',
+            title: 'Revisão do Dia',
+            description: 'Palavras prontas para serem revisadas hoje (Spaced Repetition).',
+            words: dueWords,
+            isSpecial: true
+          });
+        }
+      }
+
       setStudentDecks(builtDecks);
     } catch (err) {
       console.error(err);
@@ -95,7 +110,12 @@ export default function Flashcards() {
 
   const handleDeckClick = (deck) => {
     if (deck.words.length === 0) return alert('Este deck está vazio!');
-    setSelectedDeck(deck);
+    
+    // Embaralha as palavras sempre que abrir o deck
+    const shuffledWords = [...deck.words].sort(() => Math.random() - 0.5);
+    const shuffledDeck = { ...deck, words: shuffledWords };
+    
+    setSelectedDeck(shuffledDeck);
     setView('mode_select');
   };
 
@@ -106,13 +126,22 @@ export default function Flashcards() {
   const handleFinish = async (result) => {
     let msg = 'Revisão Concluída!';
     let isGoalReached = false;
+    let cardsStudied = selectedDeck.words.length;
 
     if (result) {
-      msg = "Você acertou " + result.score + " de " + result.total + ".";
+      if (result.score !== undefined) {
+        msg = "Você acertou " + result.score + " de " + result.total + ".";
+      }
+      if (result.earlyExit) {
+        msg = "Sessão interrompida. Progresso até aqui foi salvo!";
+      }
+      if (result.studiedCount !== undefined) {
+        cardsStudied = result.studiedCount;
+      }
     }
 
-    if (userData) {
-      isGoalReached = await recordStudy(selectedDeck.words.length);
+    if (userData && cardsStudied > 0) {
+      isGoalReached = await recordStudy(cardsStudied);
     }
 
     setView('list');
@@ -191,7 +220,7 @@ export default function Flashcards() {
                         onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                       >
-                        <span style={{ fontSize: '2rem', marginBottom: 15 }}>{deck.id === 'custom_words_deck' ? '📝' : '🗂️'}</span>
+                        <span style={{ fontSize: '2rem', marginBottom: 15 }}>{deck.id === 'daily_review_deck' ? '🔥' : deck.id === 'custom_words_deck' ? '📝' : '🗂️'}</span>
                         <h3 style={{ fontSize: '1.4rem', margin: '0 0 10px', color: 'var(--text)' }}>{deck.title}</h3>
                         {deck.description && <p style={{ margin: '0 0 15px', color: 'var(--muted)', fontSize: '0.9rem' }}>{deck.description}</p>}
                         <div style={{ marginTop: 'auto', display: 'inline-block', background: 'var(--cream)', padding: '4px 12px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--plum)' }}>

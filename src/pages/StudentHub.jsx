@@ -53,11 +53,9 @@ export default function StudentHub() {
       const targetWeek = weeks.find(w => w.id === location.state.openWeekId);
       if (targetWeek) {
         setSelectedWeek(targetWeek);
-        // Clean up state so a refresh doesn't reopen it
-        navigate('.', { replace: true, state: {} });
       }
     }
-  }, [location.state, weeks, navigate]);
+  }, [location.state?.openWeekId, weeks]);
 
   const fetchWeeks = async () => {
     try {
@@ -415,7 +413,10 @@ export default function StudentHub() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.6)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20, animation: 'fadeIn 0.3s ease-out' }}>
           <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 650, borderRadius: 32, overflow: 'hidden', position: 'relative', border: '1px solid var(--line)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
             <div style={{ background: 'radial-gradient(ellipse at 100% 0%,rgba(200,136,58,.15),transparent 50%),linear-gradient(140deg,var(--plum),var(--plum-mid))', padding: '40px 30px', position: 'relative' }}>
-              <button onClick={() => setSelectedWeek(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold' }}>✕</button>
+              <button onClick={() => {
+                setSelectedWeek(null);
+                navigate(location.pathname, { replace: true, state: {} });
+              }} style={{ position: 'absolute', top: 20, right: 20, background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold' }}>✕</button>
               <h2 style={{ margin: '0 0 10px', fontSize: '2.4rem', color: '#fff', fontFamily: '"Playfair Display", serif' }}>{selectedWeek.title}</h2>
               <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '1rem', maxWidth: '90%', lineHeight: 1.5 }}>{selectedWeek.description}</p>
             </div>

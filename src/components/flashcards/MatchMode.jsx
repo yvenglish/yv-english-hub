@@ -82,7 +82,10 @@ export default function MatchMode({ deck, onFinish }) {
     <div style={{ width: 'min(100%, 700px)', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
         <span>Combinar Cartões</span>
-        <span>Etapa {chunkIndex + 1} de {Math.ceil(deck.words.length / CHUNK_SIZE)}</span>
+        <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
+          <span>Etapa {chunkIndex + 1} de {Math.ceil(deck.words.length / CHUNK_SIZE)}</span>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: chunkIndex * CHUNK_SIZE })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>Sair</button>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 15 }}>
