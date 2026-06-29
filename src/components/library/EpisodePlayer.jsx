@@ -68,7 +68,7 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
           
           {/* Top Dark Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: 20 }}>
             
             {/* Left Card: Info & Summary */}
             <div style={{ background: 'linear-gradient(145deg, #1A112C, #2A1B3D)', padding: 40, borderRadius: 24, color: '#fff', display: 'flex', flexDirection: 'column' }}>
@@ -125,7 +125,7 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
                 {episode.hasVideo ? 'Video / Player' : 'Audio Player'}
               </h3>
               
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#000', borderRadius: 16, overflow: 'hidden', minHeight: 250, aspectRatio: '16/9' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#000', borderRadius: 16, overflow: 'hidden', width: '100%', aspectRatio: '16/9' }}>
                 {episode.hasVideo ? (
                   episode.embed ? (
                     <div 
