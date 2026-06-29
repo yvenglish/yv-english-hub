@@ -72,13 +72,13 @@ export default function Account() {
               {/* Fallback caso a imagem não exista, mostra um quadrado estilizado */}
               <div style={{ position: 'relative', width: 130, height: 130 }}>
                 <img 
-                  src="/pix-qrcode.png" 
+                  src="/pix.jpeg" 
                   alt="QR Code Pix" 
                   style={{ width: '100%', height: '100%', borderRadius: 12, border: '2px solid var(--plum)', objectFit: 'cover', position: 'relative', zIndex: 2 }} 
                   onError={(e) => { e.target.style.opacity = '0'; }}
                 />
                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'var(--line)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: 'var(--muted)', zIndex: 1, border: '2px dashed var(--muted)' }}>
-                  Adicione pix-qrcode.png na pasta public
+                  Adicione pix.jpeg na pasta public
                 </div>
               </div>
               <p style={{ margin: '15px 0 0', fontSize: '0.85rem', color: 'var(--muted)' }}>Escaneie para pagar a mensalidade</p>
