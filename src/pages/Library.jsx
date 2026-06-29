@@ -39,7 +39,7 @@ export default function Library() {
         window.scrollTo(0, 0); // Garante que o usuário veja o player no topo
       }
     }
-  }, [location.state?.openEpisodeId, episodes]);
+  }, [location.state?.openEpisodeId, location.state?._t, episodes]);
 
   const favorites = userData?.libraryFavorites || [];
   const completed = userData?.libraryProgress || [];

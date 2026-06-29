@@ -59,10 +59,10 @@ export default function Navbar() {
     setIsDropdownOpen(false);
     setSearchQuery('');
     if (item.searchType === 'week') {
-      navigate('/', { state: { openWeekId: item.id } });
+      navigate('/', { state: { openWeekId: item.id, _t: Date.now() } });
     } else {
       // Fallback para qualquer outro tipo (que será a biblioteca)
-      navigate('/library', { state: { openEpisodeId: item.id } });
+      navigate('/library', { state: { openEpisodeId: item.id, _t: Date.now() } });
     }
   };
 
@@ -205,10 +205,6 @@ export default function Navbar() {
               transition: 'all 0.2s',
             }}
             onFocusCapture={e => e.target.style.background = 'rgba(255,255,255,0.1)'}
-            onBlurCapture={e => {
-              e.target.style.background = 'rgba(255,255,255,0.06)';
-              setTimeout(() => setIsDropdownOpen(false), 200);
-            }}
           />
           
           {isDropdownOpen && searchQuery.trim() && (
