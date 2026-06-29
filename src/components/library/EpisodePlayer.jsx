@@ -230,7 +230,7 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
                 </p>
                 <div style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: 24, padding: 40 }}>
                   <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, color: '#334155', fontSize: '1.05rem', maxHeight: 500, overflowY: 'auto' }}>
-                    {episode.transcript}
+                    {typeof episode.transcript === 'string' ? episode.transcript : episode.transcript.en || JSON.stringify(episode.transcript)}
                   </div>
                 </div>
               </div>
