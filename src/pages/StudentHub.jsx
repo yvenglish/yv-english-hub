@@ -207,9 +207,6 @@ export default function StudentHub() {
             </aside>
           </div>
         </div>
-        
-        {/* Soft Gradient Transition to Main Content */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px', background: `linear-gradient(to bottom, ${theme === 'dark' ? 'rgba(12,8,18,0), #0c0812' : 'rgba(250,247,242,0), #FAF7F2'})`, pointerEvents: 'none', zIndex: 10 }} />
       </header>
 
       <main>
