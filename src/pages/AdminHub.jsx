@@ -76,8 +76,6 @@ export default function AdminHub() {
 
   useEffect(() => {
     fetchStudents();
-    fetchGlobalVocabulary();
-    fetchDecks();
     fetchGlobalAssignments();
     fetchWeeks();
   }, []);
