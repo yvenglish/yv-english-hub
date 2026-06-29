@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, getDocs, query, where, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import LibraryAdminTab from '../components/admin/LibraryAdminTab';
+import './AdminHub.css';
 
 export default function AdminHub() {
   const { logout } = useAuth();
@@ -492,7 +493,7 @@ export default function AdminHub() {
           </div>
         </header>
 
-        <main style={{ maxWidth: 1040, margin: '0 auto', padding: '34px 20px', display: 'grid', gap: 30, gridTemplateColumns: '1fr 1fr' }}>
+        <main className="admin-grid-2" style={{ maxWidth: 1040, margin: '0 auto', padding: '34px 20px' }}>
           <div>
             <h2 style={{ borderBottom: '1px solid var(--line)', paddingBottom: 10 }}>Semanas de Aula ({sWeeks.length})</h2>
             <div style={{ display: 'grid', gap: 10, marginTop: 15 }}>
@@ -579,7 +580,7 @@ export default function AdminHub() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 10, marginBottom: 30, borderBottom: '1px solid var(--line)', paddingBottom: 15, overflowX: 'auto' }}>
+        <div className="admin-main-tabs">
           {['students', 'weeks', 'daily', 'vocabulary', 'library'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 20px', whiteSpace: 'nowrap', borderRadius: 999, border: activeTab === tab ? 'none' : '1px solid var(--line)', background: activeTab === tab ? 'var(--plum)' : 'transparent', color: activeTab === tab ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: 800, textTransform: 'capitalize' }}>
               {tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : 'Vocabulário Global'}
@@ -626,14 +627,14 @@ export default function AdminHub() {
 
             <div style={{ display: 'grid', gap: 14 }}>
               {students.filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase()) || s.email.toLowerCase().includes(studentSearch.toLowerCase())).map(student => (
-                <div key={student.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 20, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 16 }}>
+                <div key={student.id} className="admin-flex-between" style={{ padding: 20, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 16 }}>
                   <div>
                     <h3 style={{ margin: '0 0 4px' }}>{student.name} {!student.active && <span style={{ background: '#ff4d4d', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: 4, fontWeight: 'bold' }}>INATIVO</span>}</h3>
                     <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>{student.email}</p>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                  <div className="admin-student-actions-wrapper">
                     <span style={{ background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', padding: '4px 12px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 800 }}>{student.plan}</span>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div className="admin-student-actions">
                       <button onClick={() => setEditingStudent(student)} style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 6, cursor: 'pointer' }}>Editar Acesso</button>
                       <button onClick={() => setSelectedStudentProfile(student)} style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold' }}>Ver Perfil Completo</button>
                     </div>
@@ -691,7 +692,7 @@ export default function AdminHub() {
             </div>
             <div style={{ display: 'grid', gap: 14 }}>
               {weeks.map(week => (
-                <div key={week.id} style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16, display: 'flex', justifyContent: 'space-between' }}>
+                <div key={week.id} className="admin-flex-between" style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
                   <div>
                     <span style={{ fontSize: '0.7rem', background: 'var(--cream)', padding: '2px 8px', borderRadius: 99, color: 'var(--muted)', fontWeight: 'bold' }}>{getStudentName(week.studentId)}</span>
                     <h3 style={{ margin: '8px 0' }}>{week.title}</h3>
@@ -708,7 +709,7 @@ export default function AdminHub() {
 
         {activeTab === 'daily' && (
           <section>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div className="admin-flex-between" style={{ marginBottom: 20 }}>
               <h2>Daily Content</h2>
               <div style={{ display: 'flex', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 999, overflow: 'hidden' }}>
                 <button onClick={() => setDailySubTab('bank')} style={{ padding: '8px 16px', background: dailySubTab === 'bank' ? 'var(--plum)' : 'transparent', color: dailySubTab === 'bank' ? '#fff' : 'var(--text)', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Banco Global</button>
@@ -809,7 +810,7 @@ export default function AdminHub() {
 
                 {scheduleStudents.length > 0 && (
                   <>
-                    <div style={{ padding: 20, border: '1px dashed var(--plum)', borderRadius: 16, marginBottom: 30, display: 'flex', gap: 15, alignItems: 'flex-end' }}>
+                    <div className="admin-flex-row" style={{ padding: 20, border: '1px dashed var(--plum)', borderRadius: 16, marginBottom: 30 }}>
                       <div style={{ flex: 1 }}><label>Data</label><input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} /></div>
                       <div style={{ flex: 2 }}><label>Conteúdo</label><select value={scheduleContentId} onChange={e => setScheduleContentId(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}><option value="">Selecione...</option>{bankItems.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></div>
                       <button disabled={loading} onClick={handleScheduleAssignment} style={{ padding: '10px 20px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', height: 40 }}>Agendar</button>
@@ -844,7 +845,7 @@ export default function AdminHub() {
           <section>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2>Vocabulário Global</h2>
-              <div style={{ display: 'flex', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 999, overflow: 'hidden' }}>
+              <div className="admin-subtabs">
                 <button onClick={() => setVocabSubTab('words')} style={{ padding: '8px 16px', background: vocabSubTab === 'words' ? 'var(--plum)' : 'transparent', color: vocabSubTab === 'words' ? '#fff' : 'var(--text)', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Palavras Avulsas</button>
                 <button onClick={() => setVocabSubTab('decks')} style={{ padding: '8px 16px', background: vocabSubTab === 'decks' ? 'var(--plum)' : 'transparent', color: vocabSubTab === 'decks' ? '#fff' : 'var(--text)', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Decks Temáticos</button>
                 <button onClick={() => setVocabSubTab('assign')} style={{ padding: '8px 16px', background: vocabSubTab === 'assign' ? 'var(--plum)' : 'transparent', color: vocabSubTab === 'assign' ? '#fff' : 'var(--text)', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Atribuir ao Aluno</button>
@@ -856,7 +857,7 @@ export default function AdminHub() {
                 <div style={{ padding: 20, border: editingWord ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
                   <h3>{editingWord ? '✏️ Editando Palavra' : '+ Nova Palavra no Banco'}</h3>
                   <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
-                    <div style={{ display: 'flex', gap: 15 }}>
+                    <div className="admin-flex-row">
                       <input type="text" value={wordTerm} onChange={e => setWordTerm(e.target.value)} placeholder="Termo em Inglês (ex: Apple)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                       <input type="text" value={wordTranslation} onChange={e => setWordTranslation(e.target.value)} placeholder="Tradução (ex: Maçã)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                     </div>
@@ -872,7 +873,7 @@ export default function AdminHub() {
                 <div style={{ display: 'grid', gap: 14 }}>
                   <input type="text" placeholder="Buscar palavra no banco..." value={vocabWordSearch} onChange={e => setVocabWordSearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
                   {vocabWords.filter(w => w.term.toLowerCase().includes(vocabWordSearch.toLowerCase()) || w.translation.toLowerCase().includes(vocabWordSearch.toLowerCase())).map(w => (
-                    <div key={w.id} style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div key={w.id} className="admin-flex-between" style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
                       <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
                         {w.imageUrl && <img src={w.imageUrl} alt={w.term} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8 }} />}
                         <div>
@@ -927,7 +928,7 @@ export default function AdminHub() {
 
                 <div style={{ display: 'grid', gap: 14 }}>
                   {decks.map(d => (
-                    <div key={d.id} style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div key={d.id} className="admin-flex-between" style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
                       <div>
                         <h3 style={{ margin: '0 0 5px' }}>{d.title}</h3>
                         <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>{d.description} • {d.wordIds?.length || 0} palavras</p>

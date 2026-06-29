@@ -1,0 +1,116 @@
+/* AdminHub.css */
+
+/* Generic Grid */
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+@media (min-width: 800px) {
+  .admin-grid-2 {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+}
+
+/* Flex rows that should stack on mobile */
+.admin-flex-row {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+@media (min-width: 800px) {
+  .admin-flex-row {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+
+/* Flex rows with space-between */
+.admin-flex-between {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: flex-start;
+}
+@media (min-width: 800px) {
+  .admin-flex-between {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* Sub-tabs like the Vocabulary section */
+.admin-subtabs {
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.admin-subtabs button {
+  width: 100%;
+  text-align: left;
+}
+@media (min-width: 800px) {
+  .admin-subtabs {
+    flex-direction: row;
+    border-radius: 999px;
+  }
+  .admin-subtabs button {
+    width: auto;
+    text-align: center;
+  }
+}
+
+/* Student card buttons align right on desktop, left on mobile */
+.admin-student-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  width: 100%;
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+.admin-student-actions-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+@media (min-width: 800px) {
+  .admin-student-actions {
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+  .admin-student-actions-wrapper {
+    align-items: flex-end;
+    width: auto;
+  }
+}
+
+/* Ensure inputs take full width gracefully */
+.admin-full-width-mobile {
+  width: 100%;
+}
+
+/* Tabs scrolling horizontally */
+.admin-main-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 15px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-main-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+.admin-main-tabs::-webkit-scrollbar-thumb {
+  background: var(--plum);
+  border-radius: 10px;
+}
