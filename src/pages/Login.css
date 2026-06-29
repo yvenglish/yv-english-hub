@@ -9,15 +9,18 @@
   --orange-soft: #f0b26c;
   --line: rgba(255, 255, 255, 0.14);
 
-  min-height: 100vh;
+  min-height: 100dvh;
   font-family: 'DM Sans', system-ui, sans-serif;
   background: radial-gradient(circle at 15% 10%, rgba(138, 124, 255, 0.24), transparent 32%),
               radial-gradient(circle at 85% 20%, rgba(201, 130, 59, 0.17), transparent 30%),
               linear-gradient(145deg, #020018, var(--bg), var(--bg2));
   color: var(--text);
-  display: grid;
-  place-items: center;
-  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  overflow-y: auto;
 }
 
 .login-page .login-shell {
