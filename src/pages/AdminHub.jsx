@@ -26,7 +26,7 @@ export default function AdminHub() {
   const [editingWeek, setEditingWeek] = useState(null);
   const [weekTitle, setWeekTitle] = useState('');
   const [weekDescription, setWeekDescription] = useState('');
-  const [weekStudent, setWeekStudent] = useState('');
+  const [weekStudents, setWeekStudents] = useState([]);
   const [weekLinks, setWeekLinks] = useState([]);
   const [currentLinkTitle, setCurrentLinkTitle] = useState('');
   const [currentLinkUrl, setCurrentLinkUrl] = useState('');
@@ -69,7 +69,7 @@ export default function AdminHub() {
   const [studentVocabAssignments, setStudentVocabAssignments] = useState([]);
 
   // Scheduling State
-  const [scheduleStudent, setScheduleStudent] = useState('');
+  const [scheduleStudents, setScheduleStudents] = useState([]);
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleContentId, setScheduleContentId] = useState('');
   const [studentAssignments, setStudentAssignments] = useState([]);
@@ -98,12 +98,12 @@ export default function AdminHub() {
   }, [activeTab, vocabSubTab, vocabAssignStudents]);
 
   useEffect(() => {
-    if (activeTab === 'daily' && dailySubTab === 'schedule' && scheduleStudent) {
+    if (activeTab === 'daily' && dailySubTab === 'schedule' && scheduleStudents.length === 1) {
       fetchAssignments();
     } else {
       setStudentAssignments([]);
     }
-  }, [activeTab, dailySubTab, scheduleStudent]);
+  }, [activeTab, dailySubTab, scheduleStudents]);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -154,9 +154,10 @@ export default function AdminHub() {
   };
 
   const fetchAssignments = async () => {
+    if (scheduleStudents.length !== 1) return;
     setLoading(true);
     try {
-      const q = query(collection(db, 'daily_assignments'), where('studentId', '==', scheduleStudent));
+      const q = query(collection(db, 'daily_assignments'), where('studentId', '==', scheduleStudents[0]));
       const snap = await getDocs(q);
       setStudentAssignments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (err) { console.error(err); }
@@ -215,32 +216,44 @@ export default function AdminHub() {
     setEditingWeek(week);
     setWeekTitle(week.title);
     setWeekDescription(week.description);
-    setWeekStudent(week.studentId);
+    setWeekStudents([week.studentId]);
     setWeekLinks(week.links || []);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const cancelEditWeek = () => {
     setEditingWeek(null);
-    setWeekTitle(''); setWeekDescription(''); setWeekStudent(''); setWeekLinks([]);
+    setWeekTitle(''); setWeekDescription(''); setWeekStudents([]); setWeekLinks([]);
   };
 
   const handleSaveWeek = async () => {
-    if (!weekTitle || !weekStudent) return alert("Preencha título e aluno!");
+    if (!weekTitle || weekStudents.length === 0) return alert("Preencha título e selecione aluno(s)!");
     setLoading(true);
     try {
-      const payload = {
-        title: weekTitle,
-        description: weekDescription,
-        studentId: weekStudent,
-        links: weekLinks,
-        updatedAt: new Date().toISOString()
-      };
-
       if (editingWeek) {
+        if (weekStudents.length !== 1) {
+          setLoading(false);
+          return alert("Na edição, deixe apenas o aluno original selecionado.");
+        }
+        const payload = {
+          title: weekTitle,
+          description: weekDescription,
+          studentId: weekStudents[0],
+          links: weekLinks,
+          updatedAt: new Date().toISOString()
+        };
         await updateDoc(doc(db, 'weeks', editingWeek.id), payload);
       } else {
-        await addDoc(collection(db, 'weeks'), { ...payload, createdAt: new Date().toISOString() });
+        for (const studentId of weekStudents) {
+          const payload = {
+            title: weekTitle,
+            description: weekDescription,
+            studentId,
+            links: weekLinks,
+            updatedAt: new Date().toISOString()
+          };
+          await addDoc(collection(db, 'weeks'), { ...payload, createdAt: new Date().toISOString() });
+        }
       }
       cancelEditWeek();
       fetchWeeks();
@@ -340,22 +353,32 @@ export default function AdminHub() {
 
   // Schedule Functions
   const handleScheduleAssignment = async () => {
-    if (!scheduleStudent || !scheduleDate || !scheduleContentId) return alert("Preencha tudo!");
+    if (scheduleStudents.length === 0 || !scheduleDate || !scheduleContentId) return alert("Preencha tudo!");
     setLoading(true);
     try {
-      const existing = studentAssignments.find(a => a.scheduledDate === scheduleDate);
-      if (existing) { alert("Já existe Daily agendado para esta data!"); setLoading(false); return; }
+      let createdCount = 0;
+      for (const studentId of scheduleStudents) {
+        // Usa a lista global para validar se o aluno já tem daily nessa data
+        const existing = globalAssignments.find(a => a.studentId === studentId && a.scheduledDate === scheduleDate);
+        if (existing) continue;
+
+        const payload = {
+          studentId,
+          contentId: scheduleContentId,
+          scheduledDate: scheduleDate,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'daily_assignments'), payload);
+        createdCount++;
+      }
       
-      const payload = {
-        studentId: scheduleStudent,
-        contentId: scheduleContentId,
-        scheduledDate: scheduleDate,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      };
-      await addDoc(collection(db, 'daily_assignments'), payload);
+      if (createdCount < scheduleStudents.length) {
+        alert(`Foram criados ${createdCount} agendamentos. Alguns alunos selecionados já possuíam Daily na data escolhida e foram ignorados.`);
+      }
+
       setScheduleDate(''); setScheduleContentId('');
-      fetchAssignments();
+      if (scheduleStudents.length === 1) fetchAssignments();
       fetchGlobalAssignments();
     } catch (err) { console.error(err); }
     setLoading(false);
@@ -629,10 +652,28 @@ export default function AdminHub() {
               <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
                 <input type="text" value={weekTitle} onChange={e => setWeekTitle(e.target.value)} placeholder="Título" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                 <textarea value={weekDescription} onChange={e => setWeekDescription(e.target.value)} rows="3" placeholder="Descrição" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}></textarea>
-                <select value={weekStudent} onChange={e => setWeekStudent(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}>
-                  <option value="">Selecione um aluno...</option>
-                  {students.filter(s => s.active).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                <div style={{ padding: 15, border: '1px solid var(--line)', borderRadius: 12, background: 'var(--bg)' }}>
+                  <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>Selecionar Alunos ({weekStudents.length})</h4>
+                  {weekStudents.length > 0 && !editingWeek && (
+                    <button onClick={() => setWeekStudents([])} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: 10 }}>Limpar Seleção</button>
+                  )}
+                  <div style={{ maxHeight: 200, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                    {students.filter(s => s.active).map(s => (
+                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', cursor: 'pointer', background: 'var(--paper)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', opacity: (editingWeek && !weekStudents.includes(s.id)) ? 0.5 : 1 }}>
+                        <input 
+                          type="checkbox" 
+                          checked={weekStudents.includes(s.id)}
+                          disabled={editingWeek && !weekStudents.includes(s.id)}
+                          onChange={e => {
+                            if (e.target.checked) setWeekStudents([...weekStudents, s.id]);
+                            else setWeekStudents(weekStudents.filter(id => id !== s.id));
+                          }}
+                        />
+                        {s.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <div style={{ padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
                   <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>Links Extras</h4>
                   <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
@@ -745,13 +786,28 @@ export default function AdminHub() {
             {dailySubTab === 'schedule' && (
               <div>
                 <div style={{ padding: 20, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 16, marginBottom: 30 }}>
-                  <select value={scheduleStudent} onChange={e => setScheduleStudent(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: '1rem' }}>
-                    <option value="">Selecione um aluno...</option>
-                    {students.filter(s => s.active).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                  <h4 style={{ margin: '0 0 10px' }}>Selecionar Alunos ({scheduleStudents.length})</h4>
+                  {scheduleStudents.length > 0 && (
+                    <button onClick={() => setScheduleStudents([])} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: 10 }}>Limpar Seleção</button>
+                  )}
+                  <div style={{ maxHeight: 300, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+                    {students.filter(s => s.active).map(s => (
+                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', cursor: 'pointer', background: 'var(--paper)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={scheduleStudents.includes(s.id)}
+                          onChange={e => {
+                            if (e.target.checked) setScheduleStudents([...scheduleStudents, s.id]);
+                            else setScheduleStudents(scheduleStudents.filter(id => id !== s.id));
+                          }}
+                        />
+                        {s.name}
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
-                {scheduleStudent && (
+                {scheduleStudents.length > 0 && (
                   <>
                     <div style={{ padding: 20, border: '1px dashed var(--plum)', borderRadius: 16, marginBottom: 30, display: 'flex', gap: 15, alignItems: 'flex-end' }}>
                       <div style={{ flex: 1 }}><label>Data</label><input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} /></div>
@@ -759,7 +815,8 @@ export default function AdminHub() {
                       <button disabled={loading} onClick={handleScheduleAssignment} style={{ padding: '10px 20px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', height: 40 }}>Agendar</button>
                     </div>
 
-                    <div style={{ display: 'grid', gap: 10 }}>
+                    {scheduleStudents.length === 1 ? (
+                      <div style={{ display: 'grid', gap: 10 }}>
                       {[...studentAssignments].sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate)).map(assign => (
                         <div key={assign.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
                           <div>
@@ -771,6 +828,11 @@ export default function AdminHub() {
                         </div>
                       ))}
                     </div>
+                    ) : (
+                      <div style={{ padding: 20, textAlign: 'center', background: 'var(--cream)', borderRadius: 12, border: '1px solid var(--line)', color: 'var(--muted)' }}>
+                        Modo em lote ativado. Você está atribuindo Daily Content para {scheduleStudents.length} alunos simultaneamente. A lista de agendamentos individuais não é exibida neste modo.
+                      </div>
+                    )}
                   </>
                 )}
               </div>
