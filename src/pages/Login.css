@@ -20,7 +20,7 @@
   justify-content: center;
   align-items: center;
   padding: 16px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .login-page .login-shell {
