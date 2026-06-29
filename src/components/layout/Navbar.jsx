@@ -60,7 +60,8 @@ export default function Navbar() {
     setSearchQuery('');
     if (item.searchType === 'week') {
       navigate('/', { state: { openWeekId: item.id } });
-    } else if (item.searchType === 'library') {
+    } else {
+      // Fallback para qualquer outro tipo (que será a biblioteca)
       navigate('/library', { state: { openEpisodeId: item.id } });
     }
   };
@@ -204,7 +205,10 @@ export default function Navbar() {
               transition: 'all 0.2s',
             }}
             onFocusCapture={e => e.target.style.background = 'rgba(255,255,255,0.1)'}
-            onBlurCapture={e => e.target.style.background = 'rgba(255,255,255,0.06)'}
+            onBlurCapture={e => {
+              e.target.style.background = 'rgba(255,255,255,0.06)';
+              setTimeout(() => setIsDropdownOpen(false), 200);
+            }}
           />
           
           {isDropdownOpen && searchQuery.trim() && (
@@ -225,7 +229,7 @@ export default function Navbar() {
                   {getFilteredResults().map(item => (
                     <div 
                       key={item.id} 
-                      onMouseDown={(e) => { e.preventDefault(); handleResultClick(item); }}
+                      onClick={(e) => handleResultClick(item)}
                       style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}

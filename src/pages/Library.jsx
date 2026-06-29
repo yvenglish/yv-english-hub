@@ -37,7 +37,6 @@ export default function Library() {
       if (targetEp) {
         setSelectedEpisode(targetEp);
         window.scrollTo(0, 0); // Garante que o usuário veja o player no topo
-        window.history.replaceState({}, document.title); // Limpa o state para não reabrir no refresh
       }
     }
   }, [location.state?.openEpisodeId, episodes]);
