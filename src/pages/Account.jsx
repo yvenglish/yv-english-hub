@@ -1,9 +1,17 @@
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function Account() {
   const { userData, logout } = useAuth();
   const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyPix = () => {
+    navigator.clipboard.writeText("01f46871-ece3-4a17-a938-f911b3c10a54");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -82,6 +90,18 @@ export default function Account() {
                 </div>
               </div>
               <p style={{ margin: '15px 0 0', fontSize: '0.85rem', color: 'var(--muted)' }}>Escaneie para pagar a mensalidade</p>
+              <button 
+                onClick={handleCopyPix} 
+                style={{ marginTop: 15, padding: '8px 16px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                {copied ? '✅ Chave Copiada!' : 'Copiar Chave Pix'}
+              </button>
+              
+              {copied && (
+                <div style={{ position: 'fixed', bottom: 30, left: '50%', transform: 'translateX(-50%)', background: '#2D7158', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', zIndex: 9999, fontSize: '0.9rem', textAlign: 'center' }}>
+                  Chave Pix copiada para a área de transferência!
+                </div>
+              )}
             </div>
           </div>
 
