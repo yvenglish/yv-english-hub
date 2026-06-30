@@ -205,7 +205,7 @@ export default function StudentHub() {
             <aside className="hero-panel">
               <span>Fluency Path</span>
               <strong>Focus now</strong>
-              <p>{weeks.length > 0 ? weeks[weeks.length - 1].title : 'Aguardando novo material...'}</p>
+              <p>{weeks.length > 0 ? [...weeks].sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0].title : 'Aguardando novo material...'}</p>
             </aside>
           </div>
         </div>
