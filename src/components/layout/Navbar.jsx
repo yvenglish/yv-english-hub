@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { db } from '../../config/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 export default function Navbar() {
   const { userData, logout } = useAuth();
@@ -33,7 +33,7 @@ export default function Navbar() {
     if (!searchData) {
       try {
         const [weeksSnap, libSnap] = await Promise.all([
-          getDocs(collection(db, 'weeks')),
+          getDocs(query(collection(db, 'weeks'), where('studentId', '==', userData?.uid || ''))),
           getDocs(collection(db, 'library_episodes'))
         ]);
         const weeks = weeksSnap.docs.map(d => ({ id: d.id, ...d.data(), searchType: 'week' }));
