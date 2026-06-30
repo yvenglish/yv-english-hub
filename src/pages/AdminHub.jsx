@@ -504,6 +504,23 @@ export default function AdminHub() {
     } catch (err) { console.error(err); }
   };
 
+  const handleRemoveSingleWord = async (assignId, wordIdToRemove, currentWordIds, isGlobal = false) => {
+    if (!window.confirm('Remover esta palavra?')) return;
+    try {
+      const newWordIds = currentWordIds.filter(id => id !== wordIdToRemove);
+      if (newWordIds.length === 0) {
+        await deleteDoc(doc(db, 'vocab_assignments', assignId));
+        if (isGlobal) setAllVocabAssignments(prev => prev.filter(a => a.id !== assignId));
+        else setProfileVocabAssignments(prev => prev.filter(a => a.id !== assignId));
+      } else {
+        await updateDoc(doc(db, 'vocab_assignments', assignId), { wordIds: newWordIds });
+        const updateState = prev => prev.map(a => a.id === assignId ? { ...a, wordIds: newWordIds } : a);
+        if (isGlobal) setAllVocabAssignments(updateState);
+        else setProfileVocabAssignments(updateState);
+      }
+    } catch (err) { console.error(err); }
+  };
+
   const getStudentName = (id) => students.find(s => s.id === id)?.name || 'Desconhecido';
   const getBankItemTitle = (id) => bankItems.find(i => i.id === id)?.title || 'Excluído';
 
@@ -584,7 +601,22 @@ export default function AdminHub() {
                       <p style={{ margin: '8px 0 0', fontWeight: 'bold', fontSize: '0.95rem' }}>
                         {assign.type === 'deck' 
                           ? (decks.find(d => d.id === assign.deckId)?.title || 'Deck Excluído')
-                          : `${assign.wordIds?.length || 0} palavras atribuídas`}
+                          : (
+                              <details style={{ cursor: 'pointer' }}>
+                                <summary style={{ outline: 'none' }}>{assign.wordIds?.length || 0} palavras atribuídas</summary>
+                                <div style={{ marginTop: 10, padding: 10, background: 'var(--bg)', borderRadius: 8, fontSize: '0.85rem', fontWeight: 'normal', maxHeight: 150, overflowY: 'auto' }}>
+                                  {assign.wordIds?.map(wid => {
+                                    const word = vocabWords.find(w => w.id === wid);
+                                    return word ? (
+                                      <div key={wid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                        <span>• <strong>{word.term}</strong>: {word.translation}</span>
+                                        <button onClick={(e) => { e.preventDefault(); handleRemoveSingleWord(assign.id, wid, assign.wordIds, false); }} style={{ background: 'none', border: 'none', color: '#ffb1b1', cursor: 'pointer', fontSize: '0.75rem', padding: '2px 6px' }} title="Remover palavra">✕</button>
+                                      </div>
+                                    ) : null;
+                                  })}
+                                </div>
+                              </details>
+                            )}
                       </p>
                     </div>
                     <button onClick={() => handleDeleteProfileVocab(assign.id)} style={{ background: 'rgba(255,140,140,0.1)', color: '#ffb1b1', border: '1px solid rgba(255,140,140,0.3)', padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Remover</button>
@@ -1139,7 +1171,22 @@ export default function AdminHub() {
                                       {a.type === 'deck' ? 'DECK' : 'PALAVRAS SOLTAS'}
                                     </span>
                                     <span style={{ fontWeight: 'bold' }}>
-                                      {a.type === 'deck' ? (decks.find(d => d.id === a.deckId)?.title || 'Deck Excluído') : `${a.wordIds?.length || 0} palavras`}
+                                      {a.type === 'deck' ? (decks.find(d => d.id === a.deckId)?.title || 'Deck Excluído') : (
+                                        <details style={{ cursor: 'pointer' }}>
+                                          <summary style={{ outline: 'none' }}>{a.wordIds?.length || 0} palavras</summary>
+                                          <div style={{ marginTop: 10, padding: 10, background: 'var(--paper)', borderRadius: 8, fontSize: '0.85rem', fontWeight: 'normal', maxHeight: 150, overflowY: 'auto' }}>
+                                            {a.wordIds?.map(wid => {
+                                              const word = vocabWords.find(w => w.id === wid);
+                                              return word ? (
+                                                <div key={wid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                                  <span>• <strong>{word.term}</strong></span>
+                                                  <button onClick={(e) => { e.preventDefault(); handleRemoveSingleWord(a.id, wid, a.wordIds, true); }} style={{ background: 'none', border: 'none', color: '#ffb1b1', cursor: 'pointer', fontSize: '0.75rem', padding: '2px 6px' }} title="Remover palavra">✕</button>
+                                                </div>
+                                              ) : null;
+                                            })}
+                                          </div>
+                                        </details>
+                                      )}
                                     </span>
                                   </div>
                                   <button onClick={() => handleDeleteGlobalVocab(a.id)} style={{ background: 'none', border: 'none', color: '#ffb1b1', textDecoration: 'underline', cursor: 'pointer' }}>Remover</button>
@@ -1182,9 +1229,25 @@ export default function AdminHub() {
                            <div style={{ display: 'grid', gap: 8 }}>
                               {allVocabAssignments.filter(a => a.type === 'words').length === 0 && <p style={{ color: 'var(--muted)', margin: 0 }}>Nenhuma atribuição de palavras soltas ativa.</p>}
                               {allVocabAssignments.filter(a => a.type === 'words').map(a => (
-                                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)', padding: '10px 15px', borderRadius: 8 }}>
-                                    <span>{getStudentName(a.studentId)} <small style={{ color: 'var(--muted)' }}>({a.wordIds?.length || 0} palavras)</small></span>
-                                    <button onClick={() => handleDeleteGlobalVocab(a.id)} style={{ background: 'none', border: 'none', color: '#ffb1b1', textDecoration: 'underline', cursor: 'pointer' }}>Remover</button>
+                                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: 'var(--bg)', padding: '10px 15px', borderRadius: 8 }}>
+                                    <div>
+                                      <span>{getStudentName(a.studentId)}</span>
+                                      <details style={{ cursor: 'pointer', marginTop: 5 }}>
+                                        <summary style={{ outline: 'none', fontSize: '0.85rem', color: 'var(--muted)' }}>{a.wordIds?.length || 0} palavras</summary>
+                                        <div style={{ marginTop: 10, padding: 10, background: 'var(--paper)', borderRadius: 8, fontSize: '0.85rem', fontWeight: 'normal', maxHeight: 150, overflowY: 'auto' }}>
+                                          {a.wordIds?.map(wid => {
+                                            const word = vocabWords.find(w => w.id === wid);
+                                            return word ? (
+                                              <div key={wid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                                <span>• <strong>{word.term}</strong></span>
+                                                <button onClick={(e) => { e.preventDefault(); handleRemoveSingleWord(a.id, wid, a.wordIds, true); }} style={{ background: 'none', border: 'none', color: '#ffb1b1', cursor: 'pointer', fontSize: '0.75rem', padding: '2px 6px' }} title="Remover palavra">✕</button>
+                                              </div>
+                                            ) : null;
+                                          })}
+                                        </div>
+                                      </details>
+                                    </div>
+                                    <button onClick={() => handleDeleteGlobalVocab(a.id)} style={{ background: 'none', border: 'none', color: '#ffb1b1', textDecoration: 'underline', cursor: 'pointer', marginTop: 2 }}>Remover</button>
                                   </div>
                               ))}
                            </div>
