@@ -61,7 +61,9 @@ export default function StudentHub() {
     try {
       const q = query(collection(db, 'weeks'), where('studentId', '==', currentUser.uid));
       const snap = await getDocs(q);
-      setWeeks(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const fetchedWeeks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      fetchedWeeks.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+      setWeeks(fetchedWeeks);
     } catch (err) { console.error(err); }
   };
 
@@ -203,7 +205,7 @@ export default function StudentHub() {
             <aside className="hero-panel">
               <span>Fluency Path</span>
               <strong>Focus now</strong>
-              <p>{weeks.length > 0 ? weeks[0].title : 'Aguardando novo material...'}</p>
+              <p>{weeks.length > 0 ? weeks[weeks.length - 1].title : 'Aguardando novo material...'}</p>
             </aside>
           </div>
         </div>
