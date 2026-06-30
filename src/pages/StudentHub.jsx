@@ -120,7 +120,6 @@ export default function StudentHub() {
         const bankDoc = await getDoc(doc(db, 'daily_bank', targetAssignment.contentId));
         if (bankDoc.exists()) {
           const rawData = bankDoc.data();
-          // Normalize to questions array for backward compatibility
           if (!rawData.questions && rawData.question) {
             rawData.questions = [{
               questionText: rawData.question,
@@ -129,6 +128,10 @@ export default function StudentHub() {
             }];
           }
           setDailyContentDetails({ id: bankDoc.id, ...rawData });
+        } else {
+          // The underlying content was deleted by the admin. Remove this broken assignment and fetch a new one.
+          await deleteDoc(doc(db, 'daily_assignments', targetAssignment.id));
+          fetchDailyAssignment();
         }
       }
     } catch (err) {
