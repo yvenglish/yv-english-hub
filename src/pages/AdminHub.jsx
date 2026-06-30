@@ -68,7 +68,9 @@ export default function AdminHub() {
   const [vocabAssignWordIds, setVocabAssignWordIds] = useState([]);
 
   const [studentVocabAssignments, setStudentVocabAssignments] = useState([]);
-
+  const [allVocabAssignments, setAllVocabAssignments] = useState([]);
+  const [profileVocabAssignments, setProfileVocabAssignments] = useState([]);
+  const [vocabAssignGroupBy, setVocabAssignGroupBy] = useState('student');
   // Scheduling State
   const [scheduleStudents, setScheduleStudents] = useState([]);
   const [scheduleDate, setScheduleDate] = useState('');
@@ -79,6 +81,8 @@ export default function AdminHub() {
     fetchStudents();
     fetchGlobalAssignments();
     fetchWeeks();
+    fetchDecks();
+    fetchVocabWords();
   }, []);
 
   useEffect(() => {
@@ -91,12 +95,29 @@ export default function AdminHub() {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'vocabulary' && vocabSubTab === 'assign' && vocabAssignStudents.length === 1) {
-      fetchVocabAssignments();
+    if (activeTab === 'vocabulary' && vocabSubTab === 'assign') {
+      if (vocabAssignStudents.length === 1) {
+        fetchVocabAssignments();
+      } else if (vocabAssignStudents.length === 0) {
+        fetchAllVocabAssignments();
+      }
     } else {
       setStudentVocabAssignments([]);
     }
   }, [activeTab, vocabSubTab, vocabAssignStudents]);
+
+  useEffect(() => {
+    if (selectedStudentProfile) {
+      const fetchProfileVocab = async () => {
+        try {
+          const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', selectedStudentProfile.id));
+          const snap = await getDocs(q);
+          setProfileVocabAssignments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } catch (err) { console.error(err); }
+      };
+      fetchProfileVocab();
+    }
+  }, [selectedStudentProfile]);
 
   useEffect(() => {
     if (activeTab === 'daily' && dailySubTab === 'schedule' && scheduleStudents.length === 1) {
@@ -185,13 +206,18 @@ export default function AdminHub() {
 
   const fetchVocabAssignments = async () => {
     if (vocabAssignStudents.length !== 1) return;
-    setLoading(true);
     try {
       const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', vocabAssignStudents[0]));
       const snap = await getDocs(q);
       setStudentVocabAssignments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (err) { console.error(err); }
-    setLoading(false);
+  };
+
+  const fetchAllVocabAssignments = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'vocab_assignments'));
+      setAllVocabAssignments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (err) { console.error(err); }
   };
 
   const handleLogout = async () => {
@@ -455,9 +481,27 @@ export default function AdminHub() {
   };
 
   const handleDeleteVocabAssign = async (id) => {
-    if (!window.confirm('Remover atribuição?')) return;
-    await deleteDoc(doc(db, 'vocab_assignments', id));
-    fetchVocabAssignments();
+    if (!window.confirm('Tem certeza?')) return;
+    try {
+      await deleteDoc(doc(db, 'vocab_assignments', id));
+      fetchVocabAssignments();
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteProfileVocab = async (id) => {
+    if (!window.confirm('Tem certeza que deseja remover este acesso do aluno?')) return;
+    try {
+      await deleteDoc(doc(db, 'vocab_assignments', id));
+      setProfileVocabAssignments(prev => prev.filter(a => a.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteGlobalVocab = async (id) => {
+    if (!window.confirm('Tem certeza que deseja remover este acesso do aluno?')) return;
+    try {
+      await deleteDoc(doc(db, 'vocab_assignments', id));
+      setAllVocabAssignments(prev => prev.filter(a => a.id !== id));
+    } catch (err) { console.error(err); }
   };
 
   const getStudentName = (id) => students.find(s => s.id === id)?.name || 'Desconhecido';
@@ -524,6 +568,29 @@ export default function AdminHub() {
                   <p style={{ margin: 0, fontSize: '0.9rem' }}>{getBankItemTitle(a.contentId)}</p>
                 </div>
               ))}
+            </div>
+
+            <h2 style={{ borderBottom: '1px solid var(--line)', paddingBottom: 10, marginTop: 30 }}>Flashcards & Vocabulário ({profileVocabAssignments.length})</h2>
+            <div style={{ display: 'grid', gap: 10, marginTop: 15, maxHeight: 600, overflowY: 'auto' }}>
+              {profileVocabAssignments.length === 0 ? (
+                <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Nenhum material atribuído.</p>
+              ) : (
+                profileVocabAssignments.map(assign => (
+                  <div key={assign.id} style={{ background: 'var(--paper)', padding: 15, borderRadius: 12, border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 99, background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', fontWeight: 'bold' }}>
+                        {assign.type === 'deck' ? 'DECK' : 'PALAVRAS SOLTAS'}
+                      </span>
+                      <p style={{ margin: '8px 0 0', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                        {assign.type === 'deck' 
+                          ? (decks.find(d => d.id === assign.deckId)?.title || 'Deck Excluído')
+                          : `${assign.wordIds?.length || 0} palavras atribuídas`}
+                      </p>
+                    </div>
+                    <button onClick={() => handleDeleteProfileVocab(assign.id)} style={{ background: 'rgba(255,140,140,0.1)', color: '#ffb1b1', border: '1px solid rgba(255,140,140,0.3)', padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Remover</button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </main>
@@ -1041,6 +1108,90 @@ export default function AdminHub() {
                       </div>
                     )}
                   </>
+                )}
+                
+                {vocabAssignStudents.length === 0 && (
+                  <div style={{ marginTop: 30 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingBottom: 10, borderBottom: '1px solid var(--line)' }}>
+                      <h3 style={{ margin: 0 }}>Todas as Atribuições Ativas ({allVocabAssignments.length})</h3>
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <button onClick={() => setVocabAssignGroupBy('student')} style={{ padding: '6px 12px', borderRadius: 8, background: vocabAssignGroupBy === 'student' ? 'var(--plum)' : 'var(--paper)', color: vocabAssignGroupBy === 'student' ? '#fff' : 'var(--text)', border: '1px solid var(--line)', cursor: 'pointer', fontWeight: 'bold' }}>Por Aluno</button>
+                        <button onClick={() => setVocabAssignGroupBy('material')} style={{ padding: '6px 12px', borderRadius: 8, background: vocabAssignGroupBy === 'material' ? 'var(--plum)' : 'var(--paper)', color: vocabAssignGroupBy === 'material' ? '#fff' : 'var(--text)', border: '1px solid var(--line)', cursor: 'pointer', fontWeight: 'bold' }}>Por Material</button>
+                      </div>
+                    </div>
+
+                    {vocabAssignGroupBy === 'student' ? (
+                      <div style={{ display: 'grid', gap: 15, maxHeight: 600, overflowY: 'auto' }}>
+                        {Object.entries(
+                          allVocabAssignments.reduce((acc, curr) => {
+                            if (!acc[curr.studentId]) acc[curr.studentId] = [];
+                            acc[curr.studentId].push(curr);
+                            return acc;
+                          }, {})
+                        ).map(([studentId, assigns]) => (
+                          <div key={studentId} style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 15 }}>
+                            <h4 style={{ margin: '0 0 10px', color: 'var(--orange-soft)' }}>{getStudentName(studentId)}</h4>
+                            <div style={{ display: 'grid', gap: 8 }}>
+                              {assigns.map(a => (
+                                <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)', padding: '10px 15px', borderRadius: 8 }}>
+                                  <div>
+                                    <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 99, background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', fontWeight: 'bold', marginRight: 10 }}>
+                                      {a.type === 'deck' ? 'DECK' : 'PALAVRAS SOLTAS'}
+                                    </span>
+                                    <span style={{ fontWeight: 'bold' }}>
+                                      {a.type === 'deck' ? (decks.find(d => d.id === a.deckId)?.title || 'Deck Excluído') : `${a.wordIds?.length || 0} palavras`}
+                                    </span>
+                                  </div>
+                                  <button onClick={() => handleDeleteGlobalVocab(a.id)} style={{ background: 'none', border: 'none', color: '#ffb1b1', textDecoration: 'underline', cursor: 'pointer' }}>Remover</button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gap: 15, maxHeight: 600, overflowY: 'auto' }}>
+                        {/* Grouping by Deck and Words */}
+                        {decks.map(deck => {
+                          const assignmentsForDeck = allVocabAssignments.filter(a => a.type === 'deck' && a.deckId === deck.id);
+                          if (assignmentsForDeck.length === 0) return null;
+                          return (
+                            <div key={deck.id} style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 15 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
+                                <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 99, background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', fontWeight: 'bold', marginRight: 10 }}>DECK</span>
+                                <h4 style={{ margin: 0 }}>{deck.title}</h4>
+                              </div>
+                              <div style={{ display: 'grid', gap: 8 }}>
+                                {assignmentsForDeck.map(a => (
+                                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)', padding: '10px 15px', borderRadius: 8 }}>
+                                    <span>{getStudentName(a.studentId)}</span>
+                                    <button onClick={() => handleDeleteGlobalVocab(a.id)} style={{ background: 'none', border: 'none', color: '#ffb1b1', textDecoration: 'underline', cursor: 'pointer' }}>Remover</button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Independent Words */}
+                        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12, padding: 15 }}>
+                           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
+                                <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: 99, background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', fontWeight: 'bold', marginRight: 10 }}>PALAVRAS SOLTAS</span>
+                                <h4 style={{ margin: 0 }}>Atribuições Manuais de Palavras</h4>
+                           </div>
+                           <div style={{ display: 'grid', gap: 8 }}>
+                              {allVocabAssignments.filter(a => a.type === 'words').length === 0 && <p style={{ color: 'var(--muted)', margin: 0 }}>Nenhuma atribuição de palavras soltas ativa.</p>}
+                              {allVocabAssignments.filter(a => a.type === 'words').map(a => (
+                                  <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)', padding: '10px 15px', borderRadius: 8 }}>
+                                    <span>{getStudentName(a.studentId)} <small style={{ color: 'var(--muted)' }}>({a.wordIds?.length || 0} palavras)</small></span>
+                                    <button onClick={() => handleDeleteGlobalVocab(a.id)} style={{ background: 'none', border: 'none', color: '#ffb1b1', textDecoration: 'underline', cursor: 'pointer' }}>Remover</button>
+                                  </div>
+                              ))}
+                           </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
