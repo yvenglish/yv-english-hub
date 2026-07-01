@@ -450,7 +450,13 @@ export default function StudentHub() {
                       <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 }}>Gravações da Aula</h3>
                       <div style={{ display: 'grid', gap: 14 }}>
                         {selectedWeek.links.filter(l => l.type === 'recording').map((link, i) => (
-                          <div key={i} onClick={() => setActiveVideoUrl(formatDriveUrl(link.url))} style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: 'var(--cream)', borderRadius: 20, color: 'var(--text)', border: '1px solid var(--line)', alignItems: 'center', cursor: 'pointer' }}>
+                          <div key={i} onClick={() => {
+                            if (window.innerWidth <= 768) {
+                              window.open(link.url, '_blank', 'noopener,noreferrer');
+                            } else {
+                              setActiveVideoUrl(formatDriveUrl(link.url));
+                            }
+                          }} style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: 'var(--cream)', borderRadius: 20, color: 'var(--text)', border: '1px solid var(--line)', alignItems: 'center', cursor: 'pointer' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
                               <div style={{ width: 44, height: 44, background: 'var(--paper)', borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: '1.2rem', color: 'var(--plum)' }}>▶️</div>
                               <div><span style={{ fontWeight: 'bold', fontSize: '1.05rem', display: 'block' }}>{link.title}</span></div>
