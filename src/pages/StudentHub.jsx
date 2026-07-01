@@ -496,15 +496,13 @@ export default function StudentHub() {
             }} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '10px 20px', borderRadius: 99, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 'bold' }}>← Voltar à Home</button>
             <button onClick={() => setActiveVideoUrl(null)} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold', flexShrink: 0 }}>✕</button>
           </div>
-          <div style={{ background: '#000', width: '100%', maxWidth: 900, margin: '0 auto', borderRadius: 16, overflow: 'hidden', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
-            <div style={{ padding: '56.25% 0 0 0', position: 'relative' }}>
-              <iframe 
-                src={activeVideoUrl} 
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} 
-                allow="autoplay; fullscreen" 
-                title="Gravação da Aula"
-              ></iframe>
-            </div>
+          <div style={{ background: '#000', width: '100%', maxWidth: 900, margin: '0 auto', borderRadius: 16, overflow: 'hidden', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', height: '70vh', minHeight: 300 }}>
+            <iframe 
+              src={activeVideoUrl} 
+              style={{ width: '100%', height: '100%', border: 'none' }} 
+              allow="autoplay; fullscreen" 
+              title="Gravação da Aula"
+            ></iframe>
           </div>
         </div>
       )}
