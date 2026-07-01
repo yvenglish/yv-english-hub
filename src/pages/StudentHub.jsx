@@ -487,14 +487,16 @@ export default function StudentHub() {
 
       {/* Video Modal */}
       {activeVideoUrl && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20, backdropFilter: 'blur(5px)' }}>
-          <div style={{ background: '#000', width: '100%', maxWidth: 900, borderRadius: 16, overflow: 'hidden', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 20, backdropFilter: 'blur(5px)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: 900, margin: '0 auto 20px', gap: 10 }}>
             <button onClick={() => {
               setActiveVideoUrl(null);
               setSelectedWeek(null);
               navigate(location.pathname, { replace: true, state: {} });
-            }} style={{ position: 'absolute', top: 15, left: 15, background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: 99, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontWeight: 'bold', zIndex: 10 }}>← Voltar para a Home</button>
-            <button onClick={() => setActiveVideoUrl(null)} style={{ position: 'absolute', top: 15, right: 15, background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 40, height: 40, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold', zIndex: 10 }}>✕</button>
+            }} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '10px 20px', borderRadius: 99, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 'bold' }}>← Voltar à Home</button>
+            <button onClick={() => setActiveVideoUrl(null)} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold', flexShrink: 0 }}>✕</button>
+          </div>
+          <div style={{ background: '#000', width: '100%', maxWidth: 900, margin: '0 auto', borderRadius: 16, overflow: 'hidden', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
             <div style={{ padding: '56.25% 0 0 0', position: 'relative' }}>
               <iframe 
                 src={activeVideoUrl} 
