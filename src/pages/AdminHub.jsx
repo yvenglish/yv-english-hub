@@ -31,6 +31,7 @@ export default function AdminHub() {
   const [weekLinks, setWeekLinks] = useState([]);
   const [currentLinkTitle, setCurrentLinkTitle] = useState('');
   const [currentLinkUrl, setCurrentLinkUrl] = useState('');
+  const [currentLinkType, setCurrentLinkType] = useState('link'); // 'link' or 'recording'
 
   // Daily State
   const [dailySubTab, setDailySubTab] = useState('bank');
@@ -233,9 +234,10 @@ export default function AdminHub() {
   // Weeks Functions
   const handleAddLink = () => {
     if (!currentLinkTitle || !currentLinkUrl) return;
-    setWeekLinks([...weekLinks, { title: currentLinkTitle, url: currentLinkUrl }]);
+    setWeekLinks([...weekLinks, { title: currentLinkTitle, url: currentLinkUrl, type: currentLinkType }]);
     setCurrentLinkTitle('');
     setCurrentLinkUrl('');
+    setCurrentLinkType('link');
   };
   const handleRemoveLink = (index) => setWeekLinks(weekLinks.filter((_, i) => i !== index));
 
@@ -777,11 +779,15 @@ export default function AdminHub() {
                 <div style={{ padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
                   <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>Links Extras</h4>
                   <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                    <select value={currentLinkType} onChange={e => setCurrentLinkType(e.target.value)} style={{ padding: '8px', borderRadius: 6, border: '1px solid var(--line)' }}>
+                      <option value="link">Link</option>
+                      <option value="recording">Gravação</option>
+                    </select>
                     <input type="text" value={currentLinkTitle} onChange={e => setCurrentLinkTitle(e.target.value)} placeholder="Título" style={{ flex: 1, padding: '8px', borderRadius: 6, border: '1px solid var(--line)' }} />
                     <input type="text" value={currentLinkUrl} onChange={e => setCurrentLinkUrl(e.target.value)} placeholder="URL" style={{ flex: 2, padding: '8px', borderRadius: 6, border: '1px solid var(--line)' }} />
                     <button onClick={handleAddLink} style={{ padding: '8px 16px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold' }}>+ Add</button>
                   </div>
-                  <ul>{weekLinks.map((l, i) => <li key={i}>{l.title} <button onClick={() => handleRemoveLink(i)}>X</button></li>)}</ul>
+                  <ul>{weekLinks.map((l, i) => <li key={i}>[{l.type === 'recording' ? 'Gravação' : 'Link'}] {l.title} <button onClick={() => handleRemoveLink(i)} style={{ marginLeft: 10, color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}>X</button></li>)}</ul>
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button disabled={loading} onClick={handleSaveWeek} style={{ padding: '12px 24px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Salvar</button>

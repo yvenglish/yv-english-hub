@@ -426,22 +426,48 @@ export default function StudentHub() {
               <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '1rem', maxWidth: '90%', lineHeight: 1.5 }}>{selectedWeek.description}</p>
             </div>
             <div style={{ padding: '30px', overflowY: 'auto', flex: 1, background: 'var(--paper)' }}>
-              <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 20, fontWeight: 800 }}>Materiais da Aula</h3>
               {(!selectedWeek.links || selectedWeek.links.length === 0) ? (
-                <div style={{ padding: 30, textAlign: 'center', background: 'var(--cream)', borderRadius: 20, border: '1px dashed var(--line)' }}>
-                  <p style={{ color: 'var(--muted)', margin: 0 }}>Nenhum material extra cadastrado.</p>
-                </div>
+                <>
+                  <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 20, fontWeight: 800 }}>Materiais da Aula</h3>
+                  <div style={{ padding: 30, textAlign: 'center', background: 'var(--cream)', borderRadius: 20, border: '1px dashed var(--line)' }}>
+                    <p style={{ color: 'var(--muted)', margin: 0 }}>Nenhum material extra cadastrado.</p>
+                  </div>
+                </>
               ) : (
-                <div style={{ display: 'grid', gap: 14 }}>
-                  {selectedWeek.links.map((link, i) => (
-                    <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: 'var(--cream)', borderRadius: 20, textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--line)', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-                        <div style={{ width: 44, height: 44, background: 'var(--paper)', borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: '1.2rem' }}>🔗</div>
-                        <div><span style={{ fontWeight: 'bold', fontSize: '1.05rem', display: 'block' }}>{link.title}</span></div>
+                <div style={{ display: 'grid', gap: 24 }}>
+                  {selectedWeek.links.filter(l => l.type === 'recording').length > 0 && (
+                    <div>
+                      <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 }}>Gravações da Aula</h3>
+                      <div style={{ display: 'grid', gap: 14 }}>
+                        {selectedWeek.links.filter(l => l.type === 'recording').map((link, i) => (
+                          <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: 'var(--cream)', borderRadius: 20, textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--line)', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+                              <div style={{ width: 44, height: 44, background: 'var(--paper)', borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: '1.2rem', color: 'var(--plum)' }}>▶️</div>
+                              <div><span style={{ fontWeight: 'bold', fontSize: '1.05rem', display: 'block' }}>{link.title}</span></div>
+                            </div>
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--plum)', color: '#fff', display: 'grid', placeItems: 'center' }}>→</div>
+                          </a>
+                        ))}
                       </div>
-                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--plum)', color: '#fff', display: 'grid', placeItems: 'center' }}>→</div>
-                    </a>
-                  ))}
+                    </div>
+                  )}
+
+                  {selectedWeek.links.filter(l => l.type !== 'recording').length > 0 && (
+                    <div>
+                      <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 }}>Materiais Extras</h3>
+                      <div style={{ display: 'grid', gap: 14 }}>
+                        {selectedWeek.links.filter(l => l.type !== 'recording').map((link, i) => (
+                          <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: 'var(--cream)', borderRadius: 20, textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--line)', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+                              <div style={{ width: 44, height: 44, background: 'var(--paper)', borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: '1.2rem' }}>🔗</div>
+                              <div><span style={{ fontWeight: 'bold', fontSize: '1.05rem', display: 'block' }}>{link.title}</span></div>
+                            </div>
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--plum)', color: '#fff', display: 'grid', placeItems: 'center' }}>→</div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
