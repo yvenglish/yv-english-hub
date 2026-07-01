@@ -25,6 +25,16 @@ export default function StudentHub() {
   // Notification State
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
 
+  // Video Modal State
+  const [activeVideoUrl, setActiveVideoUrl] = useState(null);
+
+  const formatDriveUrl = (url) => {
+    if (url.includes('drive.google.com') && url.includes('/view')) {
+      return url.replace('/view', '/preview').split('?')[0];
+    }
+    return url;
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchWeeks();
@@ -440,13 +450,13 @@ export default function StudentHub() {
                       <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 }}>Gravações da Aula</h3>
                       <div style={{ display: 'grid', gap: 14 }}>
                         {selectedWeek.links.filter(l => l.type === 'recording').map((link, i) => (
-                          <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: 'var(--cream)', borderRadius: 20, textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--line)', alignItems: 'center' }}>
+                          <div key={i} onClick={() => setActiveVideoUrl(formatDriveUrl(link.url))} style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: 'var(--cream)', borderRadius: 20, color: 'var(--text)', border: '1px solid var(--line)', alignItems: 'center', cursor: 'pointer' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
                               <div style={{ width: 44, height: 44, background: 'var(--paper)', borderRadius: 12, display: 'grid', placeItems: 'center', fontSize: '1.2rem', color: 'var(--plum)' }}>▶️</div>
                               <div><span style={{ fontWeight: 'bold', fontSize: '1.05rem', display: 'block' }}>{link.title}</span></div>
                             </div>
-                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--plum)', color: '#fff', display: 'grid', placeItems: 'center' }}>→</div>
-                          </a>
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--plum)', color: '#fff', display: 'grid', placeItems: 'center' }}>▶</div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -470,6 +480,23 @@ export default function StudentHub() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Modal */}
+      {activeVideoUrl && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20, backdropFilter: 'blur(5px)' }}>
+          <div style={{ background: '#000', width: '100%', maxWidth: 900, borderRadius: 16, overflow: 'hidden', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+            <button onClick={() => setActiveVideoUrl(null)} style={{ position: 'absolute', top: 15, right: 15, background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', width: 40, height: 40, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold', zIndex: 10 }}>✕</button>
+            <div style={{ padding: '56.25% 0 0 0', position: 'relative' }}>
+              <iframe 
+                src={activeVideoUrl} 
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} 
+                allow="autoplay; fullscreen" 
+                title="Gravação da Aula"
+              ></iframe>
             </div>
           </div>
         </div>
