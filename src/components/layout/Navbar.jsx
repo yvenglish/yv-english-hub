@@ -94,7 +94,8 @@ export default function Navbar() {
               display: 'flex',
               alignItems: 'center',
               position: 'relative',
-              height: '100%'
+              height: '100%',
+              whiteSpace: 'nowrap'
             })}
           >
             {({ isActive }) => (
@@ -123,6 +124,7 @@ export default function Navbar() {
               display: 'flex',
               alignItems: 'center',
               height: '100%',
+              whiteSpace: 'nowrap',
               opacity: 0.8
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = 1}
@@ -141,7 +143,8 @@ export default function Navbar() {
               display: 'flex',
               alignItems: 'center',
               position: 'relative',
-              height: '100%'
+              height: '100%',
+              whiteSpace: 'nowrap'
             })}
           >
             {({ isActive }) => (
@@ -165,7 +168,8 @@ export default function Navbar() {
               alignItems: 'center',
               gap: 8,
               position: 'relative',
-              height: '100%'
+              height: '100%',
+              whiteSpace: 'nowrap'
             })}
           >
             {({ isActive }) => (
