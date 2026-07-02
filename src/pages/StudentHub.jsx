@@ -323,8 +323,8 @@ export default function StudentHub() {
 
       {showDailyModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.6)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20, animation: 'fadeIn 0.3s ease-out' }}>
-          <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 800, borderRadius: 32, overflow: 'hidden', position: 'relative', border: '1px solid var(--line)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <div style={{ padding: '30px 30px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)' }}>
+          <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 800, borderRadius: 32, overflow: 'hidden', position: 'relative', border: '1px solid var(--line)', maxHeight: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ padding: '30px 30px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
               <div>
                 <span style={{ fontSize: '0.7rem', background: 'rgba(200, 136, 58, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--amber)', fontWeight: 'bold', textTransform: 'uppercase' }}>YV DAILY EXERCISE</span>
                 <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '1.8rem', color: 'var(--plum)', margin: '10px 0 0' }}>Daily Content</h2>
@@ -332,7 +332,7 @@ export default function StudentHub() {
               <button onClick={() => setShowDailyModal(false)} style={{ background: 'var(--cream)', border: '1px solid var(--line)', color: 'var(--text)', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold' }}>✕</button>
             </div>
 
-            <div style={{ padding: '30px', overflowY: 'auto', flex: 1, background: 'var(--paper)' }}>
+            <div style={{ padding: '30px', overflowY: 'auto', flex: 1, background: 'var(--paper)', WebkitOverflowScrolling: 'touch' }}>
               {!dailyAssignment || !dailyContentDetails ? (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
                   <span style={{ fontSize: '3rem', display: 'block', margin: '0 auto 15px' }}>✨</span>
@@ -426,8 +426,8 @@ export default function StudentHub() {
 
       {selectedWeek && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.6)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20, animation: 'fadeIn 0.3s ease-out' }}>
-          <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 650, borderRadius: 32, overflow: 'hidden', position: 'relative', border: '1px solid var(--line)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <div style={{ background: 'radial-gradient(ellipse at 100% 0%,rgba(200,136,58,.15),transparent 50%),linear-gradient(140deg,var(--plum),var(--plum-mid))', padding: '40px 30px', position: 'relative' }}>
+          <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 650, borderRadius: 32, overflow: 'hidden', position: 'relative', border: '1px solid var(--line)', maxHeight: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ background: 'radial-gradient(ellipse at 100% 0%,rgba(200,136,58,.15),transparent 50%),linear-gradient(140deg,var(--plum),var(--plum-mid))', padding: '40px 30px', position: 'relative', flexShrink: 0 }}>
               <button onClick={() => {
                 setSelectedWeek(null);
                 navigate(location.pathname, { replace: true, state: {} });
@@ -435,7 +435,7 @@ export default function StudentHub() {
               <h2 style={{ margin: '0 0 10px', fontSize: '2.4rem', color: '#fff', fontFamily: '"Playfair Display", serif' }}>{selectedWeek.title}</h2>
               <p style={{ color: 'rgba(255,255,255,0.85)', margin: 0, fontSize: '1rem', maxWidth: '90%', lineHeight: 1.5 }}>{selectedWeek.description}</p>
             </div>
-            <div style={{ padding: '30px', overflowY: 'auto', flex: 1, background: 'var(--paper)' }}>
+            <div style={{ padding: '30px', overflowY: 'auto', flex: 1, background: 'var(--paper)', WebkitOverflowScrolling: 'touch' }}>
               {(!selectedWeek.links || selectedWeek.links.length === 0) ? (
                 <>
                   <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 20, fontWeight: 800 }}>Materiais da Aula</h3>
