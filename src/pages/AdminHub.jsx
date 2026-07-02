@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, getDocs, query, where, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
-import { items as seedItems } from '../seedDailiesData';
 import LibraryAdminTab from '../components/admin/LibraryAdminTab';
 import './AdminHub.css';
 
@@ -382,36 +381,6 @@ export default function AdminHub() {
     if (!window.confirm("Excluir exercício do banco?")) return;
     await deleteDoc(doc(db, 'daily_bank', id));
     fetchDailyBank();
-  };
-
-  const handleSeedDailies = async () => {
-    if (!window.confirm("Importar os 10 novos dailies para o banco de dados?")) return;
-    setLoading(true);
-    try {
-      let count = 0;
-      for (const item of seedItems) {
-        const payload = {
-          title: item.title,
-          tags: item.tags,
-          learningGoal: item.learningGoal,
-          content: item.content,
-          questions: item.questions.map(q => ({
-            questionText: q.questionText,
-            options: q.options,
-            correctOption: q.correctOption
-          })),
-          createdAt: new Date().toISOString()
-        };
-        await addDoc(collection(db, 'daily_bank'), payload);
-        count++;
-      }
-      alert(`Feito! ${count} dailies importados com sucesso.`);
-      fetchDailyBank();
-    } catch (err) {
-      alert("Erro ao importar.");
-      console.error(err);
-    }
-    setLoading(false);
   };
 
   // Schedule Functions
@@ -854,7 +823,6 @@ export default function AdminHub() {
                 <button onClick={() => setDailySubTab('bank')} style={{ padding: '8px 16px', background: dailySubTab === 'bank' ? 'var(--plum)' : 'transparent', color: dailySubTab === 'bank' ? '#fff' : 'var(--text)', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Banco Global</button>
                 <button onClick={() => setDailySubTab('schedule')} style={{ padding: '8px 16px', background: dailySubTab === 'schedule' ? 'var(--plum)' : 'transparent', color: dailySubTab === 'schedule' ? '#fff' : 'var(--text)', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Agendar</button>
               </div>
-              <button onClick={handleSeedDailies} style={{ padding: '8px 16px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 999, cursor: 'pointer', fontWeight: 'bold' }}>Importar Textos Novos (Script)</button>
             </div>
 
             {dailySubTab === 'bank' && (
@@ -867,7 +835,7 @@ export default function AdminHub() {
                       <input type="text" value={dailyTags} onChange={e => setDailyTags(e.target.value)} placeholder="Tags (ex: to be, past)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                     </div>
                     <input type="text" value={dailyLearningGoal} onChange={e => setDailyLearningGoal(e.target.value)} placeholder="Learning Goal (ex: Talk about coworkers) - Visível só para admin" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
-                    <textarea value={dailyContent} onChange={e => setDailyContent(e.target.value)} rows="4" placeholder="Texto base da lição..." style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}></textarea>
+                    <textarea value={dailyContent} onChange={e => setDailyContent(e.target.value)} rows="12" placeholder="Texto base da lição..." style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}></textarea>
 
                     <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 15, background: 'var(--paper)' }}>
                       <h4 style={{ margin: '0 0 15px', color: 'var(--plum)' }}>Perguntas Múltipla Escolha ({dailyQuestions.length})</h4>
