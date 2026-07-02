@@ -80,6 +80,51 @@ export default function MatchMode({ deck, onFinish }) {
 
   return (
     <div style={{ width: 'min(100%, 700px)', margin: '0 auto' }}>
+      <style>{`
+        .match-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 15px;
+        }
+        .match-card {
+          padding: 20px 10px;
+          border-radius: 16px;
+          min-height: 120px;
+          font-size: 1.05rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          text-align: center;
+          word-break: break-word;
+          line-height: 1.2;
+        }
+        .match-card img {
+          width: 40px;
+          height: 40px;
+          object-fit: cover;
+          border-radius: 8px;
+          margin-bottom: 10px;
+        }
+        @media (max-width: 600px) {
+          .match-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+          }
+          .match-card {
+            padding: 10px 5px;
+            border-radius: 12px;
+            min-height: 80px;
+            font-size: 0.85rem;
+          }
+          .match-card img {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 5px;
+          }
+        }
+      `}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
         <span>Combinar Cartões</span>
         <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
@@ -88,7 +133,7 @@ export default function MatchMode({ deck, onFinish }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 15 }}>
+      <div className="match-grid">
         {cards.map((card, idx) => {
           const isMatched = matchedIds.includes(card.id);
           const isSelected = selectedOne?.index === idx;
@@ -114,19 +159,18 @@ export default function MatchMode({ deck, onFinish }) {
           return (
             <button
               key={idx}
+              className="match-card"
               onClick={() => handleCardClick(card, idx)}
               disabled={isMatched}
               style={{
                 background: bgColor, border: `2px solid ${borderColor}`, color: textColor,
-                padding: '20px 10px', borderRadius: 16, cursor: isMatched ? 'default' : 'pointer',
-                fontWeight: 'bold', fontSize: '1.05rem', minHeight: 120,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                cursor: isMatched ? 'default' : 'pointer',
                 transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                 opacity, transform, boxShadow: isSelected ? '0 10px 20px rgba(0,0,0,0.1)' : 'none'
               }}
             >
               {card.img && card.type === 'term' && (
-                <img src={card.img} alt="" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} />
+                <img src={card.img} alt="" />
               )}
               {card.text}
             </button>
