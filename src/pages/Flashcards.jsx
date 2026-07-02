@@ -38,18 +38,19 @@ export default function Flashcards() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Global Words
-      const wordsSnap = await getDocs(collection(db, 'vocabulary_global'));
+      const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', currentUser.uid));
+      
+      const [wordsSnap, decksSnap, assignSnap, dueFlashcards] = await Promise.all([
+        getDocs(collection(db, 'vocabulary_global')),
+        getDocs(collection(db, 'decks')),
+        getDocs(q),
+        getDueFlashcards()
+      ]);
+
       const allWords = wordsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       setGlobalWords(allWords);
 
-      // 2. Fetch Decks
-      const decksSnap = await getDocs(collection(db, 'decks'));
       const allDecks = decksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      // 3. Fetch Assignments for this student
-      const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', currentUser.uid));
-      const assignSnap = await getDocs(q);
       const assignments = assignSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       // 4. Assemble student's decks
@@ -87,7 +88,6 @@ export default function Flashcards() {
       }
 
       // 5. Fetch Daily Review (Spaced Repetition)
-      const dueFlashcards = await getDueFlashcards();
       if (dueFlashcards.length > 0) {
         const dueWords = dueFlashcards.map(df => allWords.find(w => w.id === df.wordId)).filter(Boolean);
         if (dueWords.length > 0) {
