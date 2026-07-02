@@ -7,7 +7,7 @@ import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc } fro
 import { requestNotificationPermission } from '../services/notificationService';
 
 export default function StudentHub() {
-  const { currentUser, userData, logout } = useAuth();
+  const { currentUser, userData, logout, recordStudy } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -192,6 +192,10 @@ export default function StudentHub() {
          });
          updateData.score = correctCount;
          updateData.totalQuestions = questionsList.length;
+
+         if (recordStudy) {
+           await recordStudy(7); // Conta como meta diária do streak
+         }
       }
       
       await updateDoc(doc(db, 'daily_assignments', dailyAssignment.id), updateData);
