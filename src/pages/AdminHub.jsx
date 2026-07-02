@@ -40,6 +40,7 @@ export default function AdminHub() {
   const [editingBankItem, setEditingBankItem] = useState(null);
   const [dailyTitle, setDailyTitle] = useState('');
   const [dailyTags, setDailyTags] = useState('');
+  const [dailyLearningGoal, setDailyLearningGoal] = useState('');
   const [dailyContent, setDailyContent] = useState('');
   const [dailyQuestions, setDailyQuestions] = useState([
     { question: '', optA: '', optB: '', optC: '', optD: '', correct: 'A' }
@@ -301,6 +302,7 @@ export default function AdminHub() {
     setEditingBankItem(item);
     setDailyTitle(item.title || '');
     setDailyTags(item.tags || '');
+    setDailyLearningGoal(item.learningGoal || '');
     setDailyContent(item.content || '');
     
     // Migration logic for old items
@@ -330,7 +332,7 @@ export default function AdminHub() {
 
   const cancelEditBankItem = () => {
     setEditingBankItem(null);
-    setDailyTitle(''); setDailyTags(''); setDailyContent('');
+    setDailyTitle(''); setDailyTags(''); setDailyLearningGoal(''); setDailyContent('');
     setDailyQuestions([{ question: '', optA: '', optB: '', optC: '', optD: '', correct: 'A' }]);
   };
 
@@ -354,6 +356,7 @@ export default function AdminHub() {
       const payload = {
         title: dailyTitle,
         tags: dailyTags,
+        learningGoal: dailyLearningGoal,
         content: dailyContent,
         questions: dailyQuestions.map(q => ({
           questionText: q.question,
@@ -831,6 +834,7 @@ export default function AdminHub() {
                       <input type="text" value={dailyTitle} onChange={e => setDailyTitle(e.target.value)} placeholder="Título" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                       <input type="text" value={dailyTags} onChange={e => setDailyTags(e.target.value)} placeholder="Tags (ex: to be, past)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                     </div>
+                    <input type="text" value={dailyLearningGoal} onChange={e => setDailyLearningGoal(e.target.value)} placeholder="Learning Goal (ex: Talk about coworkers) - Visível só para admin" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                     <textarea value={dailyContent} onChange={e => setDailyContent(e.target.value)} rows="4" placeholder="Texto base da lição..." style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}></textarea>
 
                     <div style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 15, background: 'var(--paper)' }}>
@@ -869,14 +873,15 @@ export default function AdminHub() {
                 </div>
 
                 <div style={{ display: 'grid', gap: 14 }}>
-                  <input type="text" placeholder="Buscar no banco (título ou tag)..." value={dailySearch} onChange={e => setDailySearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
-                  {bankItems.filter(item => (item.title || '').toLowerCase().includes(dailySearch.toLowerCase()) || (item.tags || '').toLowerCase().includes(dailySearch.toLowerCase())).map(item => (
+                  <input type="text" placeholder="Buscar no banco (título, tag ou objetivo)..." value={dailySearch} onChange={e => setDailySearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
+                  {bankItems.filter(item => (item.title || '').toLowerCase().includes(dailySearch.toLowerCase()) || (item.tags || '').toLowerCase().includes(dailySearch.toLowerCase()) || (item.learningGoal || '').toLowerCase().includes(dailySearch.toLowerCase())).map(item => (
                     <div key={item.id} style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <div>
                           <span style={{ fontSize: '0.7rem', background: 'rgba(200, 136, 58, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--amber)', fontWeight: 'bold' }}>{item.tags}</span>
-                          <h3 style={{ margin: '8px 0' }}>{item.title}</h3>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{item.questions ? item.questions.length : 1} pergunta(s)</p>
+                          <h3 style={{ margin: '8px 0 4px' }}>{item.title}</h3>
+                          {item.learningGoal && <p style={{ fontSize: '0.85rem', color: 'var(--plum)', margin: '0 0 8px', fontWeight: 'bold' }}>🎯 {item.learningGoal}</p>}
+                          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>{item.questions ? item.questions.length : 1} pergunta(s)</p>
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button onClick={() => startEditBankItem(item)} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
