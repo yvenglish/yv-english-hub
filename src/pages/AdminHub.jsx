@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
-import { collection, getDocs, query, where, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { items as seedItems } from '../seedDailiesData';
 import LibraryAdminTab from '../components/admin/LibraryAdminTab';
 import './AdminHub.css';
 
@@ -381,6 +382,36 @@ export default function AdminHub() {
     if (!window.confirm("Excluir exercício do banco?")) return;
     await deleteDoc(doc(db, 'daily_bank', id));
     fetchDailyBank();
+  };
+
+  const handleSeedDailies = async () => {
+    if (!window.confirm("Importar os 10 novos dailies para o banco de dados?")) return;
+    setLoading(true);
+    try {
+      let count = 0;
+      for (const item of seedItems) {
+        const payload = {
+          title: item.title,
+          tags: item.tags,
+          learningGoal: item.learningGoal,
+          content: item.content,
+          questions: item.questions.map(q => ({
+            questionText: q.questionText,
+            options: q.options,
+            correctOption: q.correctOption
+          })),
+          createdAt: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'daily_bank'), payload);
+        count++;
+      }
+      alert(`Feito! ${count} dailies importados com sucesso.`);
+      fetchDailyBank();
+    } catch (err) {
+      alert("Erro ao importar.");
+      console.error(err);
+    }
+    setLoading(false);
   };
 
   // Schedule Functions
@@ -823,6 +854,7 @@ export default function AdminHub() {
                 <button onClick={() => setDailySubTab('bank')} style={{ padding: '8px 16px', background: dailySubTab === 'bank' ? 'var(--plum)' : 'transparent', color: dailySubTab === 'bank' ? '#fff' : 'var(--text)', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Banco Global</button>
                 <button onClick={() => setDailySubTab('schedule')} style={{ padding: '8px 16px', background: dailySubTab === 'schedule' ? 'var(--plum)' : 'transparent', color: dailySubTab === 'schedule' ? '#fff' : 'var(--text)', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Agendar</button>
               </div>
+              <button onClick={handleSeedDailies} style={{ padding: '8px 16px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 999, cursor: 'pointer', fontWeight: 'bold' }}>Importar Textos Novos (Script)</button>
             </div>
 
             {dailySubTab === 'bank' && (
