@@ -45,6 +45,8 @@ export default function AdminHub() {
   const [dailyQuestions, setDailyQuestions] = useState([
     { question: '', optA: '', optB: '', optC: '', optD: '', correct: 'A' }
   ]);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [conflictData, setConflictData] = useState(null);
 
   // Vocabulary State
   const [vocabSubTab, setVocabSubTab] = useState('words'); // 'words', 'decks', 'assign'
@@ -384,6 +386,29 @@ export default function AdminHub() {
   };
 
   // Schedule Functions
+  const executeSchedule = async (studentsList, contentId, date) => {
+    setLoading(true);
+    try {
+      for (const studentId of studentsList) {
+        const payload = {
+          studentId,
+          contentId,
+          scheduledDate: date,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'daily_assignments'), payload);
+      }
+      
+      alert(`Foram criados ${studentsList.length} agendamentos com sucesso!`);
+      setScheduleDate(''); setScheduleContentId('');
+      if (studentsList.length === 1) fetchAssignments();
+      fetchGlobalAssignments();
+    } catch (err) { console.error(err); }
+    setLoading(false);
+    setConflictModalOpen(false);
+  };
+
   const handleScheduleAssignment = async () => {
     if (scheduleStudents.length === 0 || !scheduleDate || !scheduleContentId) return alert("Preencha tudo!");
     
@@ -397,33 +422,12 @@ export default function AdminHub() {
     }
 
     if (conflicts.length > 0) {
-      const msg = `Os seguintes alunos já possuem um Daily agendado para o dia ${scheduleDate.split('-').reverse().join('/')}:\n\n- ` + 
-                  conflicts.join('\n- ') + 
-                  `\n\nDeseja agendar MAIS UM exercício para eles neste mesmo dia?`;
-      if (!window.confirm(msg)) {
-        return;
-      }
+      setConflictData({ conflicts, scheduleStudents, scheduleContentId, scheduleDate });
+      setConflictModalOpen(true);
+      return;
     }
 
-    setLoading(true);
-    try {
-      for (const studentId of scheduleStudents) {
-        const payload = {
-          studentId,
-          contentId: scheduleContentId,
-          scheduledDate: scheduleDate,
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        };
-        await addDoc(collection(db, 'daily_assignments'), payload);
-      }
-      
-      alert(`Foram criados ${scheduleStudents.length} agendamentos com sucesso!`);
-      setScheduleDate(''); setScheduleContentId('');
-      if (scheduleStudents.length === 1) fetchAssignments();
-      fetchGlobalAssignments();
-    } catch (err) { console.error(err); }
-    setLoading(false);
+    executeSchedule(scheduleStudents, scheduleContentId, scheduleDate);
   };
 
   const handleDeleteAssignment = async (id) => {
@@ -931,7 +935,7 @@ export default function AdminHub() {
                 {scheduleStudents.length > 0 && (
                   <>
                     <div className="admin-flex-row" style={{ padding: 20, border: '1px dashed var(--plum)', borderRadius: 16, marginBottom: 30 }}>
-                      <div style={{ flex: 1 }}><label>Data</label><input type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} /></div>
+                      <div style={{ flex: 1 }}><label>Data</label><input id="scheduleDateInput" type="date" value={scheduleDate} onChange={e => setScheduleDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} /></div>
                       <div style={{ flex: 2 }}><label>Conteúdo</label><select value={scheduleContentId} onChange={e => setScheduleContentId(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}><option value="">Selecione...</option>{bankItems.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}</select></div>
                       <button disabled={loading} onClick={handleScheduleAssignment} style={{ padding: '10px 20px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', height: 40 }}>Agendar</button>
                     </div>
@@ -1284,6 +1288,37 @@ export default function AdminHub() {
 
         {activeTab === 'library' && <LibraryAdminTab setLoading={setLoading} />}
       </main>
+
+      {/* Daily Conflict Modal */}
+      {conflictModalOpen && conflictData && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--paper)', width: '90%', maxWidth: 500, padding: 30, borderRadius: 20 }}>
+            <h3 style={{ margin: '0 0 15px', color: 'var(--plum)' }}>⚠️ Conflito de Agendamento</h3>
+            <p style={{ margin: '0 0 15px', color: 'var(--text)' }}>
+              Os seguintes alunos já possuem um Daily agendado para o dia <strong>{conflictData.scheduleDate.split('-').reverse().join('/')}</strong>:
+            </p>
+            <ul style={{ margin: '0 0 25px 20px', color: 'var(--muted)' }}>
+              {conflictData.conflicts.map(c => <li key={c}>{c}</li>)}
+            </ul>
+            <p style={{ margin: '0 0 25px', fontWeight: 'bold' }}>O que você deseja fazer?</p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button onClick={() => executeSchedule(conflictData.scheduleStudents, conflictData.scheduleContentId, conflictData.scheduleDate)} style={{ padding: '14px 20px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer' }}>
+                Sim, agendar MAIS UM para o mesmo dia
+              </button>
+              <button onClick={() => {
+                 setConflictModalOpen(false);
+                 document.getElementById('scheduleDateInput')?.focus();
+              }} style={{ padding: '14px 20px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer' }}>
+                Agendar em outra data
+              </button>
+              <button onClick={() => setConflictModalOpen(false)} style={{ padding: '14px 20px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer' }}>
+                Cancelar agendamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
