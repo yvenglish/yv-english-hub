@@ -124,7 +124,7 @@ export default function Library() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
           {filteredEpisodes.sort((a, b) => {
-            const priority = ["bad habits", "rapunzel", "23 verbos", "introduc", "dua lipa", "communication", "toy story 5"];
+            const priority = ["bad habits", "rapunzel", "introduc", "dua lipa", "communication", "toy story 5", "23 verbos"];
             const aTitle = (a.title || '').toLowerCase();
             const bTitle = (b.title || '').toLowerCase();
             let aIdx = priority.findIndex(p => aTitle.includes(p));
