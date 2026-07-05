@@ -123,7 +123,16 @@ export default function Library() {
         <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>Nenhum conteúdo encontrado.</div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-          {filteredEpisodes.map(ep => {
+          {filteredEpisodes.sort((a, b) => {
+            const priority = ["bad habits", "rapunzel", "dua lipa", "introduc", "toy story 5", "communication"];
+            const aTitle = (a.title || '').toLowerCase();
+            const bTitle = (b.title || '').toLowerCase();
+            let aIdx = priority.findIndex(p => aTitle.includes(p));
+            let bIdx = priority.findIndex(p => bTitle.includes(p));
+            if (aIdx === -1) aIdx = 999;
+            if (bIdx === -1) bIdx = 999;
+            return aIdx - bIdx;
+          }).map(ep => {
             const isFav = favorites.includes(ep.id);
             const isDone = completed.includes(ep.id);
             
