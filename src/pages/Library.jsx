@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { LEVELS } from '../data/libraryData';
 import { db } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -46,16 +46,27 @@ export default function Library() {
 
   const handleFilter = (f) => setFilter(f);
 
-  const filteredEpisodes = episodes.filter(ep => {
-    // Search
-    if (search && !ep.title.toLowerCase().includes(search.toLowerCase())) return false;
-    
-    // Tabs
-    if (filter === 'all') return true;
-    if (filter === 'favorites') return favorites.includes(ep.id);
-    if (filter === 'grammar') return ep.type === 'Grammar' || ep.tags?.includes('Grammar');
-    return ep.level === filter;
-  });
+  const filteredEpisodes = useMemo(() => {
+    let result = episodes.filter(ep => {
+      // Search
+      if (search && !ep.title.toLowerCase().includes(search.toLowerCase())) return false;
+      
+      // Tabs
+      if (filter === 'all') return true;
+      if (filter === 'favorites') return favorites.includes(ep.id);
+      if (filter === 'grammar') return ep.type === 'Grammar' || ep.tags?.includes('Grammar');
+      return ep.level === filter;
+    });
+
+    const priority = ["bad habits", "rapunzel", "introduc", "dua lipa", "communication", "toy story 5", "23 verbos"];
+    result = result.map(ep => {
+      const title = (ep.title || '').toLowerCase();
+      let idx = priority.findIndex(p => title.includes(p));
+      return { ...ep, _priorityIdx: idx === -1 ? 999 : idx };
+    });
+
+    return result.sort((a, b) => a._priorityIdx - b._priorityIdx);
+  }, [episodes, search, filter, favorites]);
 
   if (selectedEpisode) {
     return (
@@ -123,16 +134,7 @@ export default function Library() {
         <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>Nenhum conteúdo encontrado.</div>
       ) : (
         <div className="episode-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-          {filteredEpisodes.sort((a, b) => {
-            const priority = ["bad habits", "rapunzel", "introduc", "dua lipa", "communication", "toy story 5", "23 verbos"];
-            const aTitle = (a.title || '').toLowerCase();
-            const bTitle = (b.title || '').toLowerCase();
-            let aIdx = priority.findIndex(p => aTitle.includes(p));
-            let bIdx = priority.findIndex(p => bTitle.includes(p));
-            if (aIdx === -1) aIdx = 999;
-            if (bIdx === -1) bIdx = 999;
-            return aIdx - bIdx;
-          }).map(ep => {
+          {filteredEpisodes.map(ep => {
             const isFav = favorites.includes(ep.id);
             const isDone = completed.includes(ep.id);
             

@@ -32,6 +32,11 @@ export default defineConfig({
       devOptions: {
         enabled: true,
         type: 'module'
+      },
+      workbox: {
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true
       }
     })
   ],
