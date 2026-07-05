@@ -135,18 +135,31 @@ export default function Library() {
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
               >
-                <div style={{ background: 'var(--cream)', padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '0.7rem', background: 'var(--plum)', color: '#fff', padding: '2px 8px', borderRadius: 99, fontWeight: 'bold', textTransform: 'uppercase' }}>
+                {/* Imagem (16:9) com Overlay */}
+                <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#333' }}>
+                  {ep.imageUrl ? (
+                    <img src={ep.imageUrl} alt={ep.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>YV</div>
+                  )}
+                  
+                  {/* Gradiente */}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.8))' }}></div>
+                  
+                  {/* Badges Absolute */}
+                  <span style={{ position: 'absolute', top: 12, left: 12, fontSize: '0.7rem', background: 'var(--plum)', color: '#fff', padding: '2px 8px', borderRadius: 99, fontWeight: 'bold', textTransform: 'uppercase', zIndex: 2 }}>
                     {ep.level}
                   </span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {isFav && <span>❤️</span>}
-                    {isDone && <span>✅</span>}
+                  
+                  <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8, zIndex: 2, background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: 99 }}>
+                    {isFav && <span style={{ fontSize: '0.9rem' }}>❤️</span>}
+                    {isDone && <span style={{ fontSize: '0.9rem' }}>✅</span>}
                   </div>
                 </div>
+
                 <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <h3 style={{ margin: '0 0 10px', fontSize: '1.2rem', color: 'var(--text)', lineHeight: 1.3 }}>{ep.title}</h3>
-                  <p style={{ margin: '0 0 15px', color: 'var(--muted)', fontSize: '0.9rem', flex: 1 }}>{ep.summary?.pt || ''}</p>
+                  <p style={{ margin: '0 0 15px', color: 'var(--muted)', fontSize: '0.9rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', flex: 1 }}>{ep.summary?.pt || ''}</p>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 'auto' }}>
                     {(ep.tags || []).slice(0,3).map(tag => (
                       <span key={tag} style={{ fontSize: '0.7rem', background: 'var(--bg)', border: '1px solid var(--line)', padding: '2px 6px', borderRadius: 6, color: 'var(--muted)' }}>

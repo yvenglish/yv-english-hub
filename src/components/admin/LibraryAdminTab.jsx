@@ -15,6 +15,7 @@ export default function LibraryAdminTab({ setLoading }) {
   const [type, setType] = useState('Video');
   const [tags, setTags] = useState('');
   const [externalLink, setExternalLink] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   
   const [hasVideo, setHasVideo] = useState(false);
   const [hasAudio, setHasAudio] = useState(false);
@@ -79,6 +80,7 @@ export default function LibraryAdminTab({ setLoading }) {
       setEmbed(ep.embed || '');
       setVideoFile(ep.videoFile || '');
       setAudioFile(ep.audioFile || '');
+      setImageUrl(ep.imageUrl || '');
       
       setSummaryEn(ep.summary?.en || '');
       setSummaryPt(ep.summary?.pt || '');
@@ -88,7 +90,7 @@ export default function LibraryAdminTab({ setLoading }) {
       setQuestions(ep.questions || []);
     } else {
       setEditingEpisode('new');
-      setTitle(''); setSource(''); setLevel('easy-peasy'); setEstimatedTime(''); setType('Video'); setTags(''); setExternalLink('');
+      setTitle(''); setSource(''); setLevel('easy-peasy'); setEstimatedTime(''); setType('Video'); setTags(''); setExternalLink(''); setImageUrl('');
       setHasVideo(false); setHasAudio(false); setEmbed(''); setVideoFile(''); setAudioFile('');
       setSummaryEn(''); setSummaryPt(''); setTranscript('');
       setVocabulary([]); setQuestions([]);
@@ -105,7 +107,7 @@ export default function LibraryAdminTab({ setLoading }) {
     setLoading(true);
     try {
       const payload = {
-        title, source, level, estimatedTime, type, externalLink,
+        title, source, level, estimatedTime, type, externalLink, imageUrl,
         hasVideo, hasAudio, embed, videoFile, audioFile,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
         summary: { en: summaryEn, pt: summaryPt },
@@ -177,6 +179,7 @@ export default function LibraryAdminTab({ setLoading }) {
             <div style={{ display: 'flex', gap: 15 }}>
               <div style={{ flex: 1 }}><label>Tags (vírgula)</label><input type="text" value={tags} onChange={e=>setTags(e.target.value)} style={inputStyle} /></div>
               <div style={{ flex: 1 }}><label>Link Externo / PDF URL</label><input type="text" value={externalLink} onChange={e=>setExternalLink(e.target.value)} style={inputStyle} /></div>
+              <div style={{ flex: 1 }}><label>Capa (URL da Imagem)</label><input type="text" value={imageUrl} onChange={e=>setImageUrl(e.target.value)} style={inputStyle} /></div>
             </div>
 
             <div style={{ padding: 20, border: '1px solid var(--line)', borderRadius: 12, background: 'var(--cream)' }}>
