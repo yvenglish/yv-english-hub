@@ -43,12 +43,14 @@ export default function StudentHub() {
     return url;
   };
 
+  const initializedRef = useRef(false);
+  
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && userData && !initializedRef.current) {
+      initializedRef.current = true;
       fetchWeeks();
       fetchDailyAssignment();
       
-      // Check if we should show the banner
       if ('Notification' in window && Notification.permission === 'default' && userData?.plan !== 'Foundation') {
          setShowNotificationBanner(true);
       }
