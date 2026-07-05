@@ -386,14 +386,28 @@ export default function AdminHub() {
   // Schedule Functions
   const handleScheduleAssignment = async () => {
     if (scheduleStudents.length === 0 || !scheduleDate || !scheduleContentId) return alert("Preencha tudo!");
+    
+    const conflicts = [];
+    for (const studentId of scheduleStudents) {
+      const existing = globalAssignments.find(a => a.studentId === studentId && a.scheduledDate === scheduleDate);
+      if (existing) {
+        const studentObj = students.find(s => s.id === studentId);
+        conflicts.push(studentObj ? studentObj.name : studentId);
+      }
+    }
+
+    if (conflicts.length > 0) {
+      const msg = `Os seguintes alunos já possuem um Daily agendado para o dia ${scheduleDate.split('-').reverse().join('/')}:\n\n- ` + 
+                  conflicts.join('\n- ') + 
+                  `\n\nDeseja agendar MAIS UM exercício para eles neste mesmo dia?`;
+      if (!window.confirm(msg)) {
+        return;
+      }
+    }
+
     setLoading(true);
     try {
-      let createdCount = 0;
       for (const studentId of scheduleStudents) {
-        // Usa a lista global para validar se o aluno já tem daily nessa data
-        const existing = globalAssignments.find(a => a.studentId === studentId && a.scheduledDate === scheduleDate);
-        if (existing) continue;
-
         const payload = {
           studentId,
           contentId: scheduleContentId,
@@ -402,13 +416,9 @@ export default function AdminHub() {
           createdAt: new Date().toISOString()
         };
         await addDoc(collection(db, 'daily_assignments'), payload);
-        createdCount++;
       }
       
-      if (createdCount < scheduleStudents.length) {
-        alert(`Foram criados ${createdCount} agendamentos. Alguns alunos selecionados já possuíam Daily na data escolhida e foram ignorados.`);
-      }
-
+      alert(`Foram criados ${scheduleStudents.length} agendamentos com sucesso!`);
       setScheduleDate(''); setScheduleContentId('');
       if (scheduleStudents.length === 1) fetchAssignments();
       fetchGlobalAssignments();
