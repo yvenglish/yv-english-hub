@@ -6,6 +6,9 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import EpisodePlayer from '../components/library/EpisodePlayer';
 
+let cachedEpisodesData = null;
+let lastFetchTime = 0;
+
 export default function Library() {
   const { userData, toggleLibraryFavorite, toggleLibraryProgress } = useAuth();
   const location = useLocation();
@@ -19,9 +22,18 @@ export default function Library() {
 
   useEffect(() => {
     const fetchEpisodes = async () => {
+      // Use cache se tiver menos de 5 minutos
+      if (cachedEpisodesData && Date.now() - lastFetchTime < 300000) {
+        setEpisodes(cachedEpisodesData);
+        setLoading(false);
+        return;
+      }
       try {
         const snap = await getDocs(collection(db, 'library_episodes'));
-        setEpisodes(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const eps = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        cachedEpisodesData = eps;
+        lastFetchTime = Date.now();
+        setEpisodes(eps);
       } catch (err) {
         console.error(err);
       }
@@ -149,10 +161,10 @@ export default function Library() {
                 {/* Imagem com Overlay */}
                 <div style={{ position: 'relative', width: '100%', height: 160, background: '#333' }}>
                   {ep.imageUrl ? (
-                    <img src={ep.imageUrl} alt={ep.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={ep.imageUrl} alt={ep.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ width: '100%', height: '100%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <img src="/logocircular.jpeg" alt={ep.title} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      <img src="/logocircular.jpeg" alt={ep.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
                   )}
                   
