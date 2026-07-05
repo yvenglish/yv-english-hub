@@ -28,3 +28,28 @@
     scroll-snap-align: start;
   }
 }
+
+/* Streak Pill Mobile Resize */
+@media (max-width: 768px) {
+  .streak-pill-container {
+    padding: 4px 10px 4px 4px !important;
+    gap: 6px !important;
+  }
+  .streak-pill-svg-wrap {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .streak-pill-svg-wrap svg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .streak-pill-svg-wrap span {
+    font-size: 0.8rem !important;
+  }
+  .streak-pill-text span:first-child {
+    font-size: 0.6rem !important;
+  }
+  .streak-pill-text span:last-child {
+    font-size: 0.75rem !important;
+  }
+}

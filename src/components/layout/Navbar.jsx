@@ -261,15 +261,15 @@ export default function Navbar() {
         </div>
 
         {/* Círculo de Progresso */}
-        <div onClick={() => setShowStreakModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', padding: '6px 16px 6px 6px', borderRadius: 99, border: '1px solid rgba(200, 136, 58, 0.3)', cursor: 'pointer', transition: '0.2s' }} className="hover-scale">
-          <div style={{ position: 'relative', width: 40, height: 40, display: 'grid', placeItems: 'center' }}>
+        <div onClick={() => setShowStreakModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', padding: '6px 16px 6px 6px', borderRadius: 99, border: '1px solid rgba(200, 136, 58, 0.3)', cursor: 'pointer', transition: '0.2s' }} className="hover-scale streak-pill-container">
+          <div className="streak-pill-svg-wrap" style={{ position: 'relative', width: 40, height: 40, display: 'grid', placeItems: 'center' }}>
             <svg viewBox="0 0 36 36" style={{ width: 40, height: 40, transform: 'rotate(-90deg)' }}>
               <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
               <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--amber)" strokeWidth="3" strokeDasharray={`${streakProgress}, 100`} />
             </svg>
             <span style={{ position: 'absolute', fontSize: '1rem' }}>🔥</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="streak-pill-text" style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 800 }}>Streak</span>
             <span style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 'bold' }}>{userData?.currentStreak || 0} dias</span>
           </div>

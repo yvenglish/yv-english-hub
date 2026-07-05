@@ -4,7 +4,15 @@ import App from './App.jsx'
 import './index.css'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { registerSW } from 'virtual:pwa-register'
 
+// Auto update service worker immediately when a new version is detected
+const updateSW = registerSW({
+  onNeedRefresh() {
+    updateSW(true)
+  },
+  onOfflineReady() {}
+})
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
