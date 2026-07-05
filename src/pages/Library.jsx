@@ -122,7 +122,7 @@ export default function Library() {
       ) : filteredEpisodes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>Nenhum conteúdo encontrado.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+        <div className="episode-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
           {filteredEpisodes.sort((a, b) => {
             const priority = ["bad habits", "rapunzel", "introduc", "dua lipa", "communication", "toy story 5", "23 verbos"];
             const aTitle = (a.title || '').toLowerCase();

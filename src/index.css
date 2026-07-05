@@ -10,3 +10,21 @@
 @media (max-width: 768px) { .navbar { padding: 0 20px; } .nav-links { display: none; } .hamburger { display: block; margin-left: 10px; } .nav-actions-container { gap: 10px; } .search-input { width: 140px !important; } .mobile-menu.open { display: flex; flex-direction: column; position: absolute; top: 80px; left: 0; right: 0; background: #0d071a; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); gap: 20px; z-index: 999; box-shadow: 0 10px 20px rgba(0,0,0,0.5); } .mobile-menu.open a { color: white; text-decoration: none; font-size: 1.1rem; font-weight: 500; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); } }
 
 @media (max-width: 768px) { .hide-on-mobile { display: none !important; } }
+
+/* Carousel Mobile Library */
+@media (max-width: 768px) {
+  .episode-grid {
+    display: flex !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 20px;
+    grid-template-columns: none !important;
+  }
+  .episode-grid::-webkit-scrollbar {
+    display: none;
+  }
+  .episode-grid > div {
+    flex: 0 0 280px;
+    scroll-snap-align: start;
+  }
+}
