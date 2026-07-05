@@ -35,6 +35,7 @@ export default function StudentHub() {
 
   // Video Modal State
   const [activeVideoUrl, setActiveVideoUrl] = useState(null);
+  const [streakGoalAchieved, setStreakGoalAchieved] = useState(false);
 
   const formatDriveUrl = (url) => {
     if (url.includes('drive.google.com') && url.includes('/view')) {
@@ -215,6 +216,7 @@ export default function StudentHub() {
          if (recordStudy) {
            const result = await recordStudy(7); // Conta como meta diária do streak
            isGoalReached = result?.goalJustReached || false;
+           if (result?.streakGoalCompleted) setStreakGoalAchieved(true);
          }
          
          if (isGoalReached) {
@@ -550,12 +552,18 @@ export default function StudentHub() {
       {showGoalModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 450, borderRadius: 28, overflow: 'hidden', position: 'relative', border: '1px solid #FF5A1E', textAlign: 'center', padding: '50px 40px', boxShadow: '0 20px 60px rgba(255, 90, 30, 0.2)' }}>
-            <span style={{ fontSize: '5rem', display: 'block', margin: '0 auto 15px', animation: 'bounce 1s infinite' }}>🔥</span>
-            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: '#FF5A1E', marginBottom: 15, lineHeight: 1.1 }}>Meta Atingida!</h2>
-            <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: 10 }}>Parabéns! Você completou o Daily Content de hoje e aumentou sua ofensiva.</p>
+            <span style={{ fontSize: '5rem', display: 'block', margin: '0 auto 15px', animation: 'bounce 1s infinite' }}>{streakGoalAchieved ? '🏆' : '🔥'}</span>
+            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: '#FF5A1E', marginBottom: 15, lineHeight: 1.1 }}>
+              {streakGoalAchieved ? 'Objetivo Concluído!' : 'Meta Atingida!'}
+            </h2>
+            <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: 10 }}>
+              {streakGoalAchieved 
+                ? `Incrível! Você completou sua meta de ${userData?.streakGoal || 3} dias seguidos de estudo.`
+                : 'Parabéns! Você completou o Daily Content de hoje e aumentou sua ofensiva.'}
+            </p>
             <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: 30 }}>Você está em um streak de <strong>{userData?.currentStreak || 0} dias</strong>. Continue assim!</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button onClick={() => setShowGoalModal(false)} style={{ padding: '16px 28px', background: '#FF5A1E', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1.1rem', width: '100%', cursor: 'pointer', transition: '0.2s' }}>Fechar</button>
+              <button onClick={() => { setShowGoalModal(false); setStreakGoalAchieved(false); }} style={{ padding: '16px 28px', background: '#FF5A1E', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1.1rem', width: '100%', cursor: 'pointer', transition: '0.2s' }}>Fechar</button>
             </div>
           </div>
         </div>
