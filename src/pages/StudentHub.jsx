@@ -22,6 +22,12 @@ export default function StudentHub() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [hasNextPending, setHasNextPending] = useState(false);
+
+  const dailyAssignmentRef = useRef();
+  useEffect(() => {
+    dailyAssignmentRef.current = dailyAssignment;
+  }, [dailyAssignment]);
   const [dailyLoading, setDailyLoading] = useState(false);
   
   // Notification State
@@ -79,7 +85,7 @@ export default function StudentHub() {
     } catch (err) { console.error(err); }
   };
 
-  const fetchDailyAssignment = async () => {
+  const fetchDailyAssignment = async (forceNext = false) => {
     try {
       const planName = userData?.plan || 'Foundation';
       const q = query(collection(db, 'daily_assignments'), where('studentId', '==', currentUser.uid));
@@ -90,7 +96,15 @@ export default function StudentHub() {
       const valid = assignments.filter(a => a.scheduledDate <= today);
       valid.sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
 
-      const pending = valid.find(a => a.status === 'pending');
+      const pendingList = valid.filter(a => a.status === 'pending');
+      const pending = pendingList.length > 0 ? pendingList[0] : null;
+
+      const currentAssig = dailyAssignmentRef.current;
+      if (!forceNext && currentAssig && currentAssig.status === 'completed') {
+         setHasNextPending(pendingList.length > 0);
+         return;
+      }
+      
       let targetAssignment = null;
       
       if (pending) {
@@ -143,7 +157,7 @@ export default function StudentHub() {
         } else {
           // The underlying content was deleted by the admin. Remove this broken assignment and fetch a new one.
           await deleteDoc(doc(db, 'daily_assignments', targetAssignment.id));
-          fetchDailyAssignment();
+          fetchDailyAssignment(true);
         }
       }
     } catch (err) {
@@ -421,7 +435,12 @@ export default function StudentHub() {
                     <div style={{ marginTop: 25, textAlign: 'center', padding: 20, background: '#EAF7F1', borderRadius: 16, color: '#2D7158', border: '1px solid #2D7158' }}>
                       <span style={{ fontSize: '2rem', display: 'block', marginBottom: 10 }}>🎉</span>
                       <h3 style={{ margin: '0 0 5px' }}>Exercício Concluído!</h3>
-                      <p style={{ margin: 0 }}>Você acertou {dailyAssignment.score} de {dailyAssignment.totalQuestions} questões.</p>
+                      <p style={{ margin: hasNextPending ? '0 0 15px' : 0 }}>Você acertou {dailyAssignment.score} de {dailyAssignment.totalQuestions} questões.</p>
+                      {hasNextPending && (
+                        <button onClick={() => fetchDailyAssignment(true)} style={{ padding: '10px 20px', background: '#2D7158', color: '#fff', border: 'none', borderRadius: 99, fontWeight: 'bold', cursor: 'pointer' }}>
+                          Próximo Exercício ➔
+                        </button>
+                      )}
                     </div>
                   )}
                   
