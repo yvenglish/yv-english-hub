@@ -343,6 +343,38 @@ export default function Navbar() {
         <button onClick={() => { toggleTheme(); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro'}</button>
         <button onClick={() => { handleLogout(); setShowMenu(false); }} style={{ background: 'transparent', color: 'var(--amber)', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>Sair</button>
       </div>
+
+      {/* Streak Modal */}
+      {showStreakModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 400, borderRadius: 28, overflow: 'hidden', position: 'relative', border: '1px solid var(--amber)', textAlign: 'center', padding: '40px 30px', boxShadow: '0 20px 60px rgba(200, 136, 58, 0.2)' }}>
+            <button onClick={() => setShowStreakModal(false)} style={{ position: 'absolute', top: 15, right: 15, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+            <span style={{ fontSize: '3.5rem', display: 'block', margin: '0 auto 10px' }}>🔥</span>
+            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2rem', color: 'var(--amber)', marginBottom: 10, lineHeight: 1.1 }}>
+              {userData?.streakGoal ? `Current Goal: ${userData.streakGoal} days` : 'Streak Goal'}
+            </h2>
+            <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: 25 }}>
+              Escolha quantos dias seguidos de estudo você quer atingir. <strong style={{ color: '#ff6b6b' }}>Atenção: alterar a sua meta atual vai zerar a sua ofensiva!</strong>
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[3, 7, 14, 21, 30].map(days => (
+                <button 
+                  key={days}
+                  onClick={() => {
+                    if (window.confirm(`Tem certeza que deseja alterar sua meta para ${days} dias? Sua ofensiva atual será ZERADA.`)) {
+                      setStreakGoal(days);
+                      setShowStreakModal(false);
+                    }
+                  }}
+                  style={{ padding: '14px', background: streakGoal === days ? 'rgba(200, 136, 58, 0.2)' : 'rgba(255,255,255,0.05)', color: streakGoal === days ? 'var(--amber)' : '#fff', border: `1px solid ${streakGoal === days ? 'var(--amber)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: '0.2s' }}
+                >
+                  Meta de {days} dias
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
