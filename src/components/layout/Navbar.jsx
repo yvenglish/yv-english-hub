@@ -20,10 +20,12 @@ export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchData, setSearchData] = useState(null);
   const searchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
+      if (searchRef.current && !searchRef.current.contains(e.target) &&
+          mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
         setIsDropdownOpen(false);
       }
     };
@@ -191,7 +193,7 @@ export default function Navbar() {
       <div className="nav-actions-container">
         
         {/* Barra de Busca Funcional */}
-        <div style={{ position: 'relative' }} ref={searchRef}>
+        <div className="hide-on-mobile" style={{ position: 'relative' }} ref={searchRef}>
           <span style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }}>🔍</span>
           <input 
             type="text" 
@@ -259,7 +261,7 @@ export default function Navbar() {
         </div>
 
         {/* Círculo de Progresso */}
-        <div onClick={() => setShowStreakModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', padding: '6px 16px 6px 6px', borderRadius: 99, border: '1px solid rgba(200, 136, 58, 0.3)', cursor: 'pointer', transition: '0.2s' }} className="hide-on-mobile hover-scale">
+        <div onClick={() => setShowStreakModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', padding: '6px 16px 6px 6px', borderRadius: 99, border: '1px solid rgba(200, 136, 58, 0.3)', cursor: 'pointer', transition: '0.2s' }} className="hover-scale">
           <div style={{ position: 'relative', width: 40, height: 40, display: 'grid', placeItems: 'center' }}>
             <svg viewBox="0 0 36 36" style={{ width: 40, height: 40, transform: 'rotate(-90deg)' }}>
               <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
@@ -338,6 +340,65 @@ export default function Navbar() {
         }}>Semanas</a>
         <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>Flashcards</NavLink>
         <NavLink to="/library" onClick={() => setShowMenu(false)}>Biblioteca</NavLink>
+        
+        {/* Mobile Search Bar */}
+        <div style={{ position: 'relative', margin: '15px 20px' }} ref={mobileSearchRef}>
+          <span style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }}>🔍</span>
+          <input 
+            type="text" 
+            placeholder="Buscar..." 
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setIsDropdownOpen(true); }}
+            onFocus={handleSearchFocus}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: 40,
+              padding: '12px 15px 12px 42px',
+              color: '#fff',
+              fontSize: '1rem',
+              width: '100%',
+              outline: 'none',
+              boxSizing: 'border-box'
+            }}
+          />
+          {isDropdownOpen && searchQuery.trim() && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 10px)',
+              left: 0,
+              right: 0,
+              background: 'var(--hero-c)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: 16,
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              overflow: 'hidden',
+              zIndex: 100
+            }}>
+              {getFilteredResults().length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 300, overflowY: 'auto' }}>
+                  {getFilteredResults().map(item => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => handleResultClick(item)}
+                      style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
+                    >
+                      <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{item.title}</strong>
+                      <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.description || item.level}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
+                  Nenhum resultado encontrado.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
         <button onClick={() => { navigate('/account'); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>Minha Conta</button>
         <button onClick={() => { toggleTheme(); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro'}</button>
