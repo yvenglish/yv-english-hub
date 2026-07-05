@@ -13,6 +13,17 @@ const updateSW = registerSW({
   },
   onOfflineReady() {}
 })
+
+// Força o reload da página assim que o novo service worker assumir o controle
+if ('serviceWorker' in navigator) {
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!reloading) {
+      reloading = true;
+      window.location.reload();
+    }
+  });
+}
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <AuthProvider>
