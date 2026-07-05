@@ -6,6 +6,7 @@ import { EPISODES as STATIC_EPISODES } from '../../data/libraryData';
 export default function LibraryAdminTab({ setLoading }) {
   const [episodes, setEpisodes] = useState([]);
   const [editingEpisode, setEditingEpisode] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form states
   const [title, setTitle] = useState('');
@@ -154,6 +155,16 @@ export default function LibraryAdminTab({ setLoading }) {
         </div>
       </div>
 
+      <div style={{ marginBottom: 20 }}>
+        <input 
+          type="text" 
+          placeholder="Buscar por título ou tag..." 
+          value={searchQuery} 
+          onChange={e => setSearchQuery(e.target.value)} 
+          style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--paper)', color: 'var(--text)', outline: 'none' }} 
+        />
+      </div>
+
       {editingEpisode && (
         <div style={{ padding: 25, border: '2px solid var(--plum)', borderRadius: 20, background: 'var(--paper)', marginBottom: 30 }}>
           <h3 style={{ margin: '0 0 20px', color: 'var(--plum)' }}>{editingEpisode === 'new' ? '+ Criar Novo Conteúdo' : '✏️ Editando Conteúdo'}</h3>
@@ -241,7 +252,13 @@ export default function LibraryAdminTab({ setLoading }) {
       )}
 
       <div style={{ display: 'grid', gap: 15 }}>
-        {episodes.map(ep => (
+        {episodes.filter(ep => {
+          if (!searchQuery) return true;
+          const q = searchQuery.toLowerCase();
+          const matchTitle = ep.title?.toLowerCase().includes(q);
+          const matchTags = (ep.tags || []).some(tag => tag.toLowerCase().includes(q));
+          return matchTitle || matchTags;
+        }).map(ep => (
           <div key={ep.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
             <div>
               <span style={{ fontSize: '0.7rem', background: 'rgba(138, 124, 255, 0.15)', padding: '4px 10px', borderRadius: 99, color: 'var(--purple)', fontWeight: 'bold', textTransform: 'uppercase', marginRight: 10 }}>{ep.level}</span>
