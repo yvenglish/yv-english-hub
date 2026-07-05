@@ -135,8 +135,8 @@ export default function Library() {
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
               >
-                {/* Imagem (16:9) com Overlay */}
-                <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#333' }}>
+                {/* Imagem com Overlay */}
+                <div style={{ position: 'relative', width: '100%', height: 160, background: '#333' }}>
                   {ep.imageUrl ? (
                     <img src={ep.imageUrl} alt={ep.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
