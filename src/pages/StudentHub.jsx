@@ -213,7 +213,8 @@ export default function StudentHub() {
 
          let isGoalReached = false;
          if (recordStudy) {
-           isGoalReached = await recordStudy(7); // Conta como meta diária do streak
+           const result = await recordStudy(7); // Conta como meta diária do streak
+           isGoalReached = result?.goalJustReached || false;
          }
          
          if (isGoalReached) {

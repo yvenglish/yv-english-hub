@@ -141,7 +141,8 @@ export default function Flashcards() {
     }
 
     if (userData && cardsStudied > 0) {
-      isGoalReached = await recordStudy(cardsStudied);
+      const { goalJustReached } = await recordStudy(cardsStudied);
+      isGoalReached = goalJustReached;
     }
 
     setView('list');

@@ -18,7 +18,10 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
 
   const handleSubmit = async () => {
     if (userData) {
-      await recordStudy(7); // Conta 7 pontos simbólicos para garantir o streak diário
+      const { streakGoalCompleted } = await recordStudy(7); // Conta 7 pontos simbólicos para garantir o streak diário
+      if (streakGoalCompleted) {
+         // Optionally could show a specific modal, but keeping it simple here
+      }
     }
     setShowGoalModal(true);
   };

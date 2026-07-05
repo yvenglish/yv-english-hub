@@ -94,6 +94,7 @@ export function AuthProvider({ children }) {
     let newStreak = userData.currentStreak || 0;
     let newStreakDate = userData.lastStreakDate || null;
     let goalJustReached = false;
+    let streakGoalCompleted = false;
 
     // Reset words count if it's a new day
     if (userData.lastStudyDate !== todayStr) {
@@ -112,6 +113,11 @@ export function AuthProvider({ children }) {
       } else {
         newStreak = 1;
       }
+
+      const targetGoal = userData.streakGoal || 3;
+      if (newStreak === targetGoal) {
+        streakGoalCompleted = true;
+      }
     }
 
     const updates = {
@@ -124,7 +130,18 @@ export function AuthProvider({ children }) {
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData({ ...userData, ...updates });
 
-    return goalJustReached;
+    return { goalJustReached, streakGoalCompleted };
+  };
+
+  const setStreakGoal = async (goal) => {
+    if (!currentUser || !userData) return;
+    const updates = {
+      streakGoal: goal,
+      currentStreak: 0,
+      lastStreakDate: null
+    };
+    await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
+    setUserData({ ...userData, ...updates });
   };
 
   const toggleLibraryFavorite = async (episodeId) => {
@@ -226,7 +243,8 @@ export function AuthProvider({ children }) {
     toggleLibraryFavorite,
     toggleLibraryProgress,
     updateFlashcardProgress,
-    getDueFlashcards
+    getDueFlashcards,
+    setStreakGoal
   };
 
   return (
