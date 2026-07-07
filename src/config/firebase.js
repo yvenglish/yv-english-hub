@@ -12,10 +12,13 @@ const firebaseConfig = {
   appId: "1:715533060042:web:7a3e88ed4085258ad8f133",
   measurementId: "G-5RL7T9E1SY"
 };
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
 
 // Só inicializa o messaging se estiver no navegador e se for suportado
 let messaging = null;
