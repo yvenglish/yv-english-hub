@@ -34,30 +34,28 @@
       #initial-loader {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: #05002e;
+        background: #15121b;
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 9999;
       }
       #initial-loader img {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        animation: pulse 2s infinite;
-        box-shadow: 0 0 30px rgba(200, 136, 58, 0.3);
+        width: 140px;
+        height: 140px;
+        animation: pulse-transparent 2.5s infinite ease-in-out;
       }
-      @keyframes pulse {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(200, 136, 58, 0.7); }
-        70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(200, 136, 58, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(200, 136, 58, 0); }
+      @keyframes pulse-transparent {
+        0% { transform: scale(0.9); opacity: 0.7; }
+        50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 15px rgba(200, 136, 58, 0.4)); }
+        100% { transform: scale(0.9); opacity: 0.7; }
       }
     </style>
   </head>
   <body>
     <div id="root">
       <div id="initial-loader">
-        <img src="/logocircular.jpeg" alt="YV English" />
+        <img src="/logocirculartransparente.png" alt="YV English" />
       </div>
     </div>
     <script type="module" src="/src/main.jsx"></script>
