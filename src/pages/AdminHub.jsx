@@ -87,6 +87,7 @@ export default function AdminHub() {
     fetchWeeks();
     fetchDecks();
     fetchVocabWords();
+    fetchDailyBank();
   }, []);
 
   useEffect(() => {
