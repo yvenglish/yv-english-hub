@@ -659,9 +659,14 @@ export default function AdminHub() {
                 <div key={a.id} style={{ background: a.status === 'completed' ? '#EAF7F1' : 'var(--paper)', color: a.status === 'completed' ? '#1E293B' : 'var(--text)', padding: 15, borderRadius: 12, border: '1px solid var(--line)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                     <strong>{new Date(a.scheduledDate + 'T00:00:00').toLocaleDateString('pt-BR')}</strong>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: a.status === 'completed' ? '#2D7158' : 'var(--amber)' }}>
-                      {a.status.toUpperCase()}
-                    </span>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: a.status === 'completed' ? '#2D7158' : 'var(--amber)' }}>
+                        {a.status.toUpperCase()}
+                      </span>
+                      <button onClick={() => handleDeleteAssignment(a.id)} style={{ background: 'none', border: 'none', color: '#ffb1b1', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', textDecoration: 'underline' }}>
+                        Remover
+                      </button>
+                    </div>
                   </div>
                   <p style={{ margin: 0, fontSize: '0.9rem' }}>{getBankItemTitle(a.contentId)}</p>
                 </div>
