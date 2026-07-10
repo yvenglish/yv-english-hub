@@ -315,8 +315,8 @@ export default function AdminHub() {
     setLoading(false);
   };
 
-  const handleDeleteWeek = async (id) => {
-    if (!window.confirm("Excluir esta semana?")) return;
+  const handleDeleteWeek = async (id, skipConfirm = false) => {
+    if (!skipConfirm && !window.confirm("Excluir esta semana?")) return;
     await deleteDoc(doc(db, 'weeks', id));
     fetchWeeks();
   };
@@ -1505,8 +1505,10 @@ export default function AdminHub() {
                 ✏️ Editar Semana
               </button>
               <button onClick={() => {
-                setViewingWeek(null);
-                handleDeleteWeek(viewingWeek.id);
+                if (window.confirm("Excluir esta semana?")) {
+                  handleDeleteWeek(viewingWeek.id, true);
+                  setViewingWeek(null);
+                }
               }} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer' }}>
                 🗑️ Excluir
               </button>
