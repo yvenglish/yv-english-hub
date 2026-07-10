@@ -942,27 +942,29 @@ export default function AdminHub() {
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(groupedWeeks[expandedYear][expandedMonth].reduce((acc, w) => {
-                      if (!acc[w.studentId]) acc[w.studentId] = [];
-                      acc[w.studentId].push(w);
-                      return acc;
-                    }, {})).map(([studentId, stWeeks]) => (
-                      <tr key={studentId} style={{ borderBottom: '1px solid var(--line)' }}>
-                        <td style={{ padding: 15, fontWeight: 'bold', borderRight: '1px solid var(--line)' }}>{getStudentName(studentId)}</td>
-                        {[...Array(Math.max(1, ...groupedWeeks[expandedYear][expandedMonth].map(w => parseInt(w.weekNumber) || 1)))].map((_, i) => {
-                          const w = stWeeks.find(sw => (parseInt(sw.weekNumber) || 1) === i + 1);
-                          return (
-                            <td key={i} style={{ padding: 15, borderRight: '1px solid var(--line)', textAlign: 'center' }}>
-                              {w ? (
-                                <div onClick={() => setViewingWeek(w)} style={{ cursor: 'pointer', color: 'var(--plum)', fontWeight: 'bold', textDecoration: 'underline', display: 'inline-block' }}>
-                                  {w.title || `S${w.weekNumber}`}
-                                </div>
-                              ) : <span style={{ color: 'var(--muted)' }}>-</span>}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
+                    {Array.from(new Set([
+                      ...students.filter(s => s.active).map(s => s.id),
+                      ...groupedWeeks[expandedYear][expandedMonth].map(w => w.studentId)
+                    ])).map(studentId => {
+                      const stWeeks = groupedWeeks[expandedYear][expandedMonth].filter(w => w.studentId === studentId);
+                      return (
+                        <tr key={studentId} style={{ borderBottom: '1px solid var(--line)' }}>
+                          <td style={{ padding: 15, fontWeight: 'bold', borderRight: '1px solid var(--line)' }}>{getStudentName(studentId)}</td>
+                          {[...Array(Math.max(1, ...groupedWeeks[expandedYear][expandedMonth].map(w => parseInt(w.weekNumber) || 1)))].map((_, i) => {
+                            const w = stWeeks.find(sw => (parseInt(sw.weekNumber) || 1) === i + 1);
+                            return (
+                              <td key={i} style={{ padding: 15, borderRight: '1px solid var(--line)', textAlign: 'center' }}>
+                                {w ? (
+                                  <div onClick={() => setViewingWeek(w)} style={{ cursor: 'pointer', color: 'var(--plum)', fontWeight: 'bold', textDecoration: 'underline', display: 'inline-block' }}>
+                                    {w.title || `S${w.weekNumber}`}
+                                  </div>
+                                ) : <span style={{ color: 'var(--muted)' }}>-</span>}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
