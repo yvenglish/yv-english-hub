@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
@@ -32,7 +32,13 @@ export default function AdminHub() {
   const [currentLinkTitle, setCurrentLinkTitle] = useState('');
   const [currentLinkUrl, setCurrentLinkUrl] = useState('');
   const [currentLinkType, setCurrentLinkType] = useState('link'); // 'link' or 'recording'
-
+  
+  const [weekYear, setWeekYear] = useState(new Date().getFullYear().toString());
+  const [weekMonth, setWeekMonth] = useState((new Date().getMonth() + 1).toString());
+  const [weekNumber, setWeekNumber] = useState('1');
+  
+  const [expandedYear, setExpandedYear] = useState(new Date().getFullYear().toString());
+  const [expandedMonth, setExpandedMonth] = useState((new Date().getMonth() + 1).toString());
   // Daily State
   const [dailySubTab, setDailySubTab] = useState('bank');
   const [bankItems, setBankItems] = useState([]);
@@ -251,16 +257,25 @@ export default function AdminHub() {
     setWeekDescription(week.description);
     setWeekStudents([week.studentId]);
     setWeekLinks(week.links || []);
+    
+    const dt = week.createdAt ? new Date(week.createdAt) : new Date();
+    setWeekYear(week.year || dt.getFullYear().toString());
+    setWeekMonth(week.month || (dt.getMonth() + 1).toString());
+    setWeekNumber(week.weekNumber || '1');
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const cancelEditWeek = () => {
     setEditingWeek(null);
     setWeekTitle(''); setWeekDescription(''); setWeekStudents([]); setWeekLinks([]);
+    setWeekYear(new Date().getFullYear().toString());
+    setWeekMonth((new Date().getMonth() + 1).toString());
+    setWeekNumber('1');
   };
 
   const handleSaveWeek = async () => {
-    if (!weekTitle || weekStudents.length === 0) return alert("Preencha título e selecione aluno(s)!");
+    if (weekStudents.length === 0) return alert("Selecione pelo menos um aluno!");
     setLoading(true);
     try {
       if (editingWeek) {
@@ -273,6 +288,9 @@ export default function AdminHub() {
           description: weekDescription,
           studentId: weekStudents[0],
           links: weekLinks,
+          year: weekYear,
+          month: weekMonth,
+          weekNumber: weekNumber,
           updatedAt: new Date().toISOString()
         };
         await updateDoc(doc(db, 'weeks', editingWeek.id), payload);
@@ -283,6 +301,9 @@ export default function AdminHub() {
             description: weekDescription,
             studentId,
             links: weekLinks,
+            year: weekYear,
+            month: weekMonth,
+            weekNumber: weekNumber,
             updatedAt: new Date().toISOString()
           };
           await addDoc(collection(db, 'weeks'), { ...payload, createdAt: new Date().toISOString() });
@@ -542,6 +563,21 @@ export default function AdminHub() {
   };
 
   const getStudentName = (id) => students.find(s => s.id === id)?.name || 'Desconhecido';
+  const [viewingWeek, setViewingWeek] = useState(null);
+
+  const groupedWeeks = useMemo(() => {
+    return weeks.reduce((acc, week) => {
+      const dt = week.createdAt ? new Date(week.createdAt) : new Date();
+      const year = week.year || dt.getFullYear().toString();
+      const month = week.month || (dt.getMonth() + 1).toString();
+      
+      if (!acc[year]) acc[year] = {};
+      if (!acc[year][month]) acc[year][month] = [];
+      acc[year][month].push(week);
+      return acc;
+    }, {});
+  }, [weeks]);
+
   const getBankItemTitle = (id) => bankItems.find(i => i.id === id)?.title || 'Excluído';
 
   // Dashboard Alerts
@@ -578,12 +614,37 @@ export default function AdminHub() {
           <div>
             <h2 style={{ borderBottom: '1px solid var(--line)', paddingBottom: 10 }}>Semanas de Aula ({sWeeks.length})</h2>
             <div style={{ display: 'grid', gap: 10, marginTop: 15 }}>
-              {sWeeks.map(w => (
-                <div key={w.id} style={{ background: 'var(--cream)', padding: 15, borderRadius: 12, border: '1px solid var(--line)' }}>
-                  <h4 style={{ margin: '0 0 5px' }}>{w.title}</h4>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>{w.links?.length || 0} link(s) anexado(s)</p>
-                </div>
-              ))}
+              {Object.keys(groupedWeeks).sort((a,b) => b - a).map(yr => {
+                const yearMonths = groupedWeeks[yr];
+                const hasWeeksInYear = Object.values(yearMonths).some(monthWeeks => monthWeeks.some(w => w.studentId === s.id));
+                if (!hasWeeksInYear) return null;
+                
+                return (
+                  <details key={yr} open={yr === new Date().getFullYear().toString()} style={{ background: 'var(--cream)', borderRadius: 12, border: '1px solid var(--line)' }}>
+                    <summary style={{ padding: 15, fontWeight: 'bold', cursor: 'pointer', outline: 'none' }}>Ano {yr}</summary>
+                    <div style={{ padding: '0 15px 15px', display: 'grid', gap: 10 }}>
+                      {Object.keys(yearMonths).sort((a,b) => b - a).map(m => {
+                        const mWeeks = yearMonths[m].filter(w => w.studentId === s.id).sort((a, b) => (parseInt(a.weekNumber) || 1) - (parseInt(b.weekNumber) || 1));
+                        if (mWeeks.length === 0) return null;
+                        return (
+                          <details key={m} style={{ background: 'var(--paper)', borderRadius: 8, border: '1px solid var(--line)' }}>
+                            <summary style={{ padding: 10, fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', outline: 'none' }}>{["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][m]}</summary>
+                            <div style={{ padding: '0 10px 10px', display: 'grid', gap: 8 }}>
+                              {mWeeks.map(w => (
+                                <div key={w.id} onClick={() => setViewingWeek(w)} style={{ background: 'var(--bg)', padding: 10, borderRadius: 8, border: '1px solid var(--line)', cursor: 'pointer' }}>
+                                  <h4 style={{ margin: '0 0 5px', color: 'var(--plum)', textDecoration: 'underline' }}>{w.title || `Semana ${w.weekNumber}`}</h4>
+                                  <p style={{ fontSize: '0.85rem', color: 'var(--muted)', margin: 0 }}>{w.links?.length || 0} link(s) anexado(s)</p>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        );
+                      })}
+                    </div>
+                  </details>
+                );
+              })}
+              {sWeeks.length === 0 && <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Nenhuma semana cadastrada.</p>}
             </div>
           </div>
           <div>
@@ -770,7 +831,37 @@ export default function AdminHub() {
             <div style={{ padding: 20, border: editingWeek ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
               <h3>{editingWeek ? '✏️ Editando Semana' : '+ Nova Semana'}</h3>
               <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
-                <input type="text" value={weekTitle} onChange={e => setWeekTitle(e.target.value)} placeholder="Título" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <select value={weekYear} onChange={e => setWeekYear(e.target.value)} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }}>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
+                  </select>
+                  <select value={weekMonth} onChange={e => setWeekMonth(e.target.value)} style={{ flex: 1, minWidth: 120, padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }}>
+                    <option value="1">Janeiro</option>
+                    <option value="2">Fevereiro</option>
+                    <option value="3">Março</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Maio</option>
+                    <option value="6">Junho</option>
+                    <option value="7">Julho</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Setembro</option>
+                    <option value="10">Outubro</option>
+                    <option value="11">Novembro</option>
+                    <option value="12">Dezembro</option>
+                  </select>
+                  <select value={weekNumber} onChange={e => setWeekNumber(e.target.value)} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }}>
+                    <option value="1">Semana 1</option>
+                    <option value="2">Semana 2</option>
+                    <option value="3">Semana 3</option>
+                    <option value="4">Semana 4</option>
+                    <option value="5">Semana 5</option>
+                  </select>
+                  <input type="text" value={weekTitle} onChange={e => setWeekTitle(e.target.value)} placeholder="Título (opcional)" style={{ flex: 2, minWidth: 200, padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
+                </div>
                 <textarea value={weekDescription} onChange={e => setWeekDescription(e.target.value)} rows="3" placeholder="Descrição" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}></textarea>
                 <div style={{ padding: 15, border: '1px solid var(--line)', borderRadius: 12, background: 'var(--bg)' }}>
                   <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>Selecionar Alunos ({weekStudents.length})</h4>
@@ -813,20 +904,64 @@ export default function AdminHub() {
                 </div>
               </div>
             </div>
-            <div style={{ display: 'grid', gap: 14 }}>
-              {weeks.map(week => (
-                <div key={week.id} className="admin-flex-between" style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
-                  <div>
-                    <span style={{ fontSize: '0.7rem', background: 'var(--cream)', padding: '2px 8px', borderRadius: 99, color: 'var(--muted)', fontWeight: 'bold' }}>{getStudentName(week.studentId)}</span>
-                    <h3 style={{ margin: '8px 0' }}>{week.title}</h3>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => startEditWeek(week)} style={{ border: '1px solid var(--line)', background: 'var(--cream)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
-                    <button onClick={() => handleDeleteWeek(week.id)} style={{ border: '1px solid red', color: 'red', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Excluir</button>
-                  </div>
-                </div>
+            {/* Year Tabs */}
+            <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 10, marginBottom: 15 }}>
+              {Object.keys(groupedWeeks).sort((a,b) => b - a).map(yr => (
+                <button key={yr} onClick={() => { setExpandedYear(yr); setExpandedMonth(Object.keys(groupedWeeks[yr]).sort((a,b) => a - b)[0]); }} style={{ padding: '8px 16px', background: expandedYear === yr ? 'var(--plum)' : 'var(--paper)', color: expandedYear === yr ? '#fff' : 'var(--text)', border: '1px solid var(--line)', borderRadius: 20, cursor: 'pointer', fontWeight: 'bold' }}>
+                  {yr}
+                </button>
               ))}
             </div>
+            
+            {/* Month Tabs */}
+            {expandedYear && groupedWeeks[expandedYear] && (
+              <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 10, marginBottom: 20 }}>
+                {Object.keys(groupedWeeks[expandedYear]).sort((a,b) => a - b).map(m => (
+                  <button key={m} onClick={() => setExpandedMonth(m)} style={{ padding: '8px 16px', background: expandedMonth === m ? 'var(--purple)' : 'var(--cream)', color: expandedMonth === m ? '#fff' : 'var(--text)', border: '1px solid var(--line)', borderRadius: 20, cursor: 'pointer' }}>
+                    {["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][m]}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {/* Weeks Table */}
+            {expandedYear && expandedMonth && groupedWeeks[expandedYear]?.[expandedMonth] && (
+              <div style={{ overflowX: 'auto', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 600 }}>
+                  <thead>
+                    <tr style={{ background: 'var(--cream)', borderBottom: '1px solid var(--line)' }}>
+                      <th style={{ padding: 15 }}>Aluno</th>
+                      {[...Array(Math.max(1, ...groupedWeeks[expandedYear][expandedMonth].map(w => parseInt(w.weekNumber) || 1)))].map((_, i) => (
+                        <th key={i} style={{ padding: 15, textAlign: 'center' }}>Semana {i + 1}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(groupedWeeks[expandedYear][expandedMonth].reduce((acc, w) => {
+                      if (!acc[w.studentId]) acc[w.studentId] = [];
+                      acc[w.studentId].push(w);
+                      return acc;
+                    }, {})).map(([studentId, stWeeks]) => (
+                      <tr key={studentId} style={{ borderBottom: '1px solid var(--line)' }}>
+                        <td style={{ padding: 15, fontWeight: 'bold', borderRight: '1px solid var(--line)' }}>{getStudentName(studentId)}</td>
+                        {[...Array(Math.max(1, ...groupedWeeks[expandedYear][expandedMonth].map(w => parseInt(w.weekNumber) || 1)))].map((_, i) => {
+                          const w = stWeeks.find(sw => (parseInt(sw.weekNumber) || 1) === i + 1);
+                          return (
+                            <td key={i} style={{ padding: 15, borderRight: '1px solid var(--line)', textAlign: 'center' }}>
+                              {w ? (
+                                <div onClick={() => setViewingWeek(w)} style={{ cursor: 'pointer', color: 'var(--plum)', fontWeight: 'bold', textDecoration: 'underline', display: 'inline-block' }}>
+                                  {w.title || `S${w.weekNumber}`}
+                                </div>
+                              ) : <span style={{ color: 'var(--muted)' }}>-</span>}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         )}
 
@@ -1315,6 +1450,58 @@ export default function AdminHub() {
               </button>
               <button onClick={() => setConflictModalOpen(false)} style={{ padding: '14px 20px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer' }}>
                 Cancelar agendamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Viewing Week Modal */}
+      {viewingWeek && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { if (e.target === e.currentTarget) setViewingWeek(null); }}>
+          <div style={{ background: 'var(--paper)', width: '90%', maxWidth: 600, maxHeight: '90vh', overflowY: 'auto', padding: 30, borderRadius: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <span style={{ fontSize: '0.8rem', background: 'var(--plum)', color: '#fff', padding: '4px 10px', borderRadius: 99, fontWeight: 'bold' }}>{getStudentName(viewingWeek.studentId)}</span>
+                <h2 style={{ margin: '10px 0 0', color: 'var(--text)' }}>{viewingWeek.title || `Semana ${viewingWeek.weekNumber}`}</h2>
+              </div>
+              <button onClick={() => setViewingWeek(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text)' }}>×</button>
+            </div>
+            
+            {viewingWeek.description && (
+              <div style={{ background: 'var(--cream)', padding: 15, borderRadius: 12, marginBottom: 20 }}>
+                <p style={{ margin: 0, color: 'var(--text)', whiteSpace: 'pre-wrap' }}>{viewingWeek.description}</p>
+              </div>
+            )}
+            
+            {viewingWeek.links && viewingWeek.links.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <h4 style={{ margin: '0 0 10px' }}>Links & Gravações</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {viewingWeek.links.map((link, idx) => (
+                    <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', padding: 12, background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 12, textDecoration: 'none', color: 'var(--text)' }}>
+                      <span style={{ fontSize: '1.2rem', marginRight: 10 }}>{link.type === 'recording' ? '🎥' : '🔗'}</span>
+                      <span style={{ flex: 1, fontWeight: 'bold' }}>{link.title}</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--plum)', textDecoration: 'underline' }}>Abrir</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', gap: 10, marginTop: 30 }}>
+              <button onClick={() => {
+                setViewingWeek(null);
+                setActiveTab('weeks');
+                startEditWeek(viewingWeek);
+              }} style={{ flex: 1, padding: '12px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer' }}>
+                ✏️ Editar Semana
+              </button>
+              <button onClick={() => {
+                setViewingWeek(null);
+                handleDeleteWeek(viewingWeek.id);
+              }} style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer' }}>
+                🗑️ Excluir
               </button>
             </div>
           </div>
