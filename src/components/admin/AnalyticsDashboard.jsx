@@ -69,44 +69,46 @@ export default function AnalyticsDashboard({ students, globalAssignments }) {
         {filteredData.map(student => {
           let statusBg = 'var(--paper)';
           let statusBorder = 'var(--line)';
+          let statusText = 'var(--text)';
+          let statusMuted = 'var(--muted)';
           
           if (student.alertStatus === 'danger') {
-            statusBg = '#FDEBEB'; statusBorder = '#9D2828';
+            statusBg = '#FDEBEB'; statusBorder = '#9D2828'; statusText = '#7f1d1d'; statusMuted = '#991b1b';
           } else if (student.alertStatus === 'warning') {
-            statusBg = '#FFF8EC'; statusBorder = 'var(--amber)';
+            statusBg = '#FFF8EC'; statusBorder = 'var(--amber)'; statusText = '#92400E'; statusMuted = '#b45309';
           } else if (student.alertStatus === 'good') {
-            statusBg = '#EAF7F1'; statusBorder = '#2D7158';
+            statusBg = '#EAF7F1'; statusBorder = '#2D7158'; statusText = '#134e4a'; statusMuted = '#115e59';
           }
 
           return (
             <div key={student.id} style={{ background: statusBg, border: `1px solid ${statusBorder}`, padding: 20, borderRadius: 16, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center' }}>
               <div style={{ flex: '1 1 200px' }}>
-                <h3 style={{ margin: '0 0 5px', fontSize: '1.2rem', color: 'var(--text)' }}>{student.name}</h3>
-                <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.9rem' }}>{student.alertMsg}</p>
+                <h3 style={{ margin: '0 0 5px', fontSize: '1.2rem', color: statusText }}>{student.name}</h3>
+                <p style={{ margin: 0, color: statusMuted, fontSize: '0.9rem' }}>{student.alertMsg}</p>
               </div>
 
               <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Taxa de Conclusão</span>
-                  <strong style={{ fontSize: '1.5rem', color: 'var(--text)' }}>
+                  <span style={{ display: 'block', fontSize: '0.8rem', color: statusMuted, fontWeight: 'bold', textTransform: 'uppercase' }}>Taxa de Conclusão</span>
+                  <strong style={{ fontSize: '1.5rem', color: statusText }}>
                     {student.totalAssigns > 0 ? `${student.completionRate.toFixed(0)}%` : '-'}
                   </strong>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  <div style={{ fontSize: '0.8rem', color: statusMuted }}>
                     {student.completedAssigns} de {student.totalAssigns}
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Ofensiva</span>
-                  <strong style={{ fontSize: '1.5rem', color: 'var(--text)' }}>
+                  <span style={{ display: 'block', fontSize: '0.8rem', color: statusMuted, fontWeight: 'bold', textTransform: 'uppercase' }}>Ofensiva</span>
+                  <strong style={{ fontSize: '1.5rem', color: statusText }}>
                     {student.currentStreak || 0} 🔥
                   </strong>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Dias seguidos</div>
+                  <div style={{ fontSize: '0.8rem', color: statusMuted }}>Dias seguidos</div>
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Último Login</span>
-                  <strong style={{ fontSize: '1.5rem', color: 'var(--text)' }}>
+                  <span style={{ display: 'block', fontSize: '0.8rem', color: statusMuted, fontWeight: 'bold', textTransform: 'uppercase' }}>Último Login</span>
+                  <strong style={{ fontSize: '1.5rem', color: statusText }}>
                     {student.daysSinceLogin === -1 ? 'Nunca' : student.daysSinceLogin === 0 ? 'Hoje' : `Há ${student.daysSinceLogin} dia(s)`}
                   </strong>
                 </div>
