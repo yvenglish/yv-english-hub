@@ -44,12 +44,12 @@ export default function WrittenMode({ deck, onFinish }) {
   };
 
   const handleNext = () => {
-    setStatus('typing');
-    setInputValue('');
     if (currentIndex < cards.length - 1) {
+      setStatus('typing');
+      setInputValue('');
       setCurrentIndex(currentIndex + 1);
     } else {
-      onFinish({ score: score + (status === 'correct' ? 1 : 0), total: cards.length });
+      onFinish({ score: score, total: cards.length });
     }
   };
 
