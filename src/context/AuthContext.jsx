@@ -169,50 +169,54 @@ export function AuthProvider({ children }) {
   const updateFlashcardProgress = async (wordId, score) => {
     if (!currentUser) return;
     
-    const docRef = doc(db, `users/${currentUser.uid}/flashcard_progress`, wordId);
-    const docSnap = await getDoc(docRef);
-    
-    let interval = 0;
-    let repetitions = 0;
-    let easeFactor = 2.5;
-
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      repetitions = data.repetitions || 0;
-      interval = data.interval || 0;
-      easeFactor = data.easeFactor || 2.5;
-    }
-
-    if (score === 0) {
-      repetitions = 0;
-      interval = 1;
-    } else {
-      repetitions += 1;
-      if (repetitions === 1) {
-        interval = 1;
-      } else if (repetitions === 2) {
-        interval = 2; // Acertou -> aparece em 2 dias
-      } else {
-        interval = Math.round(interval * easeFactor);
-      }
+    try {
+      const docRef = doc(db, `users/${currentUser.uid}/flashcard_progress`, wordId);
+      const docSnap = await getDoc(docRef);
       
-      easeFactor = easeFactor + (0.1 - (3 - score) * (0.08 + (3 - score) * 0.02));
-      if (easeFactor < 1.3) easeFactor = 1.3;
-    }
+      let interval = 0;
+      let repetitions = 0;
+      let easeFactor = 2.5;
 
-    const nextDate = new Date();
-    if (score > 0) {
-      nextDate.setDate(nextDate.getDate() + interval);
-    }
-    const nextReviewDate = nextDate.toISOString().split('T')[0];
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        repetitions = data.repetitions || 0;
+        interval = data.interval || 0;
+        easeFactor = data.easeFactor || 2.5;
+      }
 
-    await setDoc(docRef, {
-      interval,
-      repetitions,
-      easeFactor,
-      nextReviewDate,
-      lastReviewed: new Date().toISOString()
-    }, { merge: true });
+      if (score === 0) {
+        repetitions = 0;
+        interval = 1;
+      } else {
+        repetitions += 1;
+        if (repetitions === 1) {
+          interval = 1;
+        } else if (repetitions === 2) {
+          interval = 2; // Acertou -> aparece em 2 dias
+        } else {
+          interval = Math.round(interval * easeFactor);
+        }
+        
+        easeFactor = easeFactor + (0.1 - (3 - score) * (0.08 + (3 - score) * 0.02));
+        if (easeFactor < 1.3) easeFactor = 1.3;
+      }
+
+      const nextDate = new Date();
+      if (score > 0) {
+        nextDate.setDate(nextDate.getDate() + interval);
+      }
+      const nextReviewDate = nextDate.toISOString().split('T')[0];
+
+      await setDoc(docRef, {
+        repetitions,
+        interval,
+        easeFactor,
+        nextReviewDate,
+        lastStudied: new Date().toISOString()
+      }, { merge: true });
+    } catch (error) {
+      console.error("Error updating flashcard progress:", error);
+    }
   };
 
   const getDueFlashcards = async () => {
