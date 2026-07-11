@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, getDocs, query, where, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import LibraryAdminTab from '../components/admin/LibraryAdminTab';
+import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import './AdminHub.css';
 
 export default function AdminHub() {
@@ -661,7 +662,7 @@ export default function AdminHub() {
                     <strong>{new Date(a.scheduledDate + 'T00:00:00').toLocaleDateString('pt-BR')}</strong>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                       <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: a.status === 'completed' ? '#2D7158' : 'var(--amber)' }}>
-                        {a.status.toUpperCase()}
+                        {a.status === 'completed' ? (a.completedAt ? `CONCLUÍDO EM ${new Date(a.completedAt).toLocaleDateString('pt-BR')}` : 'CONCLUÍDO') : a.status.toUpperCase()}
                       </span>
                       <button onClick={() => handleDeleteAssignment(a.id)} style={{ background: 'none', border: 'none', color: '#ffb1b1', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', textDecoration: 'underline' }}>
                         Remover
@@ -766,12 +767,16 @@ export default function AdminHub() {
         )}
 
         <div className="admin-main-tabs">
-          {['students', 'weeks', 'daily', 'vocabulary', 'library'].map(tab => (
+          {['analytics', 'students', 'weeks', 'daily', 'vocabulary', 'library'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 20px', whiteSpace: 'nowrap', borderRadius: 999, border: activeTab === tab ? 'none' : '1px solid var(--line)', background: activeTab === tab ? 'var(--plum)' : 'transparent', color: activeTab === tab ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: 800, textTransform: 'capitalize' }}>
-              {tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : 'Vocabulário Global'}
+              {tab === 'analytics' ? 'Analytics' : tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : 'Vocabulário Global'}
             </button>
           ))}
         </div>
+
+        {activeTab === 'analytics' && (
+          <AnalyticsDashboard students={students} globalAssignments={globalAssignments} />
+        )}
 
         {activeTab === 'students' && (
           <section>
