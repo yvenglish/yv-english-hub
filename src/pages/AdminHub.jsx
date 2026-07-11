@@ -759,7 +759,7 @@ export default function AdminHub() {
             <span style={{ fontSize: '1.5rem' }}>⚠️</span>
             <div>
               <strong style={{ display: 'block', color: 'var(--amber)' }}>Alerta de Estoque do Daily Content</strong>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+              <span style={{ fontSize: '0.9rem', color: '#92400E' }}>
                 Os seguintes alunos têm menos de 3 dias planejados: {alerts.map(a => `${a.student.name} (${a.count})`).join(', ')}. O Auto-Pilot tentará cobrir falhas automaticamente.
               </span>
             </div>
