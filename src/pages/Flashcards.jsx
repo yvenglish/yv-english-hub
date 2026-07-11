@@ -119,11 +119,14 @@ export default function Flashcards() {
     setView('mode_select');
   };
 
+  const [finishing, setFinishing] = useState(false);
+
   const startGame = (mode) => {
     setSelectedMode(mode);
     setView('playing');
   };
   const handleFinish = async (result) => {
+    setFinishing(true);
     let msg = 'Revisão Concluída!';
     let isGoalReached = false;
     let cardsStudied = selectedDeck.words.length;
@@ -148,6 +151,7 @@ export default function Flashcards() {
     setView('list');
     setSelectedDeck(null);
     setSelectedMode('');
+    setFinishing(false);
 
     if (isGoalReached) {
       setShowGoalModal(true);
@@ -272,19 +276,23 @@ export default function Flashcards() {
               </div>
             )}
 
-            {view === 'playing' && selectedMode === 'classic' && (
+            {view === 'playing' && finishing && (
+              <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>Salvando progresso...</div>
+            )}
+
+            {view === 'playing' && !finishing && selectedMode === 'classic' && (
               <ClassicMode deck={selectedDeck} onFinish={handleFinish} />
             )}
             
-            {view === 'playing' && selectedMode === 'multiple' && (
+            {view === 'playing' && !finishing && selectedMode === 'multiple' && (
               <MultipleChoiceMode deck={selectedDeck} globalWords={globalWords} onFinish={handleFinish} />
             )}
             
-            {view === 'playing' && selectedMode === 'match' && (
+            {view === 'playing' && !finishing && selectedMode === 'match' && (
               <MatchMode deck={selectedDeck} onFinish={handleFinish} />
             )}
             
-            {view === 'playing' && selectedMode === 'written' && (
+            {view === 'playing' && !finishing && selectedMode === 'written' && (
               <WrittenMode deck={selectedDeck} onFinish={handleFinish} />
             )}
           </>
