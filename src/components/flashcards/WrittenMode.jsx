@@ -23,7 +23,8 @@ export default function WrittenMode({ deck, onFinish }) {
     e.preventDefault();
     if (!inputValue.trim() || status !== 'typing') return;
 
-    const isMatch = inputValue.trim().toLowerCase() === currentCard.term.toLowerCase();
+    const cleanString = (str) => str.trim().toLowerCase().replace(/[.,!?]/g, '');
+    const isMatch = cleanString(inputValue) === cleanString(currentCard.term);
     
     // Save to SRS
     await updateFlashcardProgress(currentCard.id, isMatch ? 2 : 0);
