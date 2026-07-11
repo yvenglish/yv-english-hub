@@ -179,9 +179,14 @@ export function AuthProvider({ children }) {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        repetitions = data.repetitions || 0;
-        interval = data.interval || 0;
-        easeFactor = data.easeFactor || 2.5;
+        repetitions = Number(data.repetitions);
+        if (isNaN(repetitions)) repetitions = 0;
+        
+        interval = Number(data.interval);
+        if (isNaN(interval)) interval = 0;
+        
+        easeFactor = Number(data.easeFactor);
+        if (isNaN(easeFactor)) easeFactor = 2.5;
       }
 
       if (score === 0) {
@@ -195,15 +200,19 @@ export function AuthProvider({ children }) {
           interval = 2; // Acertou -> aparece em 2 dias
         } else {
           interval = Math.round(interval * easeFactor);
+          if (isNaN(interval) || interval < 1) interval = 1;
         }
         
         easeFactor = easeFactor + (0.1 - (3 - score) * (0.08 + (3 - score) * 0.02));
+        if (isNaN(easeFactor)) easeFactor = 2.5;
         if (easeFactor < 1.3) easeFactor = 1.3;
       }
 
       const nextDate = new Date();
       if (score > 0) {
-        nextDate.setDate(nextDate.getDate() + interval);
+        let daysToAdd = Number(interval);
+        if (isNaN(daysToAdd)) daysToAdd = 1;
+        nextDate.setDate(nextDate.getDate() + daysToAdd);
       }
       const nextReviewDate = nextDate.toISOString().split('T')[0];
 
