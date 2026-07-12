@@ -8,6 +8,7 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
   const [flippedVocab, setFlippedVocab] = useState({});
   const [answers, setAnswers] = useState({});
   const [showGoalModal, setShowGoalModal] = useState(false);
+  const [localStreak, setLocalStreak] = useState(null);
   
   const audioRef = useRef(null);
   const videoRef = useRef(null);
@@ -18,9 +19,9 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
 
   const handleSubmit = async () => {
     if (userData) {
-      const { streakGoalCompleted } = await recordStudy(7); // Conta 7 pontos simbólicos para garantir o streak diário
-      if (streakGoalCompleted) {
-         // Optionally could show a specific modal, but keeping it simple here
+      const { newStreak } = await recordStudy(7); // Conta 7 pontos simbólicos para garantir o streak diário
+      if (newStreak !== undefined) {
+        setLocalStreak(newStreak);
       }
     }
     setShowGoalModal(true);
@@ -35,7 +36,7 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
             <span style={{ fontSize: '5rem', display: 'block', margin: '0 auto 15px', animation: 'bounce 1s infinite' }}>🎉</span>
             <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: '#A78BFA', marginBottom: 15, lineHeight: 1.1 }}>Excellent!</h2>
             <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: 10 }}>Suas respostas foram enviadas com sucesso para a Teacher Yas.</p>
-            <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: 30 }}>Você está em um streak de <strong>{userData?.currentStreak || 0} dias</strong>. Continue assim!</p>
+            <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: 30 }}>Você está em um streak de <strong>{localStreak ?? userData?.currentStreak ?? 0} dias</strong>. Continue assim!</p>
             <button onClick={() => setShowGoalModal(false)} style={{ padding: '16px 28px', background: '#A78BFA', color: '#0d071a', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1.1rem', width: '100%', cursor: 'pointer', transition: '0.2s' }}>Fechar</button>
           </div>
         </div>

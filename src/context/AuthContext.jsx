@@ -130,7 +130,7 @@ export function AuthProvider({ children }) {
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData({ ...userData, ...updates });
 
-    return { goalJustReached, streakGoalCompleted };
+    return { goalJustReached, streakGoalCompleted, newStreak };
   };
 
   const setStreakGoal = async (goal) => {
