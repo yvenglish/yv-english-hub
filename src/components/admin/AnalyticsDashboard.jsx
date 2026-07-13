@@ -48,7 +48,19 @@ export default function AnalyticsDashboard({ students, globalAssignments }) {
 
   const filteredData = analyticsData
     .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => b.completionRate - a.completionRate);
+    .sort((a, b) => {
+      if (b.completionRate !== a.completionRate) {
+        return b.completionRate - a.completionRate;
+      }
+      const streakA = a.currentStreak || 0;
+      const streakB = b.currentStreak || 0;
+      if (streakB !== streakA) {
+        return streakB - streakA;
+      }
+      const daysA = a.daysSinceLogin === -1 ? Infinity : a.daysSinceLogin;
+      const daysB = b.daysSinceLogin === -1 ? Infinity : b.daysSinceLogin;
+      return daysA - daysB;
+    });
 
   return (
     <section>
