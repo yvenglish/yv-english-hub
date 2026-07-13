@@ -288,7 +288,7 @@ export default function StudentHub() {
             <small>Revisão com algoritmo de repetição</small>
           </button>
           
-          <button className="feature-card" onClick={() => window.open('https://yvenglish.github.io/The-Fluency-Times/', '_blank')}>
+          <button className="feature-card" onClick={() => window.open('https://the-fluency-times.vercel.app/', '_blank')}>
             <span className="feature-icon" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <span>🗞️</span>
               <span style={{ fontSize: '0.65rem', background: 'rgba(200, 136, 58, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--amber)', fontWeight: 800 }}>NEWS</span>
