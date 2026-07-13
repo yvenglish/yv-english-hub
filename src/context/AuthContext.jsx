@@ -128,7 +128,7 @@ export function AuthProvider({ children }) {
     };
 
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
-    setUserData({ ...userData, ...updates });
+    setUserData(prev => ({ ...prev, ...updates }));
 
     return { goalJustReached, streakGoalCompleted, newStreak };
   };
@@ -141,7 +141,7 @@ export function AuthProvider({ children }) {
       lastStreakDate: null
     };
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
-    setUserData({ ...userData, ...updates });
+    setUserData(prev => ({ ...prev, ...updates }));
   };
 
   const toggleLibraryFavorite = async (episodeId) => {
@@ -152,7 +152,7 @@ export function AuthProvider({ children }) {
       : [...currentFavs, episodeId];
     
     await setDoc(doc(db, 'users', currentUser.uid), { libraryFavorites: newFavs }, { merge: true });
-    setUserData({ ...userData, libraryFavorites: newFavs });
+    setUserData(prev => ({ ...prev, libraryFavorites: newFavs }));
   };
 
   const toggleLibraryProgress = async (episodeId) => {
@@ -163,7 +163,7 @@ export function AuthProvider({ children }) {
       : [...currentProg, episodeId];
     
     await setDoc(doc(db, 'users', currentUser.uid), { libraryProgress: newProg }, { merge: true });
-    setUserData({ ...userData, libraryProgress: newProg });
+    setUserData(prev => ({ ...prev, libraryProgress: newProg }));
   };
 
   const updateFlashcardProgress = async (wordId, score) => {
