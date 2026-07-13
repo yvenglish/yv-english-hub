@@ -461,6 +461,76 @@ export default function AdminHub() {
   };
 
   // Vocabulary CRUD Functions
+  const handleImportVocabJSON = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (!Array.isArray(data)) throw new Error("JSON deve ser uma array.");
+        if (!window.confirm(`Importar ${data.length} flashcards?`)) return;
+        setLoading(true);
+        for (const item of data) {
+          if (item.term && item.translation) {
+            await addDoc(collection(db, 'vocabulary_global'), {
+              term: item.term,
+              translation: item.translation,
+              imageUrl: item.imageUrl || '',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+          }
+        }
+        fetchVocabWords();
+        alert("Importação concluída com sucesso!");
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao ler JSON: " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = null;
+  };
+
+  const handleImportDailyJSON = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (!Array.isArray(data)) throw new Error("JSON deve ser uma array.");
+        if (!window.confirm(`Importar ${data.length} dailies?`)) return;
+        setLoading(true);
+        for (const item of data) {
+          if (item.title && item.content) {
+            await addDoc(collection(db, 'daily_bank'), {
+              title: item.title,
+              tags: item.tags || '',
+              learningGoal: item.learningGoal || '',
+              content: item.content,
+              questions: item.questions || [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+          }
+        }
+        fetchDailyBank();
+        alert("Importação concluída com sucesso!");
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao ler JSON: " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = null;
+  };
+
   const handleSaveWord = async () => {
     if (!wordTerm || !wordTranslation) return alert('Preencha termo e tradução!');
     setLoading(true);
@@ -990,7 +1060,15 @@ export default function AdminHub() {
             {dailySubTab === 'bank' && (
               <div>
                 <div style={{ padding: 20, border: editingBankItem ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
-                  <h3>{editingBankItem ? '✏️ Editando Exercício' : '+ Criar Exercício no Banco'}</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3>{editingBankItem ? '✏️ Editando Exercício' : '+ Criar Exercício no Banco'}</h3>
+                    {!editingBankItem && (
+                      <div style={{ position: 'relative' }}>
+                        <input type="file" id="importDailyJSON" accept=".json" onChange={handleImportDailyJSON} style={{ display: 'none' }} />
+                        <button onClick={() => document.getElementById('importDailyJSON').click()} style={{ background: 'var(--amber)', color: '#fff', padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>Importar JSON</button>
+                      </div>
+                    )}
+                  </div>
                   <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
                     <div style={{ display: 'flex', gap: 15 }}>
                       <input type="text" value={dailyTitle} onChange={e => setDailyTitle(e.target.value)} placeholder="Título" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
@@ -1127,7 +1205,15 @@ export default function AdminHub() {
             {vocabSubTab === 'words' && (
               <div>
                 <div style={{ padding: 20, border: editingWord ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
-                  <h3>{editingWord ? '✏️ Editando Palavra' : '+ Nova Palavra no Banco'}</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3>{editingWord ? '✏️ Editando Palavra' : '+ Nova Palavra no Banco'}</h3>
+                    {!editingWord && (
+                      <div style={{ position: 'relative' }}>
+                        <input type="file" id="importVocabJSON" accept=".json" onChange={handleImportVocabJSON} style={{ display: 'none' }} />
+                        <button onClick={() => document.getElementById('importVocabJSON').click()} style={{ background: 'var(--amber)', color: '#fff', padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>Importar JSON</button>
+                      </div>
+                    )}
+                  </div>
                   <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
                     <div className="admin-flex-row">
                       <input type="text" value={wordTerm} onChange={e => setWordTerm(e.target.value)} placeholder="Termo em Inglês (ex: Apple)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
