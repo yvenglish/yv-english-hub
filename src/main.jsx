@@ -6,6 +6,8 @@ import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { registerSW } from 'virtual:pwa-register'
 
+console.log('YV English Hub - v1.0.1');
+
 // Auto update service worker immediately when a new version is detected
 const updateSW = registerSW({
   onNeedRefresh() {
