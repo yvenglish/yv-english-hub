@@ -312,6 +312,14 @@ export default function Navbar() {
                   style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', color: 'var(--text)', padding: '8px 15px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '0.9rem' }}
                 >👤 Minha Conta
               </button>
+              <button 
+                  onClick={() => {
+                    navigate('/glossary');
+                    setShowMenu(false);
+                  }} 
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', color: 'var(--text)', padding: '8px 15px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '0.9rem' }}
+                >📖 Meu Glossário
+              </button>
               <button onClick={toggleTheme} style={{ width: '100%', padding: '12px 20px', background: 'transparent', border: 'none', color: 'var(--text)', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.95rem' }}>
                 {theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
               </button>
@@ -340,6 +348,7 @@ export default function Navbar() {
         }}>Semanas</a>
         <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>Flashcards</NavLink>
         <NavLink to="/library" onClick={() => setShowMenu(false)}>Biblioteca</NavLink>
+        <NavLink to="/glossary" onClick={() => setShowMenu(false)}>Glossário</NavLink>
         
         {/* Mobile Search Bar */}
         <div style={{ position: 'relative', margin: '15px 20px' }} ref={mobileSearchRef}>

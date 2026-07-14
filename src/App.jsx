@@ -11,6 +11,7 @@ const AdminHub = React.lazy(() => import('./pages/AdminHub'));
 const Flashcards = React.lazy(() => import('./pages/Flashcards'));
 const Account = React.lazy(() => import('./pages/Account'));
 const Library = React.lazy(() => import('./pages/Library'));
+const Glossary = React.lazy(() => import('./pages/Glossary'));
 
 function PrivateRoute({ children, requireMaster }) {
   const { currentUser, userData } = useAuth();
@@ -72,6 +73,7 @@ function App() {
             <Route path="/" element={<StudentHub />} />
             <Route path="/flashcards" element={<Flashcards />} />
             <Route path="/library" element={<Library />} />
+            <Route path="/glossary" element={<Glossary />} />
           </Route>
 
           <Route path="/admin" element={<PrivateRoute requireMaster><AdminHub /></PrivateRoute>} />
