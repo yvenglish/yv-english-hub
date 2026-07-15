@@ -95,6 +95,7 @@ export default function WrittenMode({ deck, onFinish }) {
             onChange={e => setInputValue(e.target.value)}
             disabled={status !== 'typing'}
             placeholder="Digite em inglês..."
+            enterKeyHint="go"
             style={{ 
               width: '100%', padding: '16px', borderRadius: 12, 
               border: '2px solid var(--line)', fontSize: '1.2rem', textAlign: 'center',
@@ -104,7 +105,7 @@ export default function WrittenMode({ deck, onFinish }) {
           />
           
           {status === 'typing' ? (
-            <button type="submit" style={{ padding: '16px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
+            <button type="submit" onClick={handleSubmit} onTouchEnd={(e) => { e.preventDefault(); handleSubmit(e); }} style={{ padding: '16px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
               Verificar
             </button>
           ) : (
@@ -114,7 +115,7 @@ export default function WrittenMode({ deck, onFinish }) {
                   A resposta correta é: <span style={{ fontSize: '1.2rem', display: 'block', marginTop: 5 }}>{currentCard.term}</span>
                 </div>
               )}
-              <button type="button" onClick={handleNext} style={{ width: '100%', padding: '16px', background: status === 'correct' ? '#2D7158' : '#9D2828', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
+              <button type="button" onClick={handleNext} onTouchEnd={(e) => { e.preventDefault(); handleNext(); }} style={{ width: '100%', padding: '16px', background: status === 'correct' ? '#2D7158' : '#9D2828', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
                 Continuar →
               </button>
             </div>
