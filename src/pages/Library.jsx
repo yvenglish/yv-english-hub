@@ -71,7 +71,7 @@ export default function Library() {
     });
 
     const priority = ["bad habits", "rapunzel", "introduc", "dua lipa", "communication", "toy story 5", "23 verbos"];
-    result = result.map(ep => {
+    result = result.reverse().map(ep => {
       const title = (ep.title || '').toLowerCase();
       let idx = priority.findIndex(p => title.includes(p));
       return { ...ep, _priorityIdx: idx === -1 ? 999 : idx };
