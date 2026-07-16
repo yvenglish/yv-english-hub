@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, getDocs, query, where, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import LibraryAdminTab from '../components/admin/LibraryAdminTab';
+import VoiceLabAdminTab from '../components/admin/VoiceLabAdminTab';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import './AdminHub.css';
 
@@ -837,9 +838,9 @@ export default function AdminHub() {
         )}
 
         <div className="admin-main-tabs">
-          {['analytics', 'students', 'weeks', 'daily', 'vocabulary', 'library'].map(tab => (
+          {['analytics', 'students', 'weeks', 'daily', 'vocabulary', 'library', 'voice-lab'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 20px', whiteSpace: 'nowrap', borderRadius: 999, border: activeTab === tab ? 'none' : '1px solid var(--line)', background: activeTab === tab ? 'var(--plum)' : 'transparent', color: activeTab === tab ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: 800, textTransform: 'capitalize' }}>
-              {tab === 'analytics' ? 'Analytics' : tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : 'Vocabulário Global'}
+              {tab === 'analytics' ? 'Analytics' : tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : tab === 'voice-lab' ? 'Voice Lab' : 'Vocabulário Global'}
             </button>
           ))}
         </div>
@@ -1521,6 +1522,7 @@ export default function AdminHub() {
         )}
 
         {activeTab === 'library' && <LibraryAdminTab setLoading={setLoading} />}
+        {activeTab === 'voice-lab' && <VoiceLabAdminTab setLoading={setLoading} />}
       </main>
 
       {/* Daily Conflict Modal */}

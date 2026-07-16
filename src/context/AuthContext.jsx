@@ -166,6 +166,32 @@ export function AuthProvider({ children }) {
     setUserData(prev => ({ ...prev, libraryProgress: newProg }));
   };
 
+  const recordVoiceLabProgress = async (challengeId) => {
+    if (!currentUser || !userData) return;
+    const currentProg = userData.voiceLabProgress || [];
+    if (currentProg.includes(challengeId)) return; // Already completed
+
+    const newProg = [...currentProg, challengeId];
+    const badges = userData.badges || [];
+    let newBadges = [...badges];
+    let earnedBadge = false;
+
+    if (newProg.length === 1 && !badges.includes('voice_lab_first')) {
+      newBadges.push('voice_lab_first');
+      earnedBadge = true;
+    }
+
+    const updates = { 
+      voiceLabProgress: newProg,
+      badges: newBadges
+    };
+
+    await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
+    setUserData(prev => ({ ...prev, ...updates }));
+
+    return { earnedBadge };
+  };
+
   const updateFlashcardProgress = async (wordId, score) => {
     if (!currentUser) return;
     
@@ -255,6 +281,7 @@ export function AuthProvider({ children }) {
     recordStudy,
     toggleLibraryFavorite,
     toggleLibraryProgress,
+    recordVoiceLabProgress,
     updateFlashcardProgress,
     getDueFlashcards,
     setStreakGoal

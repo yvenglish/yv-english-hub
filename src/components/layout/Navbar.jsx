@@ -18,6 +18,7 @@ export default function Navbar() {
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLibraryHovered, setIsLibraryHovered] = useState(false);
   const [searchData, setSearchData] = useState(null);
   const searchRef = useRef(null);
   const mobileSearchRef = useRef(null);
@@ -162,30 +163,65 @@ export default function Navbar() {
             )}
           </NavLink>
 
-          <NavLink 
-            to="/library"
-            style={({ isActive }) => ({
-              textDecoration: 'none',
-              color: isActive ? 'var(--amber)' : '#ffffff',
-              fontWeight: 500,
-              fontSize: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              position: 'relative',
-              height: '100%',
-              whiteSpace: 'nowrap'
-            })}
+          <div 
+            style={{ position: 'relative', height: '100%', display: 'flex', alignItems: 'center' }}
+            onMouseEnter={() => setIsLibraryHovered(true)}
+            onMouseLeave={() => setIsLibraryHovered(false)}
           >
-            {({ isActive }) => (
-              <>
-                Biblioteca
-                {isActive && (
-                  <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--amber)', borderRadius: '3px 3px 0 0' }} />
-                )}
-              </>
+            <div
+              style={{
+                textDecoration: 'none',
+                color: (location.pathname === '/library' || location.pathname === '/voice-lab') ? 'var(--amber)' : '#ffffff',
+                fontWeight: 500,
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                position: 'relative',
+                height: '100%',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer'
+              }}
+              onClick={() => navigate('/library')}
+            >
+              Biblioteca ▾
+              {(location.pathname === '/library' || location.pathname === '/voice-lab') && (
+                <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--amber)', borderRadius: '3px 3px 0 0' }} />
+              )}
+            </div>
+            
+            {isLibraryHovered && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'var(--hero-c)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 16,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                padding: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                zIndex: 100,
+                minWidth: '160px',
+                marginTop: '-5px'
+              }}>
+                <NavLink to="/library" style={{ textDecoration: 'none' }} onClick={() => setIsLibraryHovered(false)}>
+                  <div style={{ padding: '10px 16px', color: '#fff', borderRadius: 8, background: location.pathname === '/library' ? 'rgba(255,255,255,0.1)' : 'transparent', transition: '0.2s', cursor: 'pointer', fontWeight: 500 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = location.pathname === '/library' ? 'rgba(255,255,255,0.1)' : 'transparent'}>
+                    Input Library
+                  </div>
+                </NavLink>
+                <NavLink to="/voice-lab" style={{ textDecoration: 'none' }} onClick={() => setIsLibraryHovered(false)}>
+                  <div style={{ padding: '10px 16px', color: '#fff', borderRadius: 8, background: location.pathname === '/voice-lab' ? 'rgba(255,255,255,0.1)' : 'transparent', transition: '0.2s', cursor: 'pointer', fontWeight: 500, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = location.pathname === '/voice-lab' ? 'rgba(255,255,255,0.1)' : 'transparent'}>
+                    Voice Lab
+                    <span style={{ fontSize: '0.65rem', background: 'var(--plum)', padding: '2px 6px', borderRadius: 8, fontWeight: 'bold' }}>NOVO</span>
+                  </div>
+                </NavLink>
+              </div>
             )}
-          </NavLink>
+          </div>
         </div>
       </div>
 
@@ -347,7 +383,8 @@ export default function Navbar() {
           setShowMenu(false);
         }}>Semanas</a>
         <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>Flashcards</NavLink>
-        <NavLink to="/library" onClick={() => setShowMenu(false)}>Biblioteca</NavLink>
+        <NavLink to="/library" onClick={() => setShowMenu(false)}>Input Library</NavLink>
+        <NavLink to="/voice-lab" onClick={() => setShowMenu(false)}>Voice Lab</NavLink>
         <NavLink to="/glossary" onClick={() => setShowMenu(false)}>Glossário</NavLink>
         
         {/* Mobile Search Bar */}

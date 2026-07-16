@@ -107,6 +107,27 @@ export default function Account() {
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
 
+          {/* Badges / Conquistas */}
+          <div>
+            <h3 style={{ margin: '0 0 20px', color: 'var(--text)', fontSize: '1.2rem' }}>Minhas Conquistas</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 15 }}>
+              <div style={{ background: 'var(--bg)', padding: 15, borderRadius: 16, textAlign: 'center', border: '1px solid var(--line)', opacity: (userData?.badges || []).includes('voice_lab_first') ? 1 : 0.4 }}>
+                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10 }}>🎙️</span>
+                <strong style={{ fontSize: '0.8rem', color: 'var(--purple)', display: 'block' }}>Voice Lab</strong>
+                <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>1º Desafio</span>
+              </div>
+              
+              {/* Espaço para futuros badges */}
+              <div style={{ background: 'var(--bg)', padding: 15, borderRadius: 16, textAlign: 'center', border: '1px dashed var(--line)', opacity: 0.3 }}>
+                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10, filter: 'grayscale(1)' }}>🔥</span>
+                <strong style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block' }}>Ofensiva</strong>
+                <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Em breve</span>
+              </div>
+            </div>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
+
           {/* Actions */}
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button 
