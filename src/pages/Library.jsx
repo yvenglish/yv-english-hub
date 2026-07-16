@@ -70,8 +70,15 @@ export default function Library() {
       return ep.level === filter;
     });
 
+    // Sort chronologically (newest first) for items that don't match the hardcoded priority
+    result.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+
     const priority = ["bad habits", "rapunzel", "introduc", "dua lipa", "communication", "toy story 5", "23 verbos"];
-    result = result.reverse().map(ep => {
+    result = result.map(ep => {
       const title = (ep.title || '').toLowerCase();
       let idx = priority.findIndex(p => title.includes(p));
       return { ...ep, _priorityIdx: idx === -1 ? 999 : idx };
