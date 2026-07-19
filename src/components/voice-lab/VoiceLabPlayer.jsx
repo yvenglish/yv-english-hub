@@ -266,7 +266,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
                   <p style={{ color: '#ff4757', fontWeight: 'bold', margin: 0 }}>Gravando...</p>
                   <button 
                     onClick={stopRecording}
-                    style={{ background: 'var(--text)', color: 'var(--bg)', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}
+                    style={{ background: '#ffffff', color: '#0d071a', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}
                   >
                     Parar e Comparar
                   </button>
