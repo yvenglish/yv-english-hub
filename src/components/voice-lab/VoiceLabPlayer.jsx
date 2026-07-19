@@ -173,10 +173,11 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
           <video 
             ref={originalAudioRef} 
             src={currentLine.audioUrl} 
+            poster={challenge.coverImageUrl}
             onPlay={() => setIsPlayingOrig(true)}
             onPause={() => setIsPlayingOrig(false)}
             onEnded={() => setIsPlayingOrig(false)}
-            style={{ width: '100%', maxHeight: 350, borderRadius: 16, background: '#000', marginBottom: 10, display: (status === 'step1_listen' || status === 'step4_compare') ? 'block' : 'none' }}
+            style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'contain', background: 'transparent', marginBottom: 10, display: (status === 'step1_listen' || status === 'step4_compare') ? 'block' : 'none' }}
             controls={false}
           />
         ) : (
@@ -216,7 +217,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
             
             <button 
               onClick={() => setStatus('step2_reveal')}
-              style={{ background: 'var(--text)', color: 'var(--bg)', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', marginTop: 20 }}
+              style={{ background: '#ffffff', color: '#0d071a', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', marginTop: 20 }}
             >
               Próximo: Ver o texto em Inglês →
             </button>
@@ -234,7 +235,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
             
             <button 
               onClick={() => setStatus('step3_record')}
-              style={{ background: 'var(--text)', color: 'var(--bg)', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}
+              style={{ background: '#ffffff', color: '#0d071a', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}
             >
               Próximo: Gravar minha voz →
             </button>
