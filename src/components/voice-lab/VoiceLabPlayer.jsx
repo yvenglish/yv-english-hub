@@ -351,13 +351,13 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
                 <h3 style={{ textAlign: 'center', color: '#fff', margin: '0 0 20px' }}>Como você avalia sua repetição?</h3>
                 <div style={{ display: 'flex', gap: 15, justifyContent: 'center' }}>
                   <button onClick={() => handleAssessment('red')} style={{ flex: 1, padding: '15px', background: 'rgba(255, 71, 87, 0.1)', border: '1px solid #ff4757', color: '#ff4757', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}>
-                    🔴 Tentar Novamente
+                    🔴 Bad
                   </button>
                   <button onClick={() => handleAssessment('yellow')} style={{ flex: 1, padding: '15px', background: 'rgba(255, 165, 2, 0.1)', border: '1px solid #ffa502', color: '#ffa502', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}>
-                    🟡 Quase Lá
+                    🟡 Okay
                   </button>
                   <button onClick={() => handleAssessment('green')} style={{ flex: 1, padding: '15px', background: 'rgba(46, 213, 115, 0.1)', border: '1px solid #2ed573', color: '#2ed573', borderRadius: 12, fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }}>
-                    🟢 Mandou Bem!
+                    🟢 Amazing
                   </button>
                 </div>
               </div>
