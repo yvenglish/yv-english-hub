@@ -233,12 +233,20 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
               </h2>
             </div>
             
-            <button 
-              onClick={() => setStatus('step3_record')}
-              style={{ background: '#ffffff', color: '#0d071a', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              Próximo: Gravar minha voz →
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+              <button 
+                onClick={() => setStatus('step3_record')}
+                style={{ background: '#ffffff', color: '#0d071a', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                Próximo: Gravar minha voz →
+              </button>
+              <button 
+                onClick={() => setStatus('step1_listen')}
+                style={{ background: 'transparent', border: 'none', color: 'var(--muted)', fontSize: '0.95rem', cursor: 'pointer', padding: '10px' }}
+              >
+                ← Voltar
+              </button>
+            </div>
           </div>
         )}
 
@@ -254,12 +262,20 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
 
             <div style={{ background: 'var(--paper)', padding: 30, borderRadius: 20, border: '1px solid var(--line)', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
               {!isRecording ? (
-                <button 
-                  onClick={startRecording}
-                  style={{ background: '#ff4757', color: '#fff', border: 'none', padding: '20px 40px', borderRadius: 99, fontSize: '1.3rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', gap: 10, alignItems: 'center', boxShadow: '0 10px 20px rgba(255, 71, 87, 0.3)' }}
-                >
-                  🎙️ Gravar Minha Voz
-                </button>
+                <>
+                  <button 
+                    onClick={startRecording}
+                    style={{ background: '#ff4757', color: '#fff', border: 'none', padding: '20px 40px', borderRadius: 99, fontSize: '1.3rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', gap: 10, alignItems: 'center', boxShadow: '0 10px 20px rgba(255, 71, 87, 0.3)' }}
+                  >
+                    🎙️ Gravar Minha Voz
+                  </button>
+                  <button 
+                    onClick={() => setStatus('step2_reveal')}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--muted)', fontSize: '0.95rem', cursor: 'pointer', marginTop: 10, padding: '10px' }}
+                  >
+                    ← Voltar
+                  </button>
+                </>
               ) : (
                 <>
                   <div className="recording-pulse" style={{ fontSize: '4rem', animation: 'pulse 1.5s infinite' }}>🎙️</div>
