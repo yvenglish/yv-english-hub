@@ -7,8 +7,10 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
   const lines = challenge.lines || [];
   const [currentIndex, setCurrentIndex] = useState(0);
   
-  // Status: 'step1_listen', 'step2_reveal', 'step3_record', 'step4_compare', 'finished'
-  const [status, setStatus] = useState('step1_listen');
+  // Status: 'listen', 'record', 'compare', 'finished'
+  const [status, setStatus] = useState('listen');
+  const [showTranscription, setShowTranscription] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
   
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlobUrl, setRecordedBlobUrl] = useState(null);
@@ -26,7 +28,9 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
 
   useEffect(() => {
     // Reset state when line changes
-    setStatus('step1_listen');
+    setStatus('listen');
+    setShowTranscription(false);
+    setShowTranslation(false);
     setRecordedBlobUrl(null);
     setPlaybackRate(1);
     setIsPlayingOrig(false);
@@ -53,7 +57,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
         setRecordedBlobUrl(url);
-        setStatus('step4_compare'); // Auto advance to compare
+        setStatus('compare'); // Auto advance to compare
         stream.getTracks().forEach(track => track.stop()); // release microphone
       };
 
@@ -75,7 +79,9 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
   const handleAssessment = (color) => {
     if (color === 'red') {
       // Retry line
-      setStatus('step1_listen');
+      setStatus('listen');
+      setShowTranscription(false);
+      setShowTranslation(false);
       setRecordedBlobUrl(null);
     } else {
       // Advance
@@ -139,10 +145,9 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
   const baseProgress = (currentIndex / totalLines) * 100;
   
   let stepMultiplier = 0;
-  if (status === 'step1_listen') stepMultiplier = 0.25;
-  if (status === 'step2_reveal') stepMultiplier = 0.50;
-  if (status === 'step3_record') stepMultiplier = 0.75;
-  if (status === 'step4_compare') stepMultiplier = 1.0;
+  if (status === 'listen') stepMultiplier = 0.33;
+  if (status === 'record') stepMultiplier = 0.66;
+  if (status === 'compare') stepMultiplier = 1.0;
 
   const stepProgress = (1 / totalLines) * 100 * stepMultiplier;
   const currentProgress = baseProgress + stepProgress;
@@ -177,7 +182,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
             onPlay={() => setIsPlayingOrig(true)}
             onPause={() => setIsPlayingOrig(false)}
             onEnded={() => setIsPlayingOrig(false)}
-            style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'contain', background: 'transparent', marginBottom: 10, display: (status === 'step1_listen' || status === 'step4_compare') ? 'block' : 'none' }}
+            style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'contain', background: 'transparent', marginBottom: 10, display: (status === 'listen' || status === 'compare') ? 'block' : 'none' }}
             controls={false}
           />
         ) : (
@@ -190,15 +195,57 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
           />
         )}
 
-        {/* Step 1: Listen */}
-        {status === 'step1_listen' && (
+        {/* Step 1: Listen & Reveal */}
+        {status === 'listen' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 30, alignItems: 'center' }}>
             
-            <div style={{ width: '100%', background: 'var(--paper)', padding: 30, borderRadius: 20, border: '1px solid var(--line)', textAlign: 'center' }}>
-              <p style={{ color: 'var(--muted)', fontSize: '1.2rem', fontStyle: 'italic', margin: 0 }}>
-                "{currentLine.translation}"
-              </p>
-            </div>
+            {!showTranscription ? (
+              <button 
+                onClick={() => setShowTranscription(true)}
+                style={{ 
+                  width: '100%', background: 'linear-gradient(135deg, rgba(138, 124, 255, 0.05), rgba(138, 124, 255, 0.15))', 
+                  padding: '40px 20px', borderRadius: 20, border: '1px dashed var(--purple)', 
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20,
+                  cursor: 'pointer', transition: 'all 0.3s'
+                }}
+                className="transcription-btn"
+              >
+                <div style={{ display: 'flex', gap: 6, height: 30, alignItems: 'center' }}>
+                   <span className="wave-bar" style={{ animationDelay: '0s' }}></span>
+                   <span className="wave-bar" style={{ animationDelay: '0.2s' }}></span>
+                   <span className="wave-bar" style={{ animationDelay: '0.4s' }}></span>
+                   <span className="wave-bar" style={{ animationDelay: '0.1s' }}></span>
+                   <span className="wave-bar" style={{ animationDelay: '0.3s' }}></span>
+                </div>
+                <span style={{ color: 'var(--purple)', fontSize: '1.2rem', fontWeight: 'bold' }}>Transcription</span>
+                <style>{`
+                  .transcription-btn:hover { background: rgba(138, 124, 255, 0.2) !important; border-style: solid !important; }
+                  .wave-bar { display: inline-block; width: 4px; background: var(--purple); border-radius: 4px; animation: waveform 1.2s ease-in-out infinite; }
+                  @keyframes waveform { 0%, 100% { height: 10px; opacity: 0.5; } 50% { height: 30px; opacity: 1; } }
+                `}</style>
+              </button>
+            ) : (
+              <div style={{ width: '100%', background: 'var(--bg)', padding: 40, borderRadius: 20, border: '2px dashed var(--purple)', textAlign: 'center', position: 'relative' }}>
+                <h2 style={{ fontSize: '2.2rem', color: '#fff', margin: 0, fontFamily: '"Playfair Display", serif' }}>
+                  {currentLine.originalText}
+                </h2>
+                
+                {!showTranslation ? (
+                  <button 
+                    onClick={() => setShowTranslation(true)}
+                    style={{ marginTop: 30, background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '10px 25px', borderRadius: 99, cursor: 'pointer', fontWeight: 'bold' }}
+                  >
+                    Translate
+                  </button>
+                ) : (
+                  <div style={{ marginTop: 30, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
+                    <p style={{ color: 'var(--muted)', fontSize: '1.2rem', fontStyle: 'italic', margin: 0 }}>
+                      "{currentLine.translation}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: 15, alignItems: 'center', justifyContent: 'center' }}>
               <button 
@@ -216,42 +263,16 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
             </div>
             
             <button 
-              onClick={() => setStatus('step2_reveal')}
-              style={{ background: '#ffffff', color: '#0d071a', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', marginTop: 20 }}
+              onClick={() => setStatus('record')}
+              style={{ background: '#ffffff', color: '#0d071a', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', marginTop: 10 }}
             >
-              Próximo: Ver o texto em Inglês →
+              Próximo: Gravar minha voz →
             </button>
           </div>
         )}
 
-        {/* Step 2: Reveal English Text */}
-        {status === 'step2_reveal' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 30, alignItems: 'center' }}>
-            <div style={{ width: '100%', background: 'var(--bg)', padding: 40, borderRadius: 20, border: '2px dashed var(--purple)', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '2.2rem', color: '#fff', margin: 0, fontFamily: '"Playfair Display", serif' }}>
-                {currentLine.originalText}
-              </h2>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
-              <button 
-                onClick={() => setStatus('step3_record')}
-                style={{ background: '#ffffff', color: '#0d071a', border: 'none', padding: '15px 40px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer' }}
-              >
-                Próximo: Gravar minha voz →
-              </button>
-              <button 
-                onClick={() => setStatus('step1_listen')}
-                style={{ background: 'transparent', border: 'none', color: 'var(--muted)', fontSize: '0.95rem', cursor: 'pointer', padding: '10px' }}
-              >
-                ← Voltar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Record */}
-        {status === 'step3_record' && (
+        {/* Step 2: Record */}
+        {status === 'record' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 30, alignItems: 'center' }}>
             
             <div style={{ width: '100%', background: 'var(--bg)', padding: 40, borderRadius: 20, border: '2px dashed var(--line)', textAlign: 'center', opacity: isRecording ? 0.2 : 1, filter: isRecording ? 'blur(8px)' : 'none', transition: 'all 0.3s' }}>
@@ -270,7 +291,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
                     🎙️ Gravar Minha Voz
                   </button>
                   <button 
-                    onClick={() => setStatus('step2_reveal')}
+                    onClick={() => setStatus('listen')}
                     style={{ background: 'transparent', border: 'none', color: 'var(--muted)', fontSize: '0.95rem', cursor: 'pointer', marginTop: 10, padding: '10px' }}
                   >
                     ← Voltar
@@ -299,8 +320,8 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
           </div>
         )}
 
-        {/* Step 4: Compare */}
-        {status === 'step4_compare' && (
+        {/* Step 3: Compare */}
+        {status === 'compare' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 30, alignItems: 'center' }}>
             <div style={{ width: '100%', background: 'var(--bg)', padding: 30, borderRadius: 20, border: '1px solid var(--line)', textAlign: 'center' }}>
               <h2 style={{ fontSize: '1.8rem', color: '#fff', margin: 0, fontFamily: '"Playfair Display", serif' }}>
