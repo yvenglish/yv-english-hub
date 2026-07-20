@@ -227,7 +227,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
               </div>
 
               <div className="admin-form-group" style={{ marginBottom: 0 }}>
-                <label>Mídia da Frase (.mp3, .mp4)</label>
+                <label>Mídia da Frase (.mp3, .m4a, .mp4)</label>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                   <input type="file" accept="audio/*,video/mp4" onChange={e => updateLine(line.id, 'audioFile', e.target.files[0])} style={{ flex: 1 }} />
                   {line.audioUrl && !line.audioFile && (
