@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function VoiceLabPlayer({ challenge, onBack }) {
   const { recordVoiceLabProgress } = useAuth();
+  const navigate = useNavigate();
   
   const lines = challenge.lines || [];
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -131,9 +133,22 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
         <p style={{ color: 'var(--muted)', fontSize: '1.1rem', marginBottom: 40 }}>
           Você completou o desafio <strong>{challenge.title}</strong> e treinou sua pronúncia. Ótimo trabalho!
         </p>
-        <button onClick={onBack} style={{ padding: '14px 40px', borderRadius: 99, background: 'var(--purple)', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
-          Voltar para a Biblioteca
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 15, alignItems: 'center' }}>
+          {challenge.linkedLibraryEpId && (
+            <button 
+              onClick={() => navigate('/library', { state: { openEpisodeId: challenge.linkedLibraryEpId } })}
+              style={{ padding: '14px 40px', borderRadius: 99, background: 'var(--amber)', color: '#000', fontSize: '1.1rem', fontWeight: 'bold', border: 'none', cursor: 'pointer', width: '100%', maxWidth: 400 }}
+            >
+              Estudar Episódio Completo →
+            </button>
+          )}
+          <button 
+            onClick={onBack} 
+            style={{ padding: '14px 40px', borderRadius: 99, background: challenge.linkedLibraryEpId ? 'transparent' : 'var(--purple)', color: challenge.linkedLibraryEpId ? 'var(--muted)' : '#fff', border: challenge.linkedLibraryEpId ? '1px solid var(--line)' : 'none', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', width: '100%', maxWidth: 400 }}
+          >
+            Voltar para o Voice Lab
+          </button>
+        </div>
       </div>
     );
   }

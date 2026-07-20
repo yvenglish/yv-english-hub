@@ -14,8 +14,10 @@ export default function VoiceLabAdminTab({ setLoading }) {
   const [tags, setTags] = useState('');
   const [coverImage, setCoverImage] = useState(null);
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [linkedLibraryEpId, setLinkedLibraryEpId] = useState('');
   
   const [lines, setLines] = useState([]); 
+  const [libraryEpisodes, setLibraryEpisodes] = useState([]);
 
   const loadChallenges = async () => {
     setLoading(true);
@@ -29,8 +31,16 @@ export default function VoiceLabAdminTab({ setLoading }) {
     setLoading(false);
   };
 
+  const loadLibraryEpisodes = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'library_episodes'));
+      setLibraryEpisodes(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.createdAt?.localeCompare(a.createdAt)));
+    } catch (err) {}
+  };
+
   useEffect(() => {
     loadChallenges();
+    loadLibraryEpisodes();
   }, []);
 
   const handleEdit = (challenge) => {
@@ -40,6 +50,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
     setLevel(challenge.level || 'Easy Peasy');
     setTags((challenge.tags || []).join(', '));
     setCoverImageUrl(challenge.coverImageUrl || '');
+    setLinkedLibraryEpId(challenge.linkedLibraryEpId || '');
     setCoverImage(null);
     setLines(challenge.lines || []);
   };
@@ -51,6 +62,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
     setLevel('Easy Peasy');
     setTags('');
     setCoverImageUrl('');
+    setLinkedLibraryEpId('');
     setCoverImage(null);
     setLines([]);
   };
@@ -102,6 +114,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
         level,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
         coverImageUrl: finalCoverUrl,
+        linkedLibraryEpId,
         lines: finalLines,
         updatedAt: new Date().toISOString()
       };
@@ -194,10 +207,20 @@ export default function VoiceLabAdminTab({ setLoading }) {
             <input type="text" value={tags} onChange={e => setTags(e.target.value)} placeholder="Ex: Everyday, Movies, Vocabulary" />
           </div>
           <div className="admin-form-group">
-            <label>Capa (Opcional)</label>
-            <input type="file" accept="image/*" onChange={e => setCoverImage(e.target.files[0])} />
-            {coverImageUrl && !coverImage && <a href={coverImageUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--amber)', marginTop: 5, display: 'inline-block' }}>Ver Capa Atual</a>}
+            <label>Linkar com Episódio da Biblioteca (Opcional)</label>
+            <select value={linkedLibraryEpId} onChange={e => setLinkedLibraryEpId(e.target.value)}>
+              <option value="">Nenhum (Avulso)</option>
+              {libraryEpisodes.map(ep => (
+                <option key={ep.id} value={ep.id}>{ep.title}</option>
+              ))}
+            </select>
           </div>
+        </div>
+
+        <div className="admin-form-group">
+          <label>Capa (Opcional)</label>
+          <input type="file" accept="image/*" onChange={e => setCoverImage(e.target.files[0])} />
+          {coverImageUrl && !coverImage && <a href={coverImageUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.8rem', color: 'var(--amber)', marginTop: 5, display: 'inline-block' }}>Ver Capa Atual</a>}
         </div>
 
         <hr style={{ border: 'none', borderTop: '1px solid var(--line)', margin: '30px 0' }} />
