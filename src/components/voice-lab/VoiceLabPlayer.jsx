@@ -213,7 +213,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
             onPlay={() => setIsPlayingOrig(true)}
             onPause={() => setIsPlayingOrig(false)}
             onEnded={() => setIsPlayingOrig(false)}
-            style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'contain', background: 'transparent', marginBottom: 10, display: (status === 'listen' || status === 'compare') ? 'block' : 'none' }}
+            style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'contain', background: 'transparent', marginBottom: 10, display: status === 'listen' ? 'block' : 'none' }}
             controls={false}
           />
         ) : (
