@@ -48,7 +48,22 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      
+      // Attempt to find a supported mime type for the recorder
+      let mimeType = 'audio/webm';
+      if (typeof MediaRecorder.isTypeSupported === 'function') {
+        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/mp4';
+        }
+      }
+      
+      try {
+        mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
+      } catch (e) {
+        // Fallback for older Safari that doesn't support options or specific mime types
+        mediaRecorderRef.current = new MediaRecorder(stream);
+      }
+      
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -56,7 +71,8 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const actualMimeType = mediaRecorderRef.current.mimeType || mimeType;
+        const blob = new Blob(audioChunksRef.current, { type: actualMimeType });
         const url = URL.createObjectURL(blob);
         setRecordedBlobUrl(url);
         setStatus('compare'); // Auto advance to compare
