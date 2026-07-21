@@ -205,25 +205,37 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 30 }}>
         
         {/* Hidden Audio/Video elements */}
+        {/* Media elements (Video or Image + Audio) */}
         {currentLine.audioUrl?.includes('.mp4') ? (
           <video 
             ref={originalAudioRef} 
             src={currentLine.audioUrl} 
             poster={challenge.coverImageUrl}
+            playsInline
+            preload="metadata"
             onPlay={() => setIsPlayingOrig(true)}
             onPause={() => setIsPlayingOrig(false)}
             onEnded={() => setIsPlayingOrig(false)}
-            style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'contain', background: 'transparent', marginBottom: 10, display: status === 'listen' ? 'block' : 'none' }}
+            style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'cover', background: 'transparent', marginBottom: 10, display: status === 'listen' ? 'block' : 'none' }}
             controls={false}
           />
         ) : (
-          <audio 
-            ref={originalAudioRef} 
-            src={currentLine.audioUrl} 
-            onPlay={() => setIsPlayingOrig(true)}
-            onPause={() => setIsPlayingOrig(false)}
-            onEnded={() => setIsPlayingOrig(false)}
-          />
+          <>
+            {challenge.coverImageUrl && (
+              <img 
+                src={challenge.coverImageUrl} 
+                alt={challenge.title}
+                style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'cover', marginBottom: 10, display: status === 'listen' ? 'block' : 'none' }}
+              />
+            )}
+            <audio 
+              ref={originalAudioRef} 
+              src={currentLine.audioUrl} 
+              onPlay={() => setIsPlayingOrig(true)}
+              onPause={() => setIsPlayingOrig(false)}
+              onEnded={() => setIsPlayingOrig(false)}
+            />
+          </>
         )}
 
         {/* Step 1: Listen & Reveal */}
