@@ -213,7 +213,7 @@ export default function LibraryAdminTab({ setLoading }) {
               <div style={{ display: 'grid', gap: 15 }}>
                 <div><label>Resumo (Inglês)</label><textarea rows={3} value={summaryEn} onChange={e=>setSummaryEn(e.target.value)} style={inputStyle} /></div>
                 <div><label>Resumo (Português)</label><textarea rows={3} value={summaryPt} onChange={e=>setSummaryPt(e.target.value)} style={inputStyle} /></div>
-                <div><label>Transcrição (pode pular se for link ou vídeo simples)</label><textarea rows={6} value={transcript} onChange={e=>setTranscript(e.target.value)} style={inputStyle} /></div>
+                <div><label>Transcrição (pode pular se for link ou vídeo simples)</label><textarea rows={20} value={transcript} onChange={e=>setTranscript(e.target.value)} style={{ ...inputStyle, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }} /></div>
               </div>
             </div>
 
