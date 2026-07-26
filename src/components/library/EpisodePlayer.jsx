@@ -229,12 +229,59 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
             <>
               <div style={{ height: 1, background: 'var(--line)', margin: '10px 0' }} />
               <div>
-                <p style={{ fontSize: '0.75rem', color: '#C2824D', textTransform: 'uppercase', fontWeight: 900, margin: '0 0 8px', letterSpacing: '0.1em' }}>
-                  TRANSCRIPT
+                <p style={{ fontSize: '0.75rem', color: '#C2824D', textTransform: 'uppercase', fontWeight: 900, margin: '0 0 16px', letterSpacing: '0.1em' }}>
+                  TRANSCRIPT (SCREENPLAY FORMAT)
                 </p>
-                <div style={{ background: '#FAFAFA', border: '1px solid #E2E8F0', borderRadius: 24, padding: 40 }}>
-                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, color: '#334155', fontSize: '1.05rem', maxHeight: 500, overflowY: 'auto' }}>
-                    {typeof episode.transcript === 'string' ? episode.transcript : episode.transcript.en || JSON.stringify(episode.transcript)}
+                <div style={{ background: '#fdfdfc', border: '1px solid #E2E8F0', borderRadius: 8, padding: '40px 20px', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.02)' }}>
+                  <div className="screenplay-container" style={{ 
+                    fontFamily: '"Courier New", Courier, monospace', 
+                    color: '#000', 
+                    fontSize: '1.1rem', 
+                    lineHeight: 1.5, 
+                    maxHeight: 600, 
+                    overflowY: 'auto',
+                    maxWidth: 700,
+                    margin: '0 auto',
+                    padding: '0 10px'
+                  }}>
+                    {(() => {
+                      const text = typeof episode.transcript === 'string' ? episode.transcript : (episode.transcript.en || '');
+                      if (!text) return null;
+                      return text.split('\n').map((line, idx) => {
+                        if (!line.trim()) return <div key={idx} style={{ height: 16 }} />;
+                        
+                        const colonIndex = line.indexOf(':');
+                        if (colonIndex > 0 && colonIndex < 35) {
+                          const character = line.substring(0, colonIndex).trim();
+                          const dialogue = line.substring(colonIndex + 1).trim();
+                          
+                          return (
+                            <div key={idx} style={{ marginBottom: 16 }}>
+                              <div style={{ textAlign: 'center', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 2 }}>
+                                {character}
+                              </div>
+                              <div style={{ width: '80%', margin: '0 auto' }}>
+                                {dialogue}
+                              </div>
+                            </div>
+                          );
+                        }
+                        
+                        if (line.trim().startsWith('(') || line.trim().startsWith('[')) {
+                          return (
+                            <div key={idx} style={{ textAlign: 'center', fontStyle: 'italic', marginBottom: 16, color: '#475569' }}>
+                              {line.trim()}
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div key={idx} style={{ marginBottom: 16, textTransform: (line === line.toUpperCase() && line.match(/[A-Z]/)) ? 'uppercase' : 'none' }}>
+                            {line.trim()}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               </div>
