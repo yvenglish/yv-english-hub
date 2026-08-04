@@ -57,28 +57,27 @@ export default function AdminHub() {
   const [conflictData, setConflictData] = useState(null);
 
   // Vocabulary State
-  const [vocabSubTab, setVocabSubTab] = useState('words'); // 'words', 'decks', 'assign'
-  
+  const [vocabSubTab, setVocabSubTab] = useState('words'); // words, decks, assign
   const [vocabWords, setVocabWords] = useState([]);
-  const [vocabWordSearch, setVocabWordSearch] = useState('');
+  const [decks, setDecks] = useState([]);
   const [editingWord, setEditingWord] = useState(null);
   const [wordTerm, setWordTerm] = useState('');
   const [wordTranslation, setWordTranslation] = useState('');
   const [wordImage, setWordImage] = useState('');
-  
-  const [decks, setDecks] = useState([]);
-  const [deckWordSearch, setDeckWordSearch] = useState('');
+  const [wordTags, setWordTags] = useState('');
+  const [vocabWordSearch, setVocabWordSearch] = useState('');
   const [editingDeck, setEditingDeck] = useState(null);
   const [deckTitle, setDeckTitle] = useState('');
   const [deckDescription, setDeckDescription] = useState('');
-  const [deckWordIds, setDeckWordIds] = useState([]); 
-  
-  const [assignWordSearch, setAssignWordSearch] = useState('');
+  const [deckIcon, setDeckIcon] = useState('');
+  const [deckWordIds, setDeckWordIds] = useState([]);
+  const [deckWordSearch, setDeckWordSearch] = useState('');
   const [vocabAssignStudents, setVocabAssignStudents] = useState([]);
   const [vocabAssignType, setVocabAssignType] = useState('deck');
   const [vocabAssignDeckId, setVocabAssignDeckId] = useState('');
   const [vocabAssignWordIds, setVocabAssignWordIds] = useState([]);
 
+  const [assignWordSearch, setAssignWordSearch] = useState('');
   const [studentVocabAssignments, setStudentVocabAssignments] = useState([]);
   const [allVocabAssignments, setAllVocabAssignments] = useState([]);
   const [profileVocabAssignments, setProfileVocabAssignments] = useState([]);
@@ -536,10 +535,16 @@ export default function AdminHub() {
     if (!wordTerm || !wordTranslation) return alert('Preencha termo e tradução!');
     setLoading(true);
     try {
-      const payload = { term: wordTerm, translation: wordTranslation, imageUrl: wordImage, updatedAt: new Date().toISOString() };
+      const payload = { 
+        term: wordTerm, 
+        translation: wordTranslation, 
+        imageUrl: wordImage, 
+        tags: wordTags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
+        updatedAt: new Date().toISOString() 
+      };
       if (editingWord) await updateDoc(doc(db, 'vocabulary_global', editingWord.id), payload);
       else await addDoc(collection(db, 'vocabulary_global'), { ...payload, createdAt: new Date().toISOString() });
-      setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage('');
+      setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags('');
       fetchVocabWords();
     } catch (e) { console.error(e); alert('Erro ao salvar.'); }
     setLoading(false);
@@ -555,10 +560,16 @@ export default function AdminHub() {
     if (!deckTitle || deckWordIds.length === 0) return alert('Preencha o título e adicione pelo menos 1 palavra!');
     setLoading(true);
     try {
-      const payload = { title: deckTitle, description: deckDescription, wordIds: deckWordIds, updatedAt: new Date().toISOString() };
+      const payload = { 
+        title: deckTitle, 
+        description: deckDescription, 
+        icon: deckIcon,
+        wordIds: deckWordIds, 
+        updatedAt: new Date().toISOString() 
+      };
       if (editingDeck) await updateDoc(doc(db, 'decks', editingDeck.id), payload);
       else await addDoc(collection(db, 'decks'), { ...payload, createdAt: new Date().toISOString() });
-      setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]);
+      setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon('');
       fetchDecks();
     } catch (e) { console.error(e); alert('Erro ao salvar deck.'); }
     setLoading(false);
@@ -1215,33 +1226,47 @@ export default function AdminHub() {
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
-                    <div className="admin-flex-row">
-                      <input type="text" value={wordTerm} onChange={e => setWordTerm(e.target.value)} placeholder="Termo em Inglês (ex: Apple)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
-                      <input type="text" value={wordTranslation} onChange={e => setWordTranslation(e.target.value)} placeholder="Tradução (ex: Maçã)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                    <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
+                      <div className="admin-flex-row">
+                        <input type="text" value={wordTerm} onChange={e => setWordTerm(e.target.value)} placeholder="Termo em Inglês (ex: Apple)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                        <input type="text" value={wordTranslation} onChange={e => setWordTranslation(e.target.value)} placeholder="Tradução (ex: Maçã)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                      </div>
+                      <div className="admin-flex-row">
+                        <input type="text" value={wordTags} onChange={e => setWordTags(e.target.value)} placeholder="Tags separadas por vírgula (ex: clothes, travel)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                        <input type="text" value={wordImage} onChange={e => setWordImage(e.target.value)} placeholder="Link da Imagem (opcional)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <button disabled={loading} onClick={handleSaveWord} style={{ padding: '12px 24px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Salvar</button>
+                        {editingWord && <button onClick={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); }} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, cursor: 'pointer' }}>Cancelar</button>}
+                      </div>
                     </div>
-                    <input type="text" value={wordImage} onChange={e => setWordImage(e.target.value)} placeholder="Link da Imagem (opcional)" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
-                    
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <button disabled={loading} onClick={handleSaveWord} style={{ padding: '12px 24px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Salvar</button>
-                      {editingWord && <button onClick={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); }} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, cursor: 'pointer' }}>Cancelar</button>}
-                    </div>
-                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gap: 14 }}>
-                  <input type="text" placeholder="Buscar palavra no banco..." value={vocabWordSearch} onChange={e => setVocabWordSearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
-                  {vocabWords.filter(w => w.term.toLowerCase().includes(vocabWordSearch.toLowerCase()) || w.translation.toLowerCase().includes(vocabWordSearch.toLowerCase())).map(w => (
+                  <input type="text" placeholder="Buscar palavra no banco (título, tradução ou tag)..." value={vocabWordSearch} onChange={e => setVocabWordSearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
+                  {vocabWords.filter(w => {
+                    const searchLower = vocabWordSearch.toLowerCase().replace('#', '');
+                    const matchesTerm = w.term.toLowerCase().includes(searchLower);
+                    const matchesTrans = w.translation.toLowerCase().includes(searchLower);
+                    const matchesTag = w.tags && w.tags.some(tag => tag.toLowerCase().includes(searchLower));
+                    return matchesTerm || matchesTrans || matchesTag;
+                  }).map(w => (
                     <div key={w.id} className="admin-flex-between" style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
                       <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
                         {w.imageUrl && <img src={w.imageUrl} alt={w.term} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8 }} />}
                         <div>
                           <h3 style={{ margin: '0 0 5px' }}>{w.term}</h3>
                           <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>{w.translation}</p>
+                          {w.tags && w.tags.length > 0 && (
+                            <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
+                              {w.tags.map(tag => <span key={tag} style={{ fontSize: '0.7rem', background: 'var(--bg)', padding: '2px 8px', borderRadius: 99, color: 'var(--muted)' }}>#{tag}</span>)}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => { setEditingWord(w); setWordTerm(w.term); setWordTranslation(w.translation); setWordImage(w.imageUrl || ''); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
+                        <button onClick={() => { setEditingWord(w); setWordTerm(w.term); setWordTranslation(w.translation); setWordImage(w.imageUrl || ''); setWordTags((w.tags || []).join(', ')); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
                         <button onClick={() => handleDeleteWord(w.id)} style={{ background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Excluir</button>
                       </div>
                     </div>
@@ -1255,14 +1280,23 @@ export default function AdminHub() {
                 <div style={{ padding: 20, border: editingDeck ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
                   <h3>{editingDeck ? '✏️ Editando Deck' : '+ Novo Deck'}</h3>
                   <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
-                    <input type="text" value={deckTitle} onChange={e => setDeckTitle(e.target.value)} placeholder="Título do Deck (ex: Body Parts)" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                    <div className="admin-flex-row">
+                      <input type="text" value={deckTitle} onChange={e => setDeckTitle(e.target.value)} placeholder="Título do Deck (ex: Body Parts)" style={{ flex: 2, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                      <input type="text" value={deckIcon} onChange={e => setDeckIcon(e.target.value)} placeholder="Emoji (opcional, ex: 👕)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                    </div>
                     <input type="text" value={deckDescription} onChange={e => setDeckDescription(e.target.value)} placeholder="Descrição (opcional)" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                     
                     <div style={{ padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
                       <h4 style={{ margin: '0 0 10px' }}>Selecionar Palavras ({deckWordIds.length})</h4>
-                      <input type="text" placeholder="Buscar palavra..." value={deckWordSearch} onChange={e => setDeckWordSearch(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 10 }} />
+                      <input type="text" placeholder="Buscar palavra ou tag..." value={deckWordSearch} onChange={e => setDeckWordSearch(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 10 }} />
                       <div style={{ maxHeight: 200, overflowY: 'auto', display: 'grid', gap: 8 }}>
-                        {vocabWords.filter(w => w.term.toLowerCase().includes(deckWordSearch.toLowerCase()) || w.translation.toLowerCase().includes(deckWordSearch.toLowerCase())).map(w => (
+                        {vocabWords.filter(w => {
+                          const searchLower = deckWordSearch.toLowerCase().replace('#', '');
+                          const matchesTerm = w.term.toLowerCase().includes(searchLower);
+                          const matchesTrans = w.translation.toLowerCase().includes(searchLower);
+                          const matchesTag = w.tags && w.tags.some(tag => tag.toLowerCase().includes(searchLower));
+                          return matchesTerm || matchesTrans || matchesTag;
+                        }).map(w => (
                           <label key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                             <input 
                               type="checkbox" 
@@ -1280,7 +1314,7 @@ export default function AdminHub() {
 
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button disabled={loading} onClick={handleSaveDeck} style={{ padding: '12px 24px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Salvar</button>
-                      {editingDeck && <button onClick={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); }} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, cursor: 'pointer' }}>Cancelar</button>}
+                      {editingDeck && <button onClick={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); }} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, cursor: 'pointer' }}>Cancelar</button>}
                     </div>
                   </div>
                 </div>
@@ -1289,11 +1323,11 @@ export default function AdminHub() {
                   {decks.map(d => (
                     <div key={d.id} className="admin-flex-between" style={{ padding: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
                       <div>
-                        <h3 style={{ margin: '0 0 5px' }}>{d.title}</h3>
+                        <h3 style={{ margin: '0 0 5px' }}>{d.icon ? d.icon + ' ' : ''}{d.title}</h3>
                         <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>{d.description} • {d.wordIds?.length || 0} palavras</p>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => { setEditingDeck(d); setDeckTitle(d.title); setDeckDescription(d.description || ''); setDeckWordIds(d.wordIds || []); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
+                        <button onClick={() => { setEditingDeck(d); setDeckTitle(d.title); setDeckDescription(d.description || ''); setDeckIcon(d.icon || ''); setDeckWordIds(d.wordIds || []); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
                         <button onClick={() => handleDeleteDeck(d.id)} style={{ background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Excluir</button>
                       </div>
                     </div>

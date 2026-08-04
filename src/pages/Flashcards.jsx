@@ -225,7 +225,7 @@ export default function Flashcards() {
                         onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-5px)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                       >
-                        <span style={{ fontSize: '2rem', marginBottom: 15 }}>{deck.id === 'daily_review_deck' ? '🔥' : deck.id === 'custom_words_deck' ? '📝' : '🗂️'}</span>
+                        <span style={{ fontSize: '2rem', marginBottom: 15 }}>{deck.id === 'daily_review_deck' ? '🔥' : deck.id === 'custom_words_deck' ? '📝' : (deck.icon || '🗂️')}</span>
                         <h3 style={{ fontSize: '1.4rem', margin: '0 0 10px', color: 'var(--text)' }}>{deck.title}</h3>
                         {deck.description && <p style={{ margin: '0 0 15px', color: 'var(--muted)', fontSize: '0.9rem' }}>{deck.description}</p>}
                         <div style={{ marginTop: 'auto', display: 'inline-block', background: 'var(--cream)', padding: '4px 12px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--plum)' }}>
