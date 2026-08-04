@@ -104,7 +104,7 @@ export function AuthProvider({ children }) {
     newWordsToday += wordsCount;
 
     // Check if goal reached today for the first time
-    if (newWordsToday >= 7 && newStreakDate !== todayStr) {
+    if (newWordsToday >= 3 && newStreakDate !== todayStr) {
       goalJustReached = true;
       newStreakDate = todayStr;
       
