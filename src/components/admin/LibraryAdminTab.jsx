@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../config/firebase';
-import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { EPISODES as STATIC_EPISODES } from '../../data/libraryData';
+import AdminModal from './AdminModal';
 
 export default function LibraryAdminTab({ setLoading }) {
   const [episodes, setEpisodes] = useState([]);
@@ -96,7 +97,6 @@ export default function LibraryAdminTab({ setLoading }) {
       setSummaryEn(''); setSummaryPt(''); setTranscript('');
       setVocabulary([]); setQuestions([]);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const cancelEdit = () => {
@@ -166,9 +166,7 @@ export default function LibraryAdminTab({ setLoading }) {
       </div>
 
       {editingEpisode && (
-        <div style={{ padding: 25, border: '2px solid var(--plum)', borderRadius: 20, background: 'var(--paper)', marginBottom: 30 }}>
-          <h3 style={{ margin: '0 0 20px', color: 'var(--plum)' }}>{editingEpisode === 'new' ? '+ Criar Novo Conteúdo' : '✏️ Editando Conteúdo'}</h3>
-          
+        <AdminModal title={editingEpisode === 'new' ? '+ Criar Novo Conteúdo' : '✏️ Editando Conteúdo'} onClose={cancelEdit}>
           <div style={{ display: 'grid', gap: 20 }}>
             <div style={{ display: 'flex', gap: 15 }}>
               <div style={{ flex: 2 }}><label>Título</label><input type="text" value={title} onChange={e=>setTitle(e.target.value)} style={inputStyle} /></div>
@@ -248,7 +246,7 @@ export default function LibraryAdminTab({ setLoading }) {
               <button onClick={cancelEdit} style={{ padding: '14px 28px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Cancelar</button>
             </div>
           </div>
-        </div>
+        </AdminModal>
       )}
 
       <div style={{ display: 'grid', gap: 15 }}>

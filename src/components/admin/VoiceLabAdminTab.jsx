@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { db, storage } from '../../config/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import AdminModal from './AdminModal';
 
 export default function VoiceLabAdminTab({ setLoading }) {
   const [challenges, setChallenges] = useState([]);
   const [editingChallenge, setEditingChallenge] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -53,6 +55,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
     setLinkedLibraryEpId(challenge.linkedLibraryEpId || '');
     setCoverImage(null);
     setLines(challenge.lines || []);
+    setIsModalOpen(true);
   };
 
   const handleCreateNew = () => {
@@ -65,6 +68,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
     setLinkedLibraryEpId('');
     setCoverImage(null);
     setLines([]);
+    setIsModalOpen(true);
   };
 
   const addLine = () => {
@@ -126,7 +130,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
 
       await setDoc(doc(db, 'voice_lab_challenges', docId), payload, { merge: true });
       alert('Desafio salvo com sucesso!');
-      handleCreateNew();
+      setIsModalOpen(false);
       loadChallenges();
     } catch (err) {
       console.error(err);
@@ -145,28 +149,30 @@ export default function VoiceLabAdminTab({ setLoading }) {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px', alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', alignItems: 'start' }}>
       
-      {/* Sidebar: Lista de Desafios */}
+      {/* Lista de Desafios */}
       <div style={{ background: 'var(--paper)', borderRadius: 16, padding: 20, border: '1px solid var(--line)' }}>
-        <h2 style={{ margin: '0 0 20px', color: 'var(--amber)' }}>Challenges</h2>
-        <button 
-          onClick={handleCreateNew}
-          style={{ width: '100%', padding: '10px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 'bold', marginBottom: 20, cursor: 'pointer' }}
-        >
-          + Novo Desafio
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h2 style={{ margin: 0, color: 'var(--amber)' }}>Challenges</h2>
+          <button 
+            onClick={handleCreateNew}
+            style={{ padding: '10px 20px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            + Novo Desafio
+          </button>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'grid', gap: 10 }}>
           {challenges.map(c => (
-            <div key={c.id} style={{ padding: 12, background: 'var(--bg)', borderRadius: 8, border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={c.id} style={{ padding: 15, background: 'var(--bg)', borderRadius: 12, border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#fff' }}>{c.title}</strong>
-                <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{c.level} • {c.lines?.length || 0} linhas</span>
+                <strong style={{ display: 'block', fontSize: '1rem', color: '#fff', marginBottom: 5 }}>{c.title}</strong>
+                <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>{c.level} • {c.lines?.length || 0} linhas</span>
               </div>
-              <div style={{ display: 'flex', gap: 5 }}>
-                <button onClick={() => handleEdit(c)} style={{ padding: '5px 10px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>✏️</button>
-                <button onClick={() => handleDelete(c.id)} style={{ padding: '5px 10px', background: '#4a1111', color: '#ff6b6b', border: 'none', borderRadius: 4, cursor: 'pointer' }}>🗑️</button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => handleEdit(c)} style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Editar</button>
+                <button onClick={() => handleDelete(c.id)} style={{ padding: '8px 16px', background: '#4a1111', color: '#ff6b6b', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Excluir</button>
               </div>
             </div>
           ))}
@@ -174,11 +180,9 @@ export default function VoiceLabAdminTab({ setLoading }) {
         </div>
       </div>
 
-      {/* Main Content: Form */}
-      <div style={{ background: 'var(--paper)', borderRadius: 16, padding: 30, border: '1px solid var(--line)' }}>
-        <h2 style={{ margin: '0 0 20px', color: 'var(--text)' }}>
-          {editingChallenge ? 'Editar Desafio' : 'Criar Novo Desafio'}
-        </h2>
+      {/* Main Content: Form Modal */}
+      {isModalOpen && (
+        <AdminModal title={editingChallenge ? 'Editar Desafio' : 'Criar Novo Desafio'} onClose={() => setIsModalOpen(false)}>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
           <div className="admin-form-group">
@@ -268,10 +272,11 @@ export default function VoiceLabAdminTab({ setLoading }) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 15 }}>
-          <button onClick={handleCreateNew} style={{ padding: '12px 24px', background: 'transparent', color: '#fff', border: '1px solid var(--line)', borderRadius: 8, cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={() => setIsModalOpen(false)} style={{ padding: '12px 24px', background: 'transparent', color: '#fff', border: '1px solid var(--line)', borderRadius: 8, cursor: 'pointer' }}>Cancelar</button>
           <button onClick={handleSave} style={{ padding: '12px 30px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}>Salvar Desafio</button>
         </div>
-      </div>
+        </AdminModal>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { collection, getDocs, query, where, doc, updateDoc, addDoc, deleteDoc, s
 import LibraryAdminTab from '../components/admin/LibraryAdminTab';
 import VoiceLabAdminTab from '../components/admin/VoiceLabAdminTab';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
+import AdminModal from '../components/admin/AdminModal';
 import './AdminHub.css';
 
 export default function AdminHub() {
@@ -16,6 +17,12 @@ export default function AdminHub() {
   const [studentSearch, setStudentSearch] = useState('');
   const [loading, setLoading] = useState(false);
   
+  // Admin UI Modals
+  const [isWeekModalOpen, setIsWeekModalOpen] = useState(false);
+  const [isDailyModalOpen, setIsDailyModalOpen] = useState(false);
+  const [isWordModalOpen, setIsWordModalOpen] = useState(false);
+  const [isDeckModalOpen, setIsDeckModalOpen] = useState(false);
+
   // Global Data for Dashboard
   const [globalAssignments, setGlobalAssignments] = useState([]);
 
@@ -263,8 +270,7 @@ export default function AdminHub() {
     setWeekYear(week.year || dt.getFullYear().toString());
     setWeekMonth(week.month || (dt.getMonth() + 1).toString());
     setWeekNumber(week.weekNumber || '1');
-    
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsWeekModalOpen(true);
   };
 
   const cancelEditWeek = () => {
@@ -273,6 +279,7 @@ export default function AdminHub() {
     setWeekYear(new Date().getFullYear().toString());
     setWeekMonth((new Date().getMonth() + 1).toString());
     setWeekNumber('1');
+    setIsWeekModalOpen(false);
   };
 
   const handleSaveWeek = async () => {
@@ -310,6 +317,7 @@ export default function AdminHub() {
           await addDoc(collection(db, 'weeks'), { ...payload, createdAt: new Date().toISOString() });
         }
       }
+      setIsWeekModalOpen(false);
       cancelEditWeek();
       fetchWeeks();
     } catch (err) { alert("Erro ao salvar semana."); console.error(err); }
@@ -349,16 +357,16 @@ export default function AdminHub() {
         optD: item.options?.D || '',
         correct: item.correctOption || 'A'
       }]);
-    } else {
       setDailyQuestions([{ question: '', optA: '', optB: '', optC: '', optD: '', correct: 'A' }]);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsDailyModalOpen(true);
   };
 
   const cancelEditBankItem = () => {
     setEditingBankItem(null);
     setDailyTitle(''); setDailyTags(''); setDailyLearningGoal(''); setDailyContent('');
     setDailyQuestions([{ question: '', optA: '', optB: '', optC: '', optD: '', correct: 'A' }]);
+    setIsDailyModalOpen(false);
   };
 
   const handleAddQuestion = () => {
@@ -397,6 +405,7 @@ export default function AdminHub() {
         await addDoc(collection(db, 'daily_bank'), { ...payload, createdAt: new Date().toISOString() });
       }
       cancelEditBankItem();
+      setIsDailyModalOpen(false);
       fetchDailyBank();
     } catch (err) { alert("Erro ao salvar no banco."); console.error(err); }
     setLoading(false);
@@ -545,6 +554,7 @@ export default function AdminHub() {
       if (editingWord) await updateDoc(doc(db, 'vocabulary_global', editingWord.id), payload);
       else await addDoc(collection(db, 'vocabulary_global'), { ...payload, createdAt: new Date().toISOString() });
       setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags('');
+      setIsWordModalOpen(false);
       fetchVocabWords();
     } catch (e) { console.error(e); alert('Erro ao salvar.'); }
     setLoading(false);
@@ -570,6 +580,7 @@ export default function AdminHub() {
       if (editingDeck) await updateDoc(doc(db, 'decks', editingDeck.id), payload);
       else await addDoc(collection(db, 'decks'), { ...payload, createdAt: new Date().toISOString() });
       setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon('');
+      setIsDeckModalOpen(false);
       fetchDecks();
     } catch (e) { console.error(e); alert('Erro ao salvar deck.'); }
     setLoading(false);
@@ -919,10 +930,16 @@ export default function AdminHub() {
 
         {activeTab === 'weeks' && (
           <section>
-            <h2>Semanas de Aula</h2>
-            <div style={{ padding: 20, border: editingWeek ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
-              <h3>{editingWeek ? '✏️ Editando Semana' : '+ Nova Semana'}</h3>
-              <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0 }}>Semanas de Aula</h2>
+              <button onClick={() => { cancelEditWeek(); setIsWeekModalOpen(true); }} style={{ padding: '8px 16px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer' }}>
+                + Nova Semana
+              </button>
+            </div>
+            
+            {isWeekModalOpen && (
+              <AdminModal title={editingWeek ? '✏️ Editando Semana' : '+ Nova Semana'} onClose={() => { cancelEditWeek(); setIsWeekModalOpen(false); }}>
+                <div style={{ display: 'grid', gap: 15 }}>
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                   <select value={weekYear} onChange={e => setWeekYear(e.target.value)} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }}>
                     <option value="2024">2024</option>
@@ -990,12 +1007,14 @@ export default function AdminHub() {
                   </div>
                   <ul>{weekLinks.map((l, i) => <li key={i}>[{l.type === 'recording' ? 'Gravação' : 'Link'}] {l.title} <button onClick={() => handleRemoveLink(i)} style={{ marginLeft: 10, color: 'red', cursor: 'pointer', background: 'none', border: 'none' }}>X</button></li>)}</ul>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button disabled={loading} onClick={handleSaveWeek} style={{ padding: '12px 24px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Salvar</button>
-                  {editingWeek && <button onClick={cancelEditWeek} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, cursor: 'pointer' }}>Cancelar</button>}
                 </div>
-              </div>
-            </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button disabled={loading} onClick={handleSaveWeek} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', width: '100%' }}>
+                    {loading ? 'Salvando...' : 'Salvar Semana'}
+                  </button>
+                </div>
+              </AdminModal>
+            )}
             {/* Year Tabs */}
             <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 10, marginBottom: 15 }}>
               {Object.keys(groupedWeeks).sort((a,b) => b - a).map(yr => (
@@ -1071,17 +1090,19 @@ export default function AdminHub() {
 
             {dailySubTab === 'bank' && (
               <div>
-                <div style={{ padding: 20, border: editingBankItem ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3>{editingBankItem ? '✏️ Editando Exercício' : '+ Criar Exercício no Banco'}</h3>
-                    {!editingBankItem && (
-                      <div style={{ position: 'relative' }}>
-                        <input type="file" id="importDailyJSON" accept=".json" onChange={handleImportDailyJSON} style={{ display: 'none' }} />
-                        <button onClick={() => document.getElementById('importDailyJSON').click()} style={{ background: 'var(--amber)', color: '#fff', padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>Importar JSON</button>
-                      </div>
-                    )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 20 }}>
+                  <div style={{ position: 'relative' }}>
+                    <input type="file" id="importDailyJSON" accept=".json" onChange={handleImportDailyJSON} style={{ display: 'none' }} />
+                    <button onClick={() => document.getElementById('importDailyJSON').click()} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Importar JSON</button>
                   </div>
-                  <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
+                  <button onClick={() => { cancelEditBankItem(); setIsDailyModalOpen(true); }} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                    + Criar Exercício no Banco
+                  </button>
+                </div>
+
+                {isDailyModalOpen && (
+                  <AdminModal title={editingBankItem ? '✏️ Editando Exercício' : '+ Criar Exercício no Banco'} onClose={() => { cancelEditBankItem(); setIsDailyModalOpen(false); }}>
+                  <div style={{ display: 'grid', gap: 15 }}>
                     <div style={{ display: 'flex', gap: 15 }}>
                       <input type="text" value={dailyTitle} onChange={e => setDailyTitle(e.target.value)} placeholder="Título" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                       <input type="text" value={dailyTags} onChange={e => setDailyTags(e.target.value)} placeholder="Tags (ex: to be, past)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
@@ -1118,11 +1139,13 @@ export default function AdminHub() {
                     </div>
 
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button disabled={loading} onClick={handleSaveDailyBank} style={{ padding: '12px 24px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Salvar</button>
-                      {editingBankItem && <button onClick={cancelEditBankItem} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, cursor: 'pointer' }}>Cancelar</button>}
+                      <button disabled={loading} onClick={handleSaveDailyBank} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', width: '100%' }}>
+                        {loading ? 'Salvando...' : 'Salvar Exercício'}
+                      </button>
                     </div>
                   </div>
-                </div>
+                  </AdminModal>
+                )}
 
                 <div style={{ display: 'grid', gap: 14 }}>
                   <input type="text" placeholder="Buscar no banco (título, tag ou objetivo)..." value={dailySearch} onChange={e => setDailySearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
@@ -1216,17 +1239,19 @@ export default function AdminHub() {
 
             {vocabSubTab === 'words' && (
               <div>
-                <div style={{ padding: 20, border: editingWord ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3>{editingWord ? '✏️ Editando Palavra' : '+ Nova Palavra no Banco'}</h3>
-                    {!editingWord && (
-                      <div style={{ position: 'relative' }}>
-                        <input type="file" id="importVocabJSON" accept=".json" onChange={handleImportVocabJSON} style={{ display: 'none' }} />
-                        <button onClick={() => document.getElementById('importVocabJSON').click()} style={{ background: 'var(--amber)', color: '#fff', padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>Importar JSON</button>
-                      </div>
-                    )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 20 }}>
+                  <div style={{ position: 'relative' }}>
+                    <input type="file" id="importVocabJSON" accept=".json" onChange={handleImportVocabJSON} style={{ display: 'none' }} />
+                    <button onClick={() => document.getElementById('importVocabJSON').click()} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Importar JSON</button>
                   </div>
-                    <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
+                  <button onClick={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); setIsWordModalOpen(true); }} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                    + Nova Palavra no Banco
+                  </button>
+                </div>
+
+                {isWordModalOpen && (
+                  <AdminModal title={editingWord ? '✏️ Editando Palavra' : '+ Nova Palavra no Banco'} onClose={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); setIsWordModalOpen(false); }}>
+                    <div style={{ display: 'grid', gap: 15 }}>
                       <div className="admin-flex-row">
                         <input type="text" value={wordTerm} onChange={e => setWordTerm(e.target.value)} placeholder="Termo em Inglês (ex: Apple)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                         <input type="text" value={wordTranslation} onChange={e => setWordTranslation(e.target.value)} placeholder="Tradução (ex: Maçã)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
@@ -1237,11 +1262,13 @@ export default function AdminHub() {
                       </div>
                       
                       <div style={{ display: 'flex', gap: 10 }}>
-                        <button disabled={loading} onClick={handleSaveWord} style={{ padding: '12px 24px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Salvar</button>
-                        {editingWord && <button onClick={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); }} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, cursor: 'pointer' }}>Cancelar</button>}
+                        <button disabled={loading} onClick={handleSaveWord} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', width: '100%' }}>
+                          {loading ? 'Salvando...' : 'Salvar Palavra'}
+                        </button>
                       </div>
                     </div>
-                </div>
+                  </AdminModal>
+                )}
 
                 <div style={{ display: 'grid', gap: 14 }}>
                   <input type="text" placeholder="Buscar palavra no banco (título, tradução ou tag)..." value={vocabWordSearch} onChange={e => setVocabWordSearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 5 }} />
@@ -1266,7 +1293,7 @@ export default function AdminHub() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => { setEditingWord(w); setWordTerm(w.term); setWordTranslation(w.translation); setWordImage(w.imageUrl || ''); setWordTags((w.tags || []).join(', ')); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
+                        <button onClick={() => { setEditingWord(w); setWordTerm(w.term); setWordTranslation(w.translation); setWordImage(w.imageUrl || ''); setWordTags((w.tags || []).join(', ')); setIsWordModalOpen(true); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
                         <button onClick={() => handleDeleteWord(w.id)} style={{ background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Excluir</button>
                       </div>
                     </div>
@@ -1277,9 +1304,14 @@ export default function AdminHub() {
 
             {vocabSubTab === 'decks' && (
               <div>
-                <div style={{ padding: 20, border: editingDeck ? '2px solid var(--plum)' : '1px solid var(--line)', borderRadius: 20, background: 'var(--cream)', marginBottom: 30 }}>
-                  <h3>{editingDeck ? '✏️ Editando Deck' : '+ Novo Deck'}</h3>
-                  <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
+                  <button onClick={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); setIsDeckModalOpen(true); }} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                    + Novo Deck
+                  </button>
+                </div>
+                {isDeckModalOpen && (
+                  <AdminModal title={editingDeck ? '✏️ Editando Deck' : '+ Novo Deck'} onClose={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); setIsDeckModalOpen(false); }}>
+                    <div style={{ display: 'grid', gap: 15 }}>
                     <div className="admin-flex-row">
                       <input type="text" value={deckTitle} onChange={e => setDeckTitle(e.target.value)} placeholder="Título do Deck (ex: Body Parts)" style={{ flex: 2, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                       <input type="text" value={deckIcon} onChange={e => setDeckIcon(e.target.value)} placeholder="Emoji (opcional, ex: 👕)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
@@ -1313,11 +1345,13 @@ export default function AdminHub() {
                     </div>
 
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button disabled={loading} onClick={handleSaveDeck} style={{ padding: '12px 24px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>Salvar</button>
-                      {editingDeck && <button onClick={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); }} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, cursor: 'pointer' }}>Cancelar</button>}
+                      <button disabled={loading} onClick={handleSaveDeck} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer', width: '100%' }}>
+                        {loading ? 'Salvando...' : 'Salvar Deck'}
+                      </button>
                     </div>
                   </div>
-                </div>
+                  </AdminModal>
+                )}
 
                 <div style={{ display: 'grid', gap: 14 }}>
                   {decks.map(d => (
@@ -1327,7 +1361,7 @@ export default function AdminHub() {
                         <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>{d.description} • {d.wordIds?.length || 0} palavras</p>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => { setEditingDeck(d); setDeckTitle(d.title); setDeckDescription(d.description || ''); setDeckIcon(d.icon || ''); setDeckWordIds(d.wordIds || []); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
+                        <button onClick={() => { setEditingDeck(d); setDeckTitle(d.title); setDeckDescription(d.description || ''); setDeckIcon(d.icon || ''); setDeckWordIds(d.wordIds || []); setIsDeckModalOpen(true); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
                         <button onClick={() => handleDeleteDeck(d.id)} style={{ background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Excluir</button>
                       </div>
                     </div>
