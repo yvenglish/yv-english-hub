@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../config/firebase';
-import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arrayUnion } from 'firebase/firestore';
 import { requestNotificationPermission } from '../services/notificationService';
 
 export default function StudentHub() {
@@ -37,6 +37,10 @@ export default function StudentHub() {
   const [activeVideoUrl, setActiveVideoUrl] = useState(null);
   const [streakGoalAchieved, setStreakGoalAchieved] = useState(false);
 
+  // Extra Content State
+  const [extraContents, setExtraContents] = useState([]);
+  const [localCompletedExtras, setLocalCompletedExtras] = useState([]);
+
   const formatDriveUrl = (url) => {
     if (url.includes('drive.google.com') && url.includes('/view')) {
       return url.replace('/view', '/preview').split('?')[0];
@@ -51,12 +55,19 @@ export default function StudentHub() {
       initializedRef.current = true;
       fetchWeeks();
       fetchDailyAssignment();
+      fetchExtraContents();
       
       if ('Notification' in window && Notification.permission === 'default' && userData?.plan !== 'Foundation') {
          setShowNotificationBanner(true);
       }
     }
   }, [currentUser, userData]);
+
+  useEffect(() => {
+    if (userData?.completedExtraContents) {
+      setLocalCompletedExtras(userData.completedExtraContents);
+    }
+  }, [userData]);
 
   const handleEnableNotifications = async () => {
     const success = await requestNotificationPermission(currentUser.uid);
@@ -85,6 +96,24 @@ export default function StudentHub() {
       const fetchedWeeks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       fetchedWeeks.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
       setWeeks(fetchedWeeks);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchExtraContents = async () => {
+    try {
+      const q = query(collection(db, 'extra_contents'), where('assignedTo', 'array-contains-any', [currentUser.uid, 'all']));
+      const snap = await getDocs(q);
+      const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setExtraContents(fetched);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleMarkExtraCompleted = async (contentId) => {
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        completedExtraContents: arrayUnion(contentId)
+      });
+      setLocalCompletedExtras(prev => [...prev, contentId]);
     } catch (err) { console.error(err); }
   };
 
@@ -337,6 +366,61 @@ export default function StudentHub() {
             )}
           </section>
         </section>
+
+        <section className="section-block" id="extraContentSection" style={{ marginTop: 40, borderTop: '1px solid var(--line)', paddingTop: 40 }}>
+          <div className="section-heading">
+            <p>Conteúdo Extra</p>
+            <h2 style={{ fontSize: '1.4rem' }}>Recomendações para você</h2>
+            <span>Podcasts, livros e materiais sugeridos pela teacher.</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 15 }}>
+            {extraContents.length === 0 ? (
+              <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Nenhum material extra recomendado no momento.</p>
+            ) : (
+              extraContents.map(content => (
+                <article key={content.id} style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      {content.image ? (
+                        <img src={content.image} alt={content.title} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid var(--line)' }} />
+                      ) : (
+                        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--muted)', fontSize: '1.2rem', border: '1px solid var(--line)' }}>
+                          📄
+                        </div>
+                      )}
+                      <div>
+                        <h3 style={{ margin: '0 0 4px', fontSize: '1rem', color: 'var(--text)' }}>{content.title}</h3>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                          {content.level} • {content.type}
+                        </span>
+                      </div>
+                    </div>
+                    {localCompletedExtras.includes(content.id) ? (
+                      <span style={{ fontSize: '0.75rem', color: '#2D7158', fontWeight: 'bold', whiteSpace: 'nowrap' }}>✓ Visto</span>
+                    ) : (
+                      <button onClick={() => handleMarkExtraCompleted(content.id)} style={{ background: 'transparent', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 99, fontSize: '0.7rem', cursor: 'pointer', color: 'var(--text)', whiteSpace: 'nowrap' }}>
+                        Marcar Visto
+                      </button>
+                    )}
+                  </div>
+                  
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.5 }}>{content.summary}</p>
+                  
+                  {content.links && content.links.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                      {content.links.map((link, idx) => (
+                        <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" style={{ padding: '6px 12px', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, fontSize: '0.75rem', color: 'var(--text)', textDecoration: 'none', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 5 }}>
+                          ↗ {link.platform}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              ))
+            )}
+          </div>
+        </section>
+
       </main>
 
       {showUpgradeModal && (

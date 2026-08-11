@@ -129,7 +129,18 @@ export default function VoiceLab() {
                 {/* Imagem com Overlay */}
                 <div style={{ position: 'relative', width: '100%', height: 160, background: '#111' }}>
                   {c.coverImageUrl ? (
-                    <img src={c.coverImageUrl} alt={c.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img 
+                      src={c.coverImageUrl} 
+                      alt={c.title} 
+                      loading="lazy" 
+                      onError={(e) => {
+                        e.target.onerror = null; 
+                        e.target.src = '/logocircular.jpeg';
+                        e.target.style.objectFit = 'contain';
+                        e.target.parentElement.style.background = '#fff';
+                      }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
                   ) : (
                     <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, var(--paper), var(--bg))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span style={{ fontSize: '3rem', opacity: 0.2 }}>🎙️</span>

@@ -161,7 +161,18 @@ export default function Library() {
                 {/* Imagem com Overlay */}
                 <div style={{ position: 'relative', width: '100%', height: 160, background: '#333' }}>
                   {ep.imageUrl ? (
-                    <img src={ep.imageUrl} alt={ep.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img 
+                      src={ep.imageUrl} 
+                      alt={ep.title} 
+                      loading="lazy" 
+                      onError={(e) => {
+                        e.target.onerror = null; 
+                        e.target.src = '/logocircular.jpeg';
+                        e.target.style.objectFit = 'contain';
+                        e.target.parentElement.style.background = '#fff';
+                      }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
                   ) : (
                     <div style={{ width: '100%', height: '100%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <img src="/logocircular.jpeg" alt={ep.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />

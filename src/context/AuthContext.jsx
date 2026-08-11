@@ -29,8 +29,9 @@ export function AuthProvider({ children }) {
             return;
           }
 
-          // Streak reset logic
-          const today = new Date();
+          // Streak reset logic with 6-hour offset (giving 30 hours for the previous day)
+          const now = new Date();
+          const today = new Date(now.getTime() - 6 * 60 * 60 * 1000);
           today.setHours(0,0,0,0);
           const todayStr = today.toISOString().split('T')[0];
           
@@ -82,7 +83,8 @@ export function AuthProvider({ children }) {
   const recordStudy = async (wordsCount) => {
     if (!currentUser || !userData) return false;
     
-    const today = new Date();
+    const now = new Date();
+    const today = new Date(now.getTime() - 6 * 60 * 60 * 1000);
     today.setHours(0,0,0,0);
     const todayStr = today.toISOString().split('T')[0];
     
@@ -104,7 +106,7 @@ export function AuthProvider({ children }) {
     newWordsToday += wordsCount;
 
     // Check if goal reached today for the first time
-    if (newWordsToday >= 3 && newStreakDate !== todayStr) {
+    if (newWordsToday >= 1 && newStreakDate !== todayStr) {
       goalJustReached = true;
       newStreakDate = todayStr;
       
@@ -189,6 +191,9 @@ export function AuthProvider({ children }) {
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData(prev => ({ ...prev, ...updates }));
 
+    // Count towards streak
+    await recordStudy(1);
+
     return { earnedBadge };
   };
 
@@ -257,8 +262,9 @@ export function AuthProvider({ children }) {
   const getDueFlashcards = async () => {
     if (!currentUser) return [];
     
-    // Build query for cards due today or earlier
-    const today = new Date();
+    // Build query for cards due today or earlier (using the 6-hour shifted day)
+    const now = new Date();
+    const today = new Date(now.getTime() - 6 * 60 * 60 * 1000);
     today.setHours(0,0,0,0);
     const todayStr = today.toISOString().split('T')[0];
     

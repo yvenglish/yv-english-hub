@@ -5,6 +5,7 @@ import { db } from '../config/firebase';
 import { collection, getDocs, query, where, doc, updateDoc, addDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import LibraryAdminTab from '../components/admin/LibraryAdminTab';
 import VoiceLabAdminTab from '../components/admin/VoiceLabAdminTab';
+import ExtraContentAdminTab from '../components/admin/ExtraContentAdminTab';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import AdminModal from '../components/admin/AdminModal';
 import './AdminHub.css';
@@ -860,9 +861,9 @@ export default function AdminHub() {
         )}
 
         <div className="admin-main-tabs">
-          {['analytics', 'students', 'weeks', 'daily', 'vocabulary', 'library', 'voice-lab'].map(tab => (
+          {['analytics', 'students', 'weeks', 'daily', 'vocabulary', 'library', 'voice-lab', 'extra'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 20px', whiteSpace: 'nowrap', borderRadius: 999, border: activeTab === tab ? 'none' : '1px solid var(--line)', background: activeTab === tab ? 'var(--plum)' : 'transparent', color: activeTab === tab ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: 800, textTransform: 'capitalize' }}>
-              {tab === 'analytics' ? 'Analytics' : tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : tab === 'voice-lab' ? 'Voice Lab' : 'Vocabulário Global'}
+              {tab === 'analytics' ? 'Analytics' : tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : tab === 'voice-lab' ? 'Voice Lab' : tab === 'extra' ? 'Conteúdo Extra' : 'Vocabulário Global'}
             </button>
           ))}
         </div>
@@ -1590,7 +1591,13 @@ export default function AdminHub() {
         )}
 
         {activeTab === 'library' && <LibraryAdminTab setLoading={setLoading} />}
-        {activeTab === 'voice-lab' && <VoiceLabAdminTab setLoading={setLoading} />}
+        {activeTab === 'voice-lab' && (
+          <VoiceLabAdminTab setLoading={setLoading} />
+        )}
+
+        {activeTab === 'extra' && (
+          <ExtraContentAdminTab setLoading={setLoading} students={students} />
+        )}
       </main>
 
       {/* Daily Conflict Modal */}
