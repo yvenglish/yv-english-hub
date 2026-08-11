@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../config/firebase';
-import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arrayUnion } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { requestNotificationPermission } from '../services/notificationService';
 
 export default function StudentHub() {
@@ -108,12 +108,15 @@ export default function StudentHub() {
     } catch (err) { console.error(err); }
   };
 
-  const handleMarkExtraCompleted = async (contentId) => {
+  const handleToggleExtraCompleted = async (contentId) => {
+    const isCompleted = localCompletedExtras.includes(contentId);
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
-        completedExtraContents: arrayUnion(contentId)
+        completedExtraContents: isCompleted ? arrayRemove(contentId) : arrayUnion(contentId)
       });
-      setLocalCompletedExtras(prev => [...prev, contentId]);
+      setLocalCompletedExtras(prev => 
+        isCompleted ? prev.filter(id => id !== contentId) : [...prev, contentId]
+      );
     } catch (err) { console.error(err); }
   };
 
@@ -396,9 +399,11 @@ export default function StudentHub() {
                       </div>
                     </div>
                     {localCompletedExtras.includes(content.id) ? (
-                      <span style={{ fontSize: '0.75rem', color: '#2D7158', fontWeight: 'bold', whiteSpace: 'nowrap' }}>✓ Visto</span>
+                      <button onClick={() => handleToggleExtraCompleted(content.id)} style={{ background: 'transparent', border: '1px solid #2D7158', padding: '4px 10px', borderRadius: 99, fontSize: '0.7rem', cursor: 'pointer', color: '#2D7158', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        ✓ Visto
+                      </button>
                     ) : (
-                      <button onClick={() => handleMarkExtraCompleted(content.id)} style={{ background: 'transparent', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 99, fontSize: '0.7rem', cursor: 'pointer', color: 'var(--text)', whiteSpace: 'nowrap' }}>
+                      <button onClick={() => handleToggleExtraCompleted(content.id)} style={{ background: 'transparent', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 99, fontSize: '0.7rem', cursor: 'pointer', color: 'var(--text)', whiteSpace: 'nowrap' }}>
                         Marcar Visto
                       </button>
                     )}
