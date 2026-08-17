@@ -38,8 +38,12 @@ export function AuthProvider({ children }) {
           const yesterday = new Date(today);
           yesterday.setDate(yesterday.getDate() - 1);
           const yesterdayStr = yesterday.toISOString().split('T')[0];
+          
+          const dayBeforeYesterday = new Date(today);
+          dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
+          const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString().split('T')[0];
 
-          if (data.currentStreak > 0 && data.lastStreakDate !== todayStr && data.lastStreakDate !== yesterdayStr) {
+          if (data.currentStreak > 0 && data.lastStreakDate !== todayStr && data.lastStreakDate !== yesterdayStr && data.lastStreakDate !== dayBeforeYesterdayStr) {
             data.currentStreak = 0;
             // Also reset words for today just in case
             data.wordsStudiedToday = 0;
@@ -91,6 +95,10 @@ export function AuthProvider({ children }) {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    const dayBeforeYesterday = new Date(today);
+    dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
+    const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString().split('T')[0];
 
     let newWordsToday = userData.wordsStudiedToday || 0;
     let newStreak = userData.currentStreak || 0;
@@ -110,7 +118,7 @@ export function AuthProvider({ children }) {
       goalJustReached = true;
       newStreakDate = todayStr;
       
-      if (userData.lastStreakDate === yesterdayStr) {
+      if (userData.lastStreakDate === yesterdayStr || userData.lastStreakDate === dayBeforeYesterdayStr) {
         newStreak += 1;
       } else {
         newStreak = 1;
