@@ -142,7 +142,7 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
                 )}
               </div>
               
-              <div className={isFloating ? "floating-player" : ""} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#000', borderRadius: isFloating ? 0 : 16, overflow: 'hidden', width: '100%', aspectRatio: isFloating ? '' : '16/9' }}>
+              <div className={isFloating ? "floating-player" : ""} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#000', borderRadius: isFloating ? 0 : 16, overflow: 'hidden', width: '100%', aspectRatio: isFloating ? '16/10' : '16/9' }}>
                 {isFloating && (
                    <button className="floating-close-btn" onClick={() => setIsFloating(false)}>×</button>
                 )}
