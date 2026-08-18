@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted, onToggleFavorite, onToggleProgress }) {
   const { userData, recordStudy } = useAuth();
   const [showSummaryPt, setShowSummaryPt] = useState(false);
+  const [isFloating, setIsFloating] = useState(false);
   const [flippedVocab, setFlippedVocab] = useState({});
   const [answers, setAnswers] = useState({});
   const [showGoalModal, setShowGoalModal] = useState(false);
@@ -121,15 +122,30 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
             </div>
 
             {/* Right Card: Player */}
-            <div style={{ background: 'linear-gradient(145deg, #1A112C, #2A1B3D)', padding: 40, borderRadius: 24, color: '#fff', display: 'flex', flexDirection: 'column' }}>
-              <p style={{ fontSize: '0.75rem', color: '#F59E0B', textTransform: 'uppercase', fontWeight: 900, margin: '0 0 8px', letterSpacing: '0.1em' }}>
-                ORIGINAL SOURCE
-              </p>
-              <h3 style={{ fontSize: '2.5rem', fontFamily: '"Playfair Display", serif', margin: '0 0 24px', fontWeight: 800 }}>
-                {episode.hasVideo ? 'Video / Player' : 'Audio Player'}
-              </h3>
+            <div style={{ background: 'linear-gradient(145deg, #1A112C, #2A1B3D)', padding: 40, borderRadius: 24, color: '#fff', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+                <div>
+                  <p style={{ fontSize: '0.75rem', color: '#F59E0B', textTransform: 'uppercase', fontWeight: 900, margin: '0 0 8px', letterSpacing: '0.1em' }}>
+                    ORIGINAL SOURCE
+                  </p>
+                  <h3 style={{ fontSize: '2.5rem', fontFamily: '"Playfair Display", serif', margin: 0, fontWeight: 800 }}>
+                    {episode.hasVideo ? 'Video / Player' : 'Audio Player'}
+                  </h3>
+                </div>
+                {(episode.hasVideo || episode.embed || episode.hasAudio) && (
+                  <button 
+                    onClick={() => setIsFloating(!isFloating)}
+                    style={{ background: isFloating ? '#F59E0B' : 'rgba(255,255,255,0.1)', color: isFloating ? '#000' : '#fff', border: 'none', padding: '8px 16px', borderRadius: 99, fontWeight: 'bold', cursor: 'pointer', transition: '0.2s', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}
+                  >
+                    {isFloating ? '🎬 Exit Theater' : '🎬 Theater Mode'}
+                  </button>
+                )}
+              </div>
               
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#000', borderRadius: 16, overflow: 'hidden', width: '100%', aspectRatio: '16/9' }}>
+              <div className={isFloating ? "floating-player" : ""} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#000', borderRadius: isFloating ? 0 : 16, overflow: 'hidden', width: '100%', aspectRatio: isFloating ? '' : '16/9' }}>
+                {isFloating && (
+                   <button className="floating-close-btn" onClick={() => setIsFloating(false)}>×</button>
+                )}
                 {episode.hasVideo ? (
                   episode.embed ? (
                     <div 
@@ -150,6 +166,9 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
                   </div>
                 ) : null}
               </div>
+
+              {/* Placeholder when floating to maintain layout */}
+              {isFloating && <div style={{ width: '100%', aspectRatio: '16/9', background: 'rgba(0,0,0,0.2)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>Player is pinned.</div>}
             </div>
             
           </div>
