@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { LEVELS } from '../../data/libraryData';
 import { useAuth } from '../../context/AuthContext';
 
@@ -142,30 +142,32 @@ export default function EpisodePlayer({ episode, onBack, isFavorite, isCompleted
                 )}
               </div>
               
-              <div className={isFloating ? "floating-player" : ""} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#000', borderRadius: isFloating ? 0 : 16, overflow: 'hidden', width: '100%', aspectRatio: '16/9' }}>
-                {isFloating && (
-                   <button className="floating-close-btn" onClick={() => setIsFloating(false)}>×</button>
-                )}
-                {episode.hasVideo ? (
-                  episode.embed ? (
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: episode.embed.replace('<iframe', '<iframe style="width: 100%; height: 100%; border: none;"') }} 
-                      style={{ width: '100%', height: '100%' }} 
-                    />
-                  ) : (
-                    <video ref={videoRef} controls src={`/${episode.videoFile}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                  )
-                ) : episode.hasAudio ? (
-                  <div style={{ padding: 30 }}>
-                    <audio ref={audioRef} controls src={`/${episode.audioFile}`} style={{ width: '100%', borderRadius: 99 }} />
-                    <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'center' }}>
-                      <button onClick={() => { if(audioRef.current) audioRef.current.currentTime -= 5 }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '8px 15px', borderRadius: 99, cursor: 'pointer', fontWeight: 'bold' }}>⏪ -5s</button>
-                      <button onClick={() => { if(audioRef.current) audioRef.current.playbackRate = 0.8 }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '8px 15px', borderRadius: 99, cursor: 'pointer', fontWeight: 'bold' }}>0.8x</button>
-                      <button onClick={() => { if(audioRef.current) audioRef.current.playbackRate = 1.0 }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '8px 15px', borderRadius: 99, cursor: 'pointer', fontWeight: 'bold' }}>1.0x</button>
+              {useMemo(() => (
+                <div className={isFloating ? "floating-player" : ""} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', background: '#000', borderRadius: isFloating ? 0 : 16, overflow: 'hidden', width: '100%', aspectRatio: '16/9' }}>
+                  {isFloating && (
+                     <button className="floating-close-btn" onClick={() => setIsFloating(false)}>×</button>
+                  )}
+                  {episode.hasVideo ? (
+                    episode.embed ? (
+                      <div 
+                        dangerouslySetInnerHTML={{ __html: episode.embed.replace('<iframe', '<iframe style="width: 100%; height: 100%; border: none;"') }} 
+                        style={{ width: '100%', height: '100%' }} 
+                      />
+                    ) : (
+                      <video ref={videoRef} controls src={`/${episode.videoFile}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    )
+                  ) : episode.hasAudio ? (
+                    <div style={{ padding: 30 }}>
+                      <audio ref={audioRef} controls src={`/${episode.audioFile}`} style={{ width: '100%', borderRadius: 99 }} />
+                      <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'center' }}>
+                        <button onClick={() => { if(audioRef.current) audioRef.current.currentTime -= 5 }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '8px 15px', borderRadius: 99, cursor: 'pointer', fontWeight: 'bold' }}>⏪ -5s</button>
+                        <button onClick={() => { if(audioRef.current) audioRef.current.playbackRate = 0.8 }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '8px 15px', borderRadius: 99, cursor: 'pointer', fontWeight: 'bold' }}>0.8x</button>
+                        <button onClick={() => { if(audioRef.current) audioRef.current.playbackRate = 1.0 }} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '8px 15px', borderRadius: 99, cursor: 'pointer', fontWeight: 'bold' }}>1.0x</button>
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-              </div>
+                  ) : null}
+                </div>
+              ), [isFloating, episode])}
 
               {/* Placeholder when floating to maintain layout */}
               {isFloating && <div style={{ width: '100%', aspectRatio: '16/9', background: 'rgba(0,0,0,0.2)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>Player is pinned.</div>}
