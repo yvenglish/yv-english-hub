@@ -20,18 +20,32 @@ export default function AnalyticsDashboard({ students, globalAssignments, onSele
       }
 
       // Determine alert status
-      let alertStatus = 'good'; // green
-      let alertMsg = 'Ótimo engajamento';
+      let alertStatus;
+      let alertMsg;
       
-      if (daysSinceLogin > 5 || (totalAssigns > 0 && completionRate < 50)) {
-        alertStatus = 'danger'; // red
-        alertMsg = 'Precisa de atenção';
-      } else if (daysSinceLogin > 2 || (totalAssigns > 0 && completionRate < 70)) {
-        alertStatus = 'warning'; // yellow
-        alertMsg = 'Sinal amarelo';
-      } else if (totalAssigns === 0) {
+      if (totalAssigns === 0) {
         alertStatus = 'neutral';
         alertMsg = 'Sem atividades';
+      } else if (completionRate < 50) {
+        alertStatus = 'danger'; // red
+        alertMsg = 'Precisa de atenção';
+      } else if (completionRate < 70) {
+        alertStatus = 'warning'; // yellow
+        alertMsg = 'Sinal amarelo';
+      } else {
+        alertStatus = 'good'; // green
+        alertMsg = 'Ótimo engajamento';
+      }
+
+      // Rebaixa o sinal se estiver 7 dias ou mais sem login
+      if (daysSinceLogin >= 7 && alertStatus !== 'neutral') {
+        if (alertStatus === 'good') {
+          alertStatus = 'warning';
+          alertMsg = 'Sinal amarelo (7+ dias sem login)';
+        } else if (alertStatus === 'warning') {
+          alertStatus = 'danger';
+          alertMsg = 'Precisa de atenção (7+ dias sem login)';
+        }
       }
 
       return {
