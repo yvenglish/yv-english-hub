@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 
-export default function AnalyticsDashboard({ students, globalAssignments }) {
+export default function AnalyticsDashboard({ students, globalAssignments, onSelectStudent }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const activeStudents = students.filter(s => s.role === 'student' && s.active);
@@ -26,7 +26,7 @@ export default function AnalyticsDashboard({ students, globalAssignments }) {
       if (daysSinceLogin > 5 || (totalAssigns > 0 && completionRate < 50)) {
         alertStatus = 'danger'; // red
         alertMsg = 'Precisa de atenção';
-      } else if (daysSinceLogin > 2 || (totalAssigns > 0 && completionRate < 80)) {
+      } else if (daysSinceLogin > 2 || (totalAssigns > 0 && completionRate < 70)) {
         alertStatus = 'warning'; // yellow
         alertMsg = 'Sinal amarelo';
       } else if (totalAssigns === 0) {
@@ -49,13 +49,13 @@ export default function AnalyticsDashboard({ students, globalAssignments }) {
   const filteredData = analyticsData
     .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
-      if (b.completionRate !== a.completionRate) {
-        return b.completionRate - a.completionRate;
-      }
       const streakA = a.currentStreak || 0;
       const streakB = b.currentStreak || 0;
       if (streakB !== streakA) {
         return streakB - streakA;
+      }
+      if (b.completionRate !== a.completionRate) {
+        return b.completionRate - a.completionRate;
       }
       const daysA = a.daysSinceLogin === -1 ? Infinity : a.daysSinceLogin;
       const daysB = b.daysSinceLogin === -1 ? Infinity : b.daysSinceLogin;
@@ -65,7 +65,7 @@ export default function AnalyticsDashboard({ students, globalAssignments }) {
   return (
     <section>
       <h2>Dashboard Analytics</h2>
-      <p style={{ color: 'var(--muted)', marginBottom: 20 }}>Visão geral do engajamento dos seus alunos ativos. Alunos com maior taxa de conclusão aparecem no topo.</p>
+      <p style={{ color: 'var(--muted)', marginBottom: 20 }}>Visão geral do engajamento dos seus alunos ativos. Alunos com maior ofensiva (streak) aparecem no topo.</p>
 
       <div style={{ marginBottom: 20 }}>
         <input 
@@ -78,49 +78,55 @@ export default function AnalyticsDashboard({ students, globalAssignments }) {
       </div>
 
       <div style={{ display: 'grid', gap: 15 }}>
-        {filteredData.map(student => {
-          let statusBg = 'var(--paper)';
-          let statusBorder = 'var(--line)';
-          let statusText = 'var(--text)';
-          let statusMuted = 'var(--muted)';
+        {filteredData.map((student, index) => {
+          let dotColor = 'var(--muted)';
           
           if (student.alertStatus === 'danger') {
-            statusBg = '#FDEBEB'; statusBorder = '#9D2828'; statusText = '#7f1d1d'; statusMuted = '#991b1b';
+            dotColor = '#ef4444';
           } else if (student.alertStatus === 'warning') {
-            statusBg = '#FFF8EC'; statusBorder = 'var(--amber)'; statusText = '#92400E'; statusMuted = '#b45309';
+            dotColor = '#f59e0b';
           } else if (student.alertStatus === 'good') {
-            statusBg = '#EAF7F1'; statusBorder = '#2D7158'; statusText = '#134e4a'; statusMuted = '#115e59';
+            dotColor = '#10b981';
           }
 
           return (
-            <div key={student.id} style={{ background: statusBg, border: `1px solid ${statusBorder}`, padding: 20, borderRadius: 16, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center' }}>
+            <div 
+              key={student.id} 
+              onClick={() => onSelectStudent && onSelectStudent(student)}
+              style={{ background: 'var(--paper)', border: '1px solid var(--line)', padding: 20, borderRadius: 16, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', cursor: 'pointer' }}
+            >
               <div style={{ flex: '1 1 200px' }}>
-                <h3 style={{ margin: '0 0 5px', fontSize: '1.2rem', color: statusText }}>{student.name}</h3>
-                <p style={{ margin: 0, color: statusMuted, fontSize: '0.9rem' }}>{student.alertMsg}</p>
+                <h3 style={{ margin: '0 0 5px', fontSize: '1.2rem', color: 'var(--text)' }}>
+                  {index + 1}. {student.name}
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: dotColor, display: 'inline-block' }}></span>
+                  <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.9rem' }}>{student.alertMsg}</p>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: statusMuted, fontWeight: 'bold', textTransform: 'uppercase' }}>Taxa de Conclusão</span>
-                  <strong style={{ fontSize: '1.5rem', color: statusText }}>
+                  <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Taxa de Conclusão</span>
+                  <strong style={{ fontSize: '1.5rem', color: 'var(--text)' }}>
                     {student.totalAssigns > 0 ? `${student.completionRate.toFixed(0)}%` : '-'}
                   </strong>
-                  <div style={{ fontSize: '0.8rem', color: statusMuted }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
                     {student.completedAssigns} de {student.totalAssigns}
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: statusMuted, fontWeight: 'bold', textTransform: 'uppercase' }}>Ofensiva</span>
-                  <strong style={{ fontSize: '1.5rem', color: statusText }}>
+                  <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Ofensiva</span>
+                  <strong style={{ fontSize: '1.5rem', color: 'var(--text)' }}>
                     {student.currentStreak || 0} 🔥
                   </strong>
-                  <div style={{ fontSize: '0.8rem', color: statusMuted }}>Dias seguidos</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Dias seguidos</div>
                 </div>
 
                 <div style={{ textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: statusMuted, fontWeight: 'bold', textTransform: 'uppercase' }}>Último Login</span>
-                  <strong style={{ fontSize: '1.5rem', color: statusText }}>
+                  <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 'bold', textTransform: 'uppercase' }}>Último Login</span>
+                  <strong style={{ fontSize: '1.5rem', color: 'var(--text)' }}>
                     {student.daysSinceLogin === -1 ? 'Nunca' : student.daysSinceLogin === 0 ? 'Hoje' : `Há ${student.daysSinceLogin} dia(s)`}
                   </strong>
                 </div>

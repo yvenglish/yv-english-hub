@@ -869,7 +869,7 @@ export default function AdminHub() {
         </div>
 
         {activeTab === 'analytics' && (
-          <AnalyticsDashboard students={students} globalAssignments={globalAssignments} />
+          <AnalyticsDashboard students={students} globalAssignments={globalAssignments} onSelectStudent={setSelectedStudentProfile} />
         )}
 
         {activeTab === 'students' && (
