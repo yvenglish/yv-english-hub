@@ -73,6 +73,7 @@ export default function AdminHub() {
   const [wordTranslation, setWordTranslation] = useState('');
   const [wordImage, setWordImage] = useState('');
   const [wordTags, setWordTags] = useState('');
+  const [wordSentences, setWordSentences] = useState([]);
   const [vocabWordSearch, setVocabWordSearch] = useState('');
   const [editingDeck, setEditingDeck] = useState(null);
   const [deckTitle, setDeckTitle] = useState('');
@@ -550,11 +551,12 @@ export default function AdminHub() {
         translation: wordTranslation, 
         imageUrl: wordImage, 
         tags: wordTags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
+          sentences: wordSentences,
         updatedAt: new Date().toISOString() 
       };
       if (editingWord) await updateDoc(doc(db, 'vocabulary_global', editingWord.id), payload);
       else await addDoc(collection(db, 'vocabulary_global'), { ...payload, createdAt: new Date().toISOString() });
-      setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags('');
+      setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); setWordSentences([]);
       setIsWordModalOpen(false);
       fetchVocabWords();
     } catch (e) { console.error(e); alert('Erro ao salvar.'); }
@@ -899,8 +901,8 @@ export default function AdminHub() {
                     <input type="number" min="1" max="31" placeholder="Ex: 5" value={editingStudent.dueDate || ''} onChange={e => setEditingStudent({...editingStudent, dueDate: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <button onClick={async () => { await updateDoc(doc(db, 'users', editingStudent.id), { name: editingStudent.name, plan: editingStudent.plan, active: editingStudent.active, dueDate: editingStudent.dueDate || null }); setEditingStudent(null); fetchStudents(); }} style={{ padding: '10px 20px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <button onClick={async () => { await updateDoc(doc(db, 'users', editingStudent.id), { name: editingStudent.name, plan: editingStudent.plan, active: editingStudent.active, dueDate: editingStudent.dueDate || null }); setEditingStudent(null); fetchStudents(); }} style={{ padding: '10px 20px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>
                       <button onClick={() => setEditingStudent(null)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 8, cursor: 'pointer' }}>Cancelar</button>
                     </div>
                     <button onClick={() => setStudentToDelete(editingStudent)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Excluir Aluno</button>
@@ -1245,13 +1247,13 @@ export default function AdminHub() {
                     <input type="file" id="importVocabJSON" accept=".json" onChange={handleImportVocabJSON} style={{ display: 'none' }} />
                     <button onClick={() => document.getElementById('importVocabJSON').click()} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Importar JSON</button>
                   </div>
-                  <button onClick={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); setIsWordModalOpen(true); }} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                  <button onClick={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); setWordSentences([]); setIsWordModalOpen(true); }} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
                     + Nova Palavra no Banco
                   </button>
                 </div>
 
                 {isWordModalOpen && (
-                  <AdminModal title={editingWord ? '✏️ Editando Palavra' : '+ Nova Palavra no Banco'} onClose={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); setIsWordModalOpen(false); }}>
+                  <AdminModal title={editingWord ? '✏️ Editando Palavra' : '+ Nova Palavra no Banco'} onClose={() => { setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); setWordSentences([]); setIsWordModalOpen(false); }}>
                     <div style={{ display: 'grid', gap: 15 }}>
                       <div className="admin-flex-row">
                         <input type="text" value={wordTerm} onChange={e => setWordTerm(e.target.value)} placeholder="Termo em Inglês (ex: Apple)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
@@ -1260,6 +1262,18 @@ export default function AdminHub() {
                       <div className="admin-flex-row">
                         <input type="text" value={wordTags} onChange={e => setWordTags(e.target.value)} placeholder="Tags separadas por vírgula (ex: clothes, travel)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                         <input type="text" value={wordImage} onChange={e => setWordImage(e.target.value)} placeholder="Link da Imagem (opcional)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                      </div>
+
+                      <div style={{ display: 'grid', gap: 10, marginTop: 10, marginBottom: 15 }}>
+                        <h4 style={{ margin: 0 }}>Frases de Exemplo (Opcional)</h4>
+                        {wordSentences.map((s, idx) => (
+                          <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                            <input type="text" value={s.english} onChange={e => { const newS = [...wordSentences]; newS[idx].english = e.target.value; setWordSentences(newS); }} placeholder="Frase em Inglês" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                            <input type="text" value={s.portuguese} onChange={e => { const newS = [...wordSentences]; newS[idx].portuguese = e.target.value; setWordSentences(newS); }} placeholder="Tradução (opcional)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                            <button onClick={() => setWordSentences(wordSentences.filter((_, i) => i !== idx))} style={{ background: '#ff4d4d', color: 'white', padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer', minWidth: '40px' }}>X</button>
+                          </div>
+                        ))}
+                        <button onClick={() => setWordSentences([...wordSentences, { english: '', portuguese: '' }])} style={{ padding: '8px', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>+ Adicionar Frase</button>
                       </div>
                       
                       <div style={{ display: 'flex', gap: 10 }}>
@@ -1294,7 +1308,7 @@ export default function AdminHub() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => { setEditingWord(w); setWordTerm(w.term); setWordTranslation(w.translation); setWordImage(w.imageUrl || ''); setWordTags((w.tags || []).join(', ')); setIsWordModalOpen(true); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
+                        <button onClick={() => { setEditingWord(w); setWordTerm(w.term); setWordTranslation(w.translation); setWordImage(w.imageUrl || ''); setWordTags((w.tags || []).join(', ')); setWordSentences(w.sentences || []); setIsWordModalOpen(true); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
                         <button onClick={() => handleDeleteWord(w.id)} style={{ background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Excluir</button>
                       </div>
                     </div>

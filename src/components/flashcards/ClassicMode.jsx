@@ -79,9 +79,35 @@ export default function ClassicMode({ deck, onFinish }) {
           {showBack ? currentCard.translation : currentCard.term}
         </h2>
         
+        
         <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
           {showBack ? 'Tradução' : 'Toque para virar'}
         </p>
+
+        {currentCard.sentences && currentCard.sentences.length > 0 && (
+          <div style={{ marginTop: '20px', borderTop: '1px solid var(--line)', paddingTop: '15px', width: '100%' }}>
+            {currentCard.sentences.map((s, idx) => {
+              if (!s.english && !s.portuguese) return null;
+              
+              return (
+                <div key={idx} style={{ marginBottom: '12px' }}>
+                  {!showBack && s.english && (
+                    <p style={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--text)' }}>"{s.english}"</p>
+                  )}
+                  {showBack && (
+                    <>
+                      {s.portuguese ? (
+                        <p style={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--muted)', marginBottom: '4px' }}>{s.portuguese}</p>
+                      ) : (
+                        s.english && <p style={{ fontStyle: 'italic', fontSize: '0.9rem', color: 'var(--muted)' }}>"{s.english}"</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {showBack && (
