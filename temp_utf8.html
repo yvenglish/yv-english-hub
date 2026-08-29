@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#210E16">
+  <meta name="description" content="Primera clase de español: alfabeto y lectura sobre España.">
+  <title>Primera clase de español | YV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#inicio" aria-label="Volver al inicio">
+      <img src="yv-logo.png" alt="YV — From understanding to speaking">
+      <span>YV Academy</span>
+    </a>
+    <nav aria-label="Navegación principal">
+      <a href="#alfabeto">Alfabeto</a>
+      <a href="#lectura">Lectura</a>
+      <button class="print-button" type="button" onclick="window.print()" aria-label="Exportar esta página como PDF">
+        <span aria-hidden="true">⇩</span> Exportar PDF
+      </button>
+    </nav>
+  </header>
+
+  <main id="inicio">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Español · Primera clase</p>
+        <h1>Sonidos, cultura<br>y <em>conversación.</em></h1>
+        <p class="hero-text">Empezamos por el alfabeto y viajamos por nueve costumbres que forman parte de la vida cotidiana en España.</p>
+        <div class="hero-actions">
+          <a class="primary-button" href="#alfabeto">Empezar la clase <span>↓</span></a>
+          <a class="text-link" href="#lectura">Ir a la lectura →</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <span class="sun"></span>
+        <span class="arch arch-one"></span>
+        <span class="arch arch-two"></span>
+        <p>Hola<br><em>¿qué tal?</em></p>
+      </div>
+    </section>
+
+    <section class="alphabet-section" id="alfabeto">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">01 · Pronunciación</p>
+          <h2>El alfabeto español</h2>
+        </div>
+        <p>Haz clic en el altavoz para escuchar el nombre de cada letra con una voz en español de España.</p>
+      </div>
+
+      <div class="audio-note" role="note">
+        <span aria-hidden="true">♪</span>
+        <p><strong>Antes de empezar:</strong> activa el sonido de tu dispositivo. La voz puede variar según el navegador.</p>
+      </div>
+
+      <div class="alphabet-grid" id="alphabetGrid" aria-label="Tabla del alfabeto español"></div>
+    </section>
+
+    <section class="reading-section" id="lectura">
+      <div class="reading-intro">
+        <p class="eyebrow">02 · Lectura y cultura</p>
+        <h2>9 cosas que sorprenden a los extranjeros en España</h2>
+        <p>Lee el texto con calma. Durante la lectura, observa las palabras destacadas y piensa: ¿qué costumbres se parecen a las de Brasil?</p>
+      </div>
+
+      <article class="article-card">
+        <section class="reading-item">
+          <span class="item-number">01</span>
+          <div>
+            <h3>Los horarios de comida: todo más tarde</h3>
+            <p>Una de las primeras sorpresas llega con el tiempo. En España, la comida principal se toma entre las 14:00 y las 15:00, y la cena puede alargarse hasta las 22:00. Esto <strong>sorprende especialmente a quienes vienen de países donde se cena a las 18:00</strong>. Y sí, los españoles no van a cenar a esa hora. Probablemente toda la gente que veas cenando sea extranjera.</p>
+          </div>
+        </section>
+
+        <section class="reading-item">
+          <span class="item-number">02</span>
+          <div>
+            <h3>La siesta: entre mito y realidad</h3>
+            <p>Aunque la imagen del español durmiendo la siesta está muy arraigada, la realidad es que solo una minoría lo hace a diario. El ritmo actual de trabajo y vida en las ciudades hace que <strong>la siesta sea más un lujo que una costumbre</strong>. Aun así, el mito sigue vivo y despierta mucha curiosidad.</p>
+          </div>
+        </section>
+
+        <section class="reading-item">
+          <span class="item-number">03</span>
+          <div>
+            <h3>La vida en la calle</h3>
+            <p>España es <strong>sinónimo de calle</strong>. Ya sea en terrazas, plazas o bares, los españoles disfrutan del aire libre, incluso entre semana y hasta altas horas. El clima ayuda, pero también es una cuestión cultural: la calle es una extensión del hogar.</p>
+          </div>
+        </section>
+
+        <section class="reading-item">
+          <span class="item-number">04</span>
+          <div>
+            <h3>El volumen al hablar</h3>
+            <p>Para muchos visitantes, los españoles hablan “demasiado alto”. Lo que puede parecer una discusión acalorada, en realidad suele ser una conversación animada. La <strong>expresividad es parte del carácter nacional</strong>, y eso incluye subir el tono… sin que haya enfado alguno.</p>
+          </div>
+        </section>
+
+        <section class="reading-item">
+          <span class="item-number">05</span>
+          <div>
+            <h3>El contacto físico: dos besos y más</h3>
+            <p>Dar <strong>dos besos en la mejilla</strong> (incluso a personas que acabas de conocer) puede ser chocante para quienes vienen de culturas más reservadas. Además, los españoles tienden a tocarse más al hablar, lo que puede parecer invasivo, pero en realidad es señal de cercanía y confianza.</p>
+          </div>
+        </section>
+
+        <section class="reading-item">
+          <span class="item-number">06</span>
+          <div>
+            <h3>La puntualidad relajada</h3>
+            <p>En <strong>contextos laborales se respeta</strong> la puntualidad, pero en lo social… digamos que hay margen. Llegar 10 o 15 minutos tarde a una cena o una quedada con amigos no solo es aceptable: a veces es lo normal. Esto sorprende (y a veces desconcierta) a quienes vienen de culturas donde la puntualidad es casi sagrada.</p>
+          </div>
+        </section>
+
+        <section class="reading-item">
+          <span class="item-number">07</span>
+          <div>
+            <h3>Las fiestas locales: ¡cada pueblo tiene la suya!</h3>
+            <p>En España, cada localidad tiene su fiesta patronal, feria o romería. Y no son celebraciones pequeñas: pueden durar varios días, con desfiles, conciertos, procesiones y mucho más. Es una oportunidad para ver a todo el pueblo implicado y disfrutar de la <strong>identidad local en estado puro</strong>.</p>
+          </div>
+        </section>
+
+        <section class="reading-item">
+          <span class="item-number">08</span>
+          <div>
+            <h3>Un carácter abierto y directo</h3>
+            <p>La <strong>espontaneidad española</strong> es algo que muchos extranjeros aprecian (aunque les cueste al principio). La gente habla con gestos, muestra emociones sin filtros y dice lo que piensa sin rodeos. Además, es normal entablar conversación con desconocidos en un bar o en la cola del supermercado.</p>
+          </div>
+        </section>
+
+        <section class="reading-item">
+          <span class="item-number">09</span>
+          <div>
+            <h3>La diversidad regional</h3>
+            <p>Desde fuera, España puede parecer un país homogéneo, pero la realidad es muy distinta. Hay <strong>varios idiomas cooficiales</strong> (catalán, euskera, gallego…), y cada región tiene su propia gastronomía, historia, tradiciones e incluso formas de entender la vida. Viajar por España es como recorrer varios países en uno.</p>
+          </div>
+        </section>
+
+        <footer class="source">
+          <span>Fuente</span>
+          <a href="https://tlcdenia.com/es/10-cosas-soprenden-extranjeros-en-espana/" target="_blank" rel="noopener noreferrer">TLCdénia — Cosas que sorprenden a los extranjeros en España ↗</a>
+        </footer>
+      </article>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    <img src="yv-logo.png" alt="YV">
+    <p>From understanding to speaking.</p>
+    <a href="#inicio">Volver arriba ↑</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

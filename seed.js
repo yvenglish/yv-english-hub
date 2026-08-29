@@ -19,17 +19,17 @@ const items = [
     title: "Ordering a Coffee",
     tags: "A1, everyday life, coffee shop, present simple, conversation, vocabulary, reading",
     learningGoal: "Order a coffee and understand simple questions in a coffee shop.",
-    content: `Sophia walks into a small coffee shop on her way to work. The café is quiet, and a friendly barista smiles at her.
-"Good morning! What can I get for you?" he asks.
-"I'd like a small latte, please," Sophia says.
-"Hot or iced?" the barista asks.
+    content: `Sophia [walks into](entra em) a small coffee shop on her way to work. The café is [quiet](tranquilo), and a friendly barista [smiles](sorri) at her.
+"Good morning! What can I [get for you](preparar para você)?" he asks.
+"I'd like a [small](pequeno) latte, please," Sophia says.
+"[Hot](quente) or [iced](gelado)?" the barista asks.
 "Hot, please."
-"Would you like anything to eat?"
+"Would you like [anything](alguma coisa) to eat?"
 "Yes, a blueberry muffin."
 "Great! Your total is $8.50."
-Sophia pays with her card and waits for her order. A few minutes later, the barista calls her name.
-"Here you go! Have a great day!"
-"Thank you!" Sophia replies with a smile before leaving the café.`,
+Sophia [pays](paga) with her card and [waits](espera) for her order. A few minutes later, the barista [calls](chama) her name.
+"[Here you go](Aqui está)! Have a great day!"
+"Thank you!" Sophia [replies](responde) with a smile [before leaving](antes de sair) the café.`,
     questions: [
       { questionText: "What does Sophia order to drink?", options: { A: "A cappuccino.", B: "A small latte.", C: "A cup of tea.", D: "A hot chocolate." }, correctOption: "B" },
       { questionText: "What does the barista ask after Sophia orders her drink?", options: { A: "If she wants sugar.", B: "If she wants it hot or iced.", C: "If she has a reservation.", D: "If she wants another coffee." }, correctOption: "B" },

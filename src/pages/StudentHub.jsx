@@ -30,6 +30,17 @@ export default function StudentHub() {
   }, [dailyAssignment]);
   const [dailyLoading, setDailyLoading] = useState(false);
   
+  // Reading & TTS State
+  const [activeTranslation, setActiveTranslation] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+  
   // Notification State
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
 
@@ -216,6 +227,82 @@ export default function StudentHub() {
   const handleFlashcardsClick = () => {
     if (planName === 'Foundation') setShowUpgradeModal(true);
     else navigate('/flashcards');
+  };
+
+  const handleSpeak = () => {
+    if (!dailyContentDetails?.content) return;
+    
+    // Cleanup any existing speech
+    window.speechSynthesis.cancel();
+    
+    // Remove the markdown tags from text for reading: [text](translation) -> text
+    const cleanText = dailyContentDetails.content.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    
+    utterance.onend = () => {
+      setIsPlaying(false);
+      setIsPaused(false);
+    };
+    
+    window.speechSynthesis.speak(utterance);
+    setIsPlaying(true);
+    setIsPaused(false);
+  };
+
+  const handlePauseAudio = () => {
+    window.speechSynthesis.pause();
+    setIsPaused(true);
+  };
+
+  const handleResumeAudio = () => {
+    window.speechSynthesis.resume();
+    setIsPaused(false);
+  };
+
+  const handleRestartAudio = () => {
+    handleSpeak();
+  };
+
+  const renderContentWithVocab = (content) => {
+    if (!content) return null;
+    const paragraphs = content.split('\n').filter(p => p.trim() !== '');
+
+    return paragraphs.map((p, pIndex) => {
+      const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+      let match;
+      let lastIndex = 0;
+      const elements = [];
+
+      while ((match = regex.exec(p)) !== null) {
+        if (match.index > lastIndex) {
+          elements.push(p.slice(lastIndex, match.index));
+        }
+
+        const vocabText = match[1];
+        const translation = match[2];
+        elements.push(
+          <button 
+            key={`vocab-${pIndex}-${match.index}`} 
+            type="button"
+            className="vocab" 
+            onClick={() => setActiveTranslation({ text: vocabText, translation })}
+          >
+            {vocabText}
+          </button>
+        );
+
+        lastIndex = regex.lastIndex;
+      }
+
+      if (lastIndex < p.length) {
+        elements.push(p.slice(lastIndex));
+      }
+
+      return <p key={pIndex} style={{ marginBottom: '15px' }}>{elements.length > 0 ? elements : p}</p>;
+    });
   };
 
   const handleAnswerDaily = async (questionIndex, optionKey) => {
@@ -463,8 +550,69 @@ export default function StudentHub() {
                 <>
                   <div style={{ marginBottom: 30 }}>
                     <h3 style={{ fontSize: '1.6rem', color: 'var(--text)', margin: '0 0 15px' }}>{dailyContentDetails.title}</h3>
-                    <div style={{ background: 'var(--cream)', padding: 25, borderRadius: 16, border: '1px solid var(--line)', fontSize: '1.05rem', lineHeight: 1.7, color: 'var(--muted)', whiteSpace: 'pre-wrap' }}>
-                      {dailyContentDetails.content}
+                    
+                    {/* TRANSLATION DISPLAY */}
+                    <div className="translation-display" style={{ 
+                        position: 'sticky',
+                        zIndex: 4,
+                        top: -10, // slightly up to look good in modal
+                        minHeight: 82,
+                        padding: '16px 22px',
+                        margin: '-2px 0 30px',
+                        border: '1px solid rgba(200,136,58,0.35)', // matches amber
+                        borderRadius: 18,
+                        background: 'rgba(20,10,30,0.95)',
+                        boxShadow: '0 13px 32px rgba(0,0,0,0.25)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 18,
+                        backdropFilter: 'blur(12px)'
+                    }}>
+                      {activeTranslation ? (
+                        <>
+                          <span style={{ color: '#bbaacb', fontSize: '0.85rem' }}>{activeTranslation.text}</span>
+                          <strong style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', textAlign: 'right' }}>{activeTranslation.translation}</strong>
+                        </>
+                      ) : (
+                        <>
+                          <span style={{ color: '#bbaacb', fontSize: '0.85rem' }}>Click a highlighted word</span>
+                          <strong style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', opacity: 0.5, textAlign: 'right' }}>A tradução aparecerá aqui.</strong>
+                        </>
+                      )}
+                    </div>
+
+                    {/* AUDIO CONTROLS */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 20 }}>
+                      <div>
+                        <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--muted)', margin: '0 0 5px 0' }}>Read &amp; Listen</p>
+                        <h4 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: '2.4rem', fontWeight: 500, color: 'var(--text)' }}>The Text</h4>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {!isPlaying || isPaused ? (
+                           <button onClick={isPaused ? handleResumeAudio : handleSpeak} style={{ background: 'transparent', color: 'var(--text)', border: '1px solid var(--line)', padding: '11px 16px', borderRadius: 99, fontWeight: 750, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s' }}>
+                             ▶ <span>{isPaused ? 'Resume' : 'Start'}</span>
+                           </button>
+                        ) : (
+                           <button onClick={handlePauseAudio} style={{ background: 'var(--amber)', color: '#fff', border: '1px solid var(--amber)', padding: '11px 16px', borderRadius: 99, fontWeight: 750, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s' }}>
+                             ⏸ <span>Pause</span>
+                           </button>
+                        )}
+                        <button onClick={handleRestartAudio} style={{ background: 'transparent', color: 'var(--text)', border: '1px solid var(--line)', padding: '11px 16px', borderRadius: 99, fontWeight: 750, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s' }}>
+                          ↻ <span>Restart</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="reading-content" style={{ 
+                        borderLeft: '2px solid var(--amber)',
+                        padding: '2px 0 2px 28px',
+                        fontFamily: 'Georgia, "Times New Roman", serif',
+                        fontSize: '1.18rem',
+                        lineHeight: 1.7,
+                        color: 'var(--text)'
+                    }}>
+                      {renderContentWithVocab(dailyContentDetails.content)}
                     </div>
                   </div>
 

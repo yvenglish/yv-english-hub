@@ -114,3 +114,23 @@
     left: auto !important;
   }
 }
+
+/* Translation Vocab Button */
+.vocab {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dashed var(--amber);
+  background: transparent;
+  color: var(--amber);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vocab:hover, .vocab:focus {
+  color: var(--plum);
+  background: var(--amber-soft);
+  outline: none;
+}
