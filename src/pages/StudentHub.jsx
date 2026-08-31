@@ -30,16 +30,8 @@ export default function StudentHub() {
   }, [dailyAssignment]);
   const [dailyLoading, setDailyLoading] = useState(false);
   
-  // Reading & TTS State
+  // Reading State
   const [activeTranslation, setActiveTranslation] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      window.speechSynthesis.cancel();
-    };
-  }, []);
   
   // Notification State
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
@@ -229,42 +221,7 @@ export default function StudentHub() {
     else navigate('/flashcards');
   };
 
-  const handleSpeak = () => {
-    if (!dailyContentDetails?.content) return;
-    
-    // Cleanup any existing speech
-    window.speechSynthesis.cancel();
-    
-    // Remove the markdown tags from text for reading: [text](translation) -> text
-    const cleanText = dailyContentDetails.content.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-    
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.9;
-    
-    utterance.onend = () => {
-      setIsPlaying(false);
-      setIsPaused(false);
-    };
-    
-    window.speechSynthesis.speak(utterance);
-    setIsPlaying(true);
-    setIsPaused(false);
-  };
 
-  const handlePauseAudio = () => {
-    window.speechSynthesis.pause();
-    setIsPaused(true);
-  };
-
-  const handleResumeAudio = () => {
-    window.speechSynthesis.resume();
-    setIsPaused(false);
-  };
-
-  const handleRestartAudio = () => {
-    handleSpeak();
-  };
 
   const renderContentWithVocab = (content) => {
     if (!content) return null;
@@ -582,25 +539,10 @@ export default function StudentHub() {
                       )}
                     </div>
 
-                    {/* AUDIO CONTROLS */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 20 }}>
                       <div>
-                        <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--muted)', margin: '0 0 5px 0' }}>Read &amp; Listen</p>
+                        <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--muted)', margin: '0 0 5px 0' }}>Read</p>
                         <h4 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: '2.4rem', fontWeight: 500, color: 'var(--text)' }}>The Text</h4>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {!isPlaying || isPaused ? (
-                           <button onClick={isPaused ? handleResumeAudio : handleSpeak} style={{ background: 'transparent', color: 'var(--text)', border: '1px solid var(--line)', padding: '11px 16px', borderRadius: 99, fontWeight: 750, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s' }}>
-                             ▶ <span>{isPaused ? 'Resume' : 'Start'}</span>
-                           </button>
-                        ) : (
-                           <button onClick={handlePauseAudio} style={{ background: 'var(--amber)', color: '#fff', border: '1px solid var(--amber)', padding: '11px 16px', borderRadius: 99, fontWeight: 750, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s' }}>
-                             ⏸ <span>Pause</span>
-                           </button>
-                        )}
-                        <button onClick={handleRestartAudio} style={{ background: 'transparent', color: 'var(--text)', border: '1px solid var(--line)', padding: '11px 16px', borderRadius: 99, fontWeight: 750, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: '0.2s' }}>
-                          ↻ <span>Restart</span>
-                        </button>
                       </div>
                     </div>
 
