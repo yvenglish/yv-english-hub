@@ -18,11 +18,24 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
   
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/logo.png'
-  };
+  // Lembretes do servidor chegam só com "data"; mensagens com "notification" o próprio FCM já exibe
+  if (payload.notification) return;
+  const data = payload.data || {};
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(data.title || 'YV English Hub', {
+    body: data.body,
+    icon: '/logo.png',
+    data: { link: data.link || '/' }
+  });
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const link = event.notification.data?.link || '/';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      const open = windowClients.find(c => 'focus' in c);
+      return open ? open.focus() : clients.openWindow(link);
+    })
+  );
 });

@@ -3,7 +3,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getMessaging } from "firebase/messaging";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDcwGG7pZu_coWB2G_vtI99LurRCZijFVw",
   authDomain: "yv-hub-2253d.firebaseapp.com",
   projectId: "yv-hub-2253d",

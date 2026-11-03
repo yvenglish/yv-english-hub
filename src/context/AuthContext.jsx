@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../config/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection, query, limit, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -267,6 +267,48 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Adiciona uma palavra do Daily Content ao deck "Minhas Palavras Soltas" do aluno
+  const addWordToFlashcards = async (term, translation) => {
+    if (!currentUser) return false;
+    const cleanTerm = term.trim();
+
+    // Reaproveita a palavra se ela já existir no vocabulário global
+    const wordSnap = await getDocs(query(collection(db, 'vocabulary_global'), where('term', '==', cleanTerm), limit(1)));
+    let wordId;
+    if (!wordSnap.empty) {
+      wordId = wordSnap.docs[0].id;
+    } else {
+      const newWord = await addDoc(collection(db, 'vocabulary_global'), {
+        term: cleanTerm,
+        translation: translation.trim(),
+        tags: ['daily'],
+        source: 'daily_content',
+        createdBy: currentUser.uid,
+        createdAt: new Date().toISOString()
+      });
+      wordId = newWord.id;
+    }
+
+    const assignSnap = await getDocs(query(
+      collection(db, 'vocab_assignments'),
+      where('studentId', '==', currentUser.uid),
+      where('type', '==', 'words'),
+      limit(1)
+    ));
+    if (!assignSnap.empty) {
+      await updateDoc(assignSnap.docs[0].ref, { wordIds: arrayUnion(wordId) });
+    } else {
+      await addDoc(collection(db, 'vocab_assignments'), {
+        studentId: currentUser.uid,
+        type: 'words',
+        deckId: null,
+        wordIds: [wordId],
+        createdAt: new Date().toISOString()
+      });
+    }
+    return true;
+  };
+
   const getDueFlashcards = async () => {
     if (!currentUser) return [];
     
@@ -298,6 +340,7 @@ export function AuthProvider({ children }) {
     recordVoiceLabProgress,
     updateFlashcardProgress,
     getDueFlashcards,
+    addWordToFlashcards,
     setStreakGoal
   };
 

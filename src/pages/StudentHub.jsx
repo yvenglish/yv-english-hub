@@ -7,7 +7,7 @@ import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arra
 import { requestNotificationPermission } from '../services/notificationService';
 
 export default function StudentHub() {
-  const { currentUser, userData, logout, recordStudy } = useAuth();
+  const { currentUser, userData, logout, recordStudy, addWordToFlashcards } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,6 +32,8 @@ export default function StudentHub() {
   
   // Reading State
   const [activeTranslation, setActiveTranslation] = useState(null);
+  const [addedWords, setAddedWords] = useState([]);
+  const [addingWord, setAddingWord] = useState(false);
   
   // Notification State
   const [showNotificationBanner, setShowNotificationBanner] = useState(false);
@@ -260,6 +262,19 @@ export default function StudentHub() {
 
       return <p key={pIndex} style={{ marginBottom: '15px' }}>{elements.length > 0 ? elements : p}</p>;
     });
+  };
+
+  const handleAddWordToFlashcards = async () => {
+    if (!activeTranslation || addingWord) return;
+    setAddingWord(true);
+    try {
+      await addWordToFlashcards(activeTranslation.text, activeTranslation.translation);
+      setAddedWords(prev => [...prev, activeTranslation.text.toLowerCase()]);
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível adicionar a palavra. Tente novamente.');
+    }
+    setAddingWord(false);
   };
 
   const handleAnswerDaily = async (questionIndex, optionKey) => {
@@ -529,7 +544,23 @@ export default function StudentHub() {
                       {activeTranslation ? (
                         <>
                           <span style={{ color: '#bbaacb', fontSize: '0.85rem' }}>{activeTranslation.text}</span>
-                          <strong style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', textAlign: 'right' }}>{activeTranslation.translation}</strong>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                            <strong style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', textAlign: 'right' }}>{activeTranslation.translation}</strong>
+                            {planName !== 'Foundation' && (
+                              addedWords.includes(activeTranslation.text.toLowerCase()) ? (
+                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#2ed573' }}>✓ Nos seus flashcards</span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={handleAddWordToFlashcards}
+                                  disabled={addingWord}
+                                  style={{ padding: '4px 12px', fontSize: '0.75rem', fontWeight: 800, background: 'transparent', color: 'var(--amber)', border: '1px solid var(--amber)', borderRadius: 999, cursor: addingWord ? 'wait' : 'pointer' }}
+                                >
+                                  {addingWord ? 'Adicionando...' : '+ Flashcards'}
+                                </button>
+                              )
+                            )}
+                          </div>
                         </>
                       ) : (
                         <>

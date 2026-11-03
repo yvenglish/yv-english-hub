@@ -8,6 +8,7 @@ import VoiceLabAdminTab from '../components/admin/VoiceLabAdminTab';
 import ExtraContentAdminTab from '../components/admin/ExtraContentAdminTab';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import AdminModal from '../components/admin/AdminModal';
+import { createStudent } from '../services/studentService';
 import './AdminHub.css';
 
 export default function AdminHub() {
@@ -31,6 +32,7 @@ export default function AdminHub() {
   const [editingStudent, setEditingStudent] = useState(null);
   const [studentToDelete, setStudentToDelete] = useState(null);
   const [selectedStudentProfile, setSelectedStudentProfile] = useState(null);
+  const [newStudent, setNewStudent] = useState(null); // { name, email, plan, dueDate } quando o formulário está aberto
 
   // Weeks State
   const [weeks, setWeeks] = useState([]);
@@ -156,6 +158,27 @@ export default function AdminHub() {
       const studentList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setStudents(studentList);
     } catch (err) { console.error(err); } 
+    setLoading(false);
+  };
+
+  const handleCreateStudent = async () => {
+    if (!newStudent.name.trim() || !newStudent.email.trim() || !newStudent.password) return alert('Preencha nome, email e senha!');
+    if (newStudent.password.length < 6) return alert('A senha precisa ter pelo menos 6 caracteres.');
+    setLoading(true);
+    try {
+      await createStudent(newStudent);
+      alert(`Aluno criado! Envie para ${newStudent.email} o email e a senha de acesso.`);
+      setNewStudent(null);
+      fetchStudents();
+    } catch (err) {
+      console.error(err);
+      const messages = {
+        'auth/email-already-in-use': 'Já existe uma conta com esse email.',
+        'auth/invalid-email': 'Email inválido.',
+        'auth/weak-password': 'Senha fraca: use pelo menos 6 caracteres.'
+      };
+      alert(messages[err.code] || 'Erro ao criar aluno.');
+    }
     setLoading(false);
   };
 
@@ -880,10 +903,33 @@ export default function AdminHub() {
             
             <div style={{ marginBottom: 20 }}>
               <input type="text" placeholder="Buscar aluno (nome ou email)..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 15 }} />
-              <button onClick={() => window.open('https://console.firebase.google.com/u/0/project/yv-hub-2253d/authentication/users?hl=pt-br', '_blank')} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>
-                + Adicionar Aluno no Banco
+              <button onClick={() => setNewStudent({ name: '', email: '', password: '', plan: 'Foundation', dueDate: '' })} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>
+                + Novo Aluno
               </button>
             </div>
+
+            {newStudent && (
+              <div style={{ padding: 20, marginBottom: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
+                <h3>Novo Aluno</h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--muted)' }}>Para trocar a senha depois, o aluno usa "Esqueci minha senha" no login.</p>
+                <div style={{ display: 'grid', gap: 15, marginTop: 15 }}>
+                  <input type="text" placeholder="Nome" value={newStudent.name} onChange={e => setNewStudent({...newStudent, name: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
+                  <input type="email" placeholder="Email" value={newStudent.email} onChange={e => setNewStudent({...newStudent, email: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
+                  <input type="text" placeholder="Senha (mínimo 6 caracteres)" autoComplete="off" value={newStudent.password} onChange={e => setNewStudent({...newStudent, password: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
+                  <select value={newStudent.plan} onChange={e => setNewStudent({...newStudent, plan: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }}>
+                    <option value="Foundation">Foundation</option><option value="Fluency">Fluency</option><option value="Performance">Performance</option>
+                  </select>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Dia de Vencimento da Mensalidade</label>
+                    <input type="number" min="1" max="31" placeholder="Ex: 5" value={newStudent.dueDate} onChange={e => setNewStudent({...newStudent, dueDate: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button onClick={handleCreateStudent} disabled={loading} style={{ padding: '10px 20px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>{loading ? 'Criando...' : 'Criar Aluno'}</button>
+                    <button onClick={() => setNewStudent(null)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 8, cursor: 'pointer' }}>Cancelar</button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {editingStudent && (
               <div style={{ padding: 20, marginBottom: 20, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 16 }}>
