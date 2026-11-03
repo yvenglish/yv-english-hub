@@ -4,9 +4,11 @@ import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import VoiceLabPlayer from '../components/voice-lab/VoiceLabPlayer';
+import { getLevelLabel } from '../data/courses';
 
 export default function VoiceLab() {
-  const { userData, activeCourse } = useAuth();
+  const { userData, activeCourse, activeCourseInfo } = useAuth();
+  const t = activeCourseInfo.ui;
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -69,16 +71,16 @@ export default function VoiceLab() {
   return (
     <div style={{ padding: '40px 20px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <p className="eyebrow">YV English — Voice Lab</p>
-        <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '3rem', color: 'var(--text)', margin: '10px 0' }}>Listen, Remember & Repeat</h1>
-        <h2 style={{ fontSize: '1.5rem', color: 'var(--muted)', fontWeight: 400 }}>Speaking Practice <span style={{ color: 'var(--purple)', fontStyle: 'italic' }}>& Pronunciation</span></h2>
+        <p className="eyebrow">{t.voiceEyebrow}</p>
+        <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '3rem', color: 'var(--text)', margin: '10px 0' }}>{t.voiceTitle}</h1>
+        <h2 style={{ fontSize: '1.5rem', color: 'var(--muted)', fontWeight: 400 }}>{t.voiceSubtitle} <span style={{ color: 'var(--purple)', fontStyle: 'italic' }}>{t.voiceSubtitleAccent}</span></h2>
       </div>
 
       {/* Busca e Filtros */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 40 }}>
         <input 
           type="search"
-          placeholder="Pesquisar desafios, diálogos, temas..."
+          placeholder={t.voiceSearch}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ width: '100%', maxWidth: 500, margin: '0 auto', padding: '14px 20px', borderRadius: 99, border: '1px solid var(--line)', background: 'var(--paper)', color: 'var(--text)', fontSize: '1rem', outline: 'none' }}
@@ -87,10 +89,9 @@ export default function VoiceLab() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
           {['all', 'completed', 'easy-peasy', 'easy', 'medium', 'hard'].map(f => {
             const isActive = filter === f;
-            let label = f.charAt(0).toUpperCase() + f.slice(1).replace('-', ' ');
-            if (f === 'all') label = 'Todos';
-            if (f === 'completed') label = 'Concluídos 🏆';
-            if (f === 'easy-peasy') label = 'Easy Peasy';
+            let label = getLevelLabel(f, activeCourse);
+            if (f === 'all') label = t.all;
+            if (f === 'completed') label = t.completed;
             
             return (
               <button
@@ -111,9 +112,9 @@ export default function VoiceLab() {
 
       {/* Grid de Desafios */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>Carregando desafios...</div>
+        <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>{t.loadingChallenges}</div>
       ) : filteredChallenges.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>Nenhum desafio encontrado.</div>
+        <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>{t.noChallenges}</div>
       ) : (
         <div className="episode-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
           {filteredChallenges.map(c => {
@@ -153,7 +154,7 @@ export default function VoiceLab() {
                   
                   {/* Badges Absolute */}
                   <span style={{ position: 'absolute', top: 12, left: 12, fontSize: '0.7rem', background: 'var(--purple)', color: '#fff', padding: '2px 8px', borderRadius: 99, fontWeight: 'bold', textTransform: 'uppercase', zIndex: 2 }}>
-                    {c.level}
+                    {getLevelLabel(c.level.toLowerCase().replace(' ', '-'), activeCourse)}
                   </span>
                   
                   <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8, zIndex: 2, background: 'rgba(0,0,0,0.4)', padding: '2px 8px', borderRadius: 99 }}>

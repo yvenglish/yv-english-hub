@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase';
 import { TASK_TYPES, RUBRIC, RUBRIC_LEVELS } from '../../data/production';
+import { inCourse } from '../../data/courses';
 
 // Avisa o aluno por push que a correção saiu. Não bloqueia a correção se falhar.
 const notifyStudent = async (studentId, weekTitle) => {
@@ -19,7 +20,7 @@ const notifyStudent = async (studentId, weekTitle) => {
   } catch (err) { console.error('Push não enviado:', err); }
 };
 
-export default function ProductionAdminTab({ setLoading }) {
+export default function ProductionAdminTab({ setLoading, adminCourse }) {
   const [submissions, setSubmissions] = useState([]);
   const [filter, setFilter] = useState('submitted');
   const [reviewing, setReviewing] = useState(null); // { id, ...submission, feedback }
@@ -28,12 +29,12 @@ export default function ProductionAdminTab({ setLoading }) {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, 'submissions'));
-      setSubmissions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setSubmissions(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => inCourse(s, adminCourse)));
     } catch (err) { console.error(err); }
     setLoading(false);
   };
 
-  useEffect(() => { fetchSubmissions(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchSubmissions(); }, [adminCourse]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pending = submissions.filter(s => s.status === 'submitted').sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
   const reviewed = submissions.filter(s => s.status === 'reviewed').sort((a, b) => (b.reviewedAt || '').localeCompare(a.reviewedAt || ''));

@@ -115,6 +115,7 @@ export default function WeekTask({ week }) {
       const payload = {
         weekId: week.id,
         weekTitle: week.title || '',
+        course: week.course || 'en',
         studentId: currentUser.uid,
         studentName: userData?.name || '',
         prompt: task.prompt,

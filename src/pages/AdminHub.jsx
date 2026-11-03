@@ -113,14 +113,13 @@ export default function AdminHub() {
     fetchDecks();
     fetchVocabWords();
     fetchDailyBank();
-  }, []);
-
-  useEffect(() => {
-    fetchWeeks();
-    fetchDecks();
-    fetchVocabWords();
-    fetchDailyBank();
   }, [adminCourse]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // O admin também troca de cores com o curso selecionado
+  useEffect(() => {
+    document.documentElement.dataset.course = adminCourse;
+    return () => { delete document.documentElement.dataset.course; };
+  }, [adminCourse]);
 
   useEffect(() => {
     if (activeTab === 'weeks') fetchWeeks();
@@ -169,7 +168,8 @@ export default function AdminHub() {
     try {
       const q = query(collection(db, 'users'), where('role', '==', 'student'));
       const snap = await getDocs(q);
-      const studentList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Só alunos do curso selecionado (inclui quem faz os dois cursos)
+      const studentList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(s => getUserCourses(s).includes(adminCourse));
       setStudents(studentList);
     } catch (err) { console.error(err); } 
     setLoading(false);
@@ -211,7 +211,7 @@ export default function AdminHub() {
   const fetchGlobalAssignments = async () => {
     try {
       const snap = await getDocs(collection(db, 'daily_assignments'));
-      setGlobalAssignments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setGlobalAssignments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(a => inCourse(a, adminCourse)));
     } catch (err) { console.error(err); }
   };
 
@@ -911,7 +911,7 @@ export default function AdminHub() {
           <strong style={{ fontSize: '0.85rem' }}>Curso:</strong>
           {Object.values(COURSES).map(c => (
             <button key={c.id} onClick={() => setAdminCourse(c.id)} style={{ padding: '8px 16px', borderRadius: 999, border: adminCourse === c.id ? 'none' : '1px solid var(--line)', background: adminCourse === c.id ? 'var(--amber)' : 'transparent', color: adminCourse === c.id ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer' }}>
-              {c.flag} {c.label}
+              {c.label}
             </button>
           ))}
           <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Semanas, Daily, vocabulário, biblioteca, Voice Lab e extras mostram e criam conteúdo deste curso.</span>
@@ -962,7 +962,7 @@ export default function AdminHub() {
                             const next = checked ? current.filter(x => x !== c.id) : [...current, c.id];
                             if (next.length > 0) setNewStudent({...newStudent, courses: next});
                           }} />
-                          {c.flag} {c.label}
+                          {c.label}
                         </label>
                       );
                     })}
@@ -1001,7 +1001,7 @@ export default function AdminHub() {
                             const next = checked ? current.filter(x => x !== c.id) : [...current, c.id];
                             if (next.length > 0) setEditingStudent({...editingStudent, courses: next});
                           }} />
-                          {c.flag} {c.label}
+                          {c.label}
                         </label>
                       );
                     })}
@@ -1029,7 +1029,7 @@ export default function AdminHub() {
                     <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>{student.email}</p>
                   </div>
                   <div className="admin-student-actions-wrapper">
-                    <span title="Cursos" style={{ fontSize: '1rem' }}>{getUserCourses(student).map(c => COURSES[c].flag).join(' ')}</span>
+                    <span title="Cursos" style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--muted)', border: '1px solid var(--line)', padding: '3px 8px', borderRadius: 99 }}>{getUserCourses(student).map(c => COURSES[c].short).join(' · ')}</span>
                     <span style={{ background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', padding: '4px 12px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 800 }}>{student.plan}</span>
                     <div className="admin-student-actions">
                       <button onClick={() => setEditingStudent(student)} style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 6, cursor: 'pointer' }}>Editar Acesso</button>
@@ -1730,7 +1730,7 @@ export default function AdminHub() {
         {activeTab === 'extra' && (
           <ExtraContentAdminTab setLoading={setLoading} students={students} adminCourse={adminCourse} />
         )}
-        {activeTab === 'correções' && <ProductionAdminTab setLoading={setLoading} />}
+        {activeTab === 'correções' && <ProductionAdminTab setLoading={setLoading} adminCourse={adminCourse} />}
       </main>
 
       {/* Daily Conflict Modal */}

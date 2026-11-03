@@ -33,11 +33,11 @@ export function AuthProvider({ children }) {
     try { localStorage.setItem('yv_course', course); } catch { /* sem storage */ }
   };
 
-  // O tema de cores segue o curso (ver [data-course] no index.css). A área admin fica no tema padrão.
+  // O tema de cores segue o curso (ver [data-course] no index.css). No admin, quem define é o seletor de curso do AdminHub.
   useEffect(() => {
     const root = document.documentElement;
-    if (userData && userData.role !== 'master') root.dataset.course = activeCourse;
-    else delete root.dataset.course;
+    if (!userData) delete root.dataset.course;
+    else if (userData.role !== 'master') root.dataset.course = activeCourse;
   }, [userData, activeCourse]);
 
   useEffect(() => {

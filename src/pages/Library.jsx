@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { LEVELS } from '../data/libraryData';
+import { getLevelLabel } from '../data/courses';
 import { db } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +10,8 @@ let cachedEpisodesData = null;
 let lastFetchTime = 0;
 
 export default function Library() {
-  const { userData, toggleLibraryFavorite, toggleLibraryProgress, syncLibraryLevels, activeCourse } = useAuth();
+  const { userData, toggleLibraryFavorite, toggleLibraryProgress, syncLibraryLevels, activeCourse, activeCourseInfo } = useAuth();
+  const t = activeCourseInfo.ui;
   const location = useLocation();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
@@ -108,16 +109,16 @@ export default function Library() {
   return (
     <div style={{ padding: '40px 20px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <p className="eyebrow">YV English — Language Academy & Method</p>
-        <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '3rem', color: 'var(--text)', margin: '10px 0' }}>YV Input Library</h1>
-        <h2 style={{ fontSize: '1.5rem', color: 'var(--muted)', fontWeight: 400 }}>Listening Practice <span style={{ color: 'var(--amber)', fontStyle: 'italic' }}>& Real English</span></h2>
+        <p className="eyebrow">{t.libraryEyebrow}</p>
+        <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '3rem', color: 'var(--text)', margin: '10px 0' }}>{t.libraryTitle}</h1>
+        <h2 style={{ fontSize: '1.5rem', color: 'var(--muted)', fontWeight: 400 }}>{t.librarySubtitle} <span style={{ color: 'var(--amber)', fontStyle: 'italic' }}>{t.librarySubtitleAccent}</span></h2>
       </div>
 
       {/* Busca e Filtros */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 40 }}>
         <input 
           type="search"
-          placeholder="Pesquisar episódios, gramática, temas..."
+          placeholder={t.librarySearch}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ width: '100%', maxWidth: 500, margin: '0 auto', padding: '14px 20px', borderRadius: 99, border: '1px solid var(--line)', background: 'var(--paper)', color: 'var(--text)', fontSize: '1rem', outline: 'none' }}
@@ -126,10 +127,10 @@ export default function Library() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
           {['all', 'favorites', 'grammar', 'easy-peasy', 'easy', 'medium', 'hard'].map(f => {
             const isActive = filter === f;
-            let label = f.charAt(0).toUpperCase() + f.slice(1).replace('-', ' ');
-            if (f === 'all') label = 'Todos';
-            if (f === 'favorites') label = 'Favoritos ❤️';
-            if (f === 'grammar') label = 'Grammar Lab 🧪';
+            let label = getLevelLabel(f, activeCourse);
+            if (f === 'all') label = t.all;
+            if (f === 'favorites') label = t.favorites;
+            if (f === 'grammar') label = t.grammar;
             
             return (
               <button
@@ -150,9 +151,9 @@ export default function Library() {
 
       {/* Grid de Episódios */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>Carregando episódios...</div>
+        <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>{t.loadingEpisodes}</div>
       ) : filteredEpisodes.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>Nenhum conteúdo encontrado.</div>
+        <div style={{ textAlign: 'center', padding: 50, color: 'var(--muted)' }}>{t.noEpisodes}</div>
       ) : (
         <div className="episode-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
           {filteredEpisodes.map(ep => {
@@ -193,7 +194,7 @@ export default function Library() {
                   
                   {/* Badges Absolute */}
                   <span style={{ position: 'absolute', top: 12, left: 12, fontSize: '0.7rem', background: 'var(--plum)', color: '#fff', padding: '2px 8px', borderRadius: 99, fontWeight: 'bold', textTransform: 'uppercase', zIndex: 2 }}>
-                    {ep.level}
+                    {getLevelLabel(ep.level, activeCourse)}
                   </span>
                   
                   <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 8, zIndex: 2, background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: 99 }}>

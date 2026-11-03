@@ -308,7 +308,7 @@ export default function Navbar() {
                 title={COURSES[c].label}
                 style={{ padding: '6px 10px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 800, background: activeCourse === c ? 'var(--amber)' : 'transparent', color: '#fff' }}
               >
-                {COURSES[c].flag} {c.toUpperCase()}
+                {COURSES[c].short}
               </button>
             ))}
           </div>
