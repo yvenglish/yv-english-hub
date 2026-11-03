@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { BADGES } from '../data/badges';
 
 export default function Account() {
   const { userData, logout } = useAuth();
@@ -109,20 +110,18 @@ export default function Account() {
 
           {/* Badges / Conquistas */}
           <div>
-            <h3 style={{ margin: '0 0 20px', color: 'var(--text)', fontSize: '1.2rem' }}>Minhas Conquistas</h3>
+            <h3 style={{ margin: '0 0 20px', color: 'var(--text)', fontSize: '1.2rem' }}>Minhas Conquistas <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 500 }}>{(userData?.badges || []).filter(id => BADGES.some(b => b.id === id)).length}/{BADGES.length}</span></h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 15 }}>
-              <div style={{ background: 'var(--bg)', padding: 15, borderRadius: 16, textAlign: 'center', border: '1px solid var(--line)', opacity: (userData?.badges || []).includes('voice_lab_first') ? 1 : 0.4 }}>
-                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10 }}>🎙️</span>
-                <strong style={{ fontSize: '0.8rem', color: 'var(--purple)', display: 'block' }}>Voice Lab</strong>
-                <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>1º Desafio</span>
-              </div>
-              
-              {/* Espaço para futuros badges */}
-              <div style={{ background: 'var(--bg)', padding: 15, borderRadius: 16, textAlign: 'center', border: '1px dashed var(--line)', opacity: 0.3 }}>
-                <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10, filter: 'grayscale(1)' }}>🔥</span>
-                <strong style={{ fontSize: '0.8rem', color: 'var(--muted)', display: 'block' }}>Ofensiva</strong>
-                <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>Em breve</span>
-              </div>
+              {BADGES.map(badge => {
+                const owned = (userData?.badges || []).includes(badge.id);
+                return (
+                  <div key={badge.id} title={owned ? 'Conquistada!' : 'Ainda bloqueada'} style={{ background: 'var(--bg)', padding: 15, borderRadius: 16, textAlign: 'center', border: owned ? '1px solid var(--line)' : '1px dashed var(--line)', opacity: owned ? 1 : 0.4 }}>
+                    <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10, filter: owned ? 'none' : 'grayscale(1)' }}>{badge.icon}</span>
+                    <strong style={{ fontSize: '0.8rem', color: owned ? 'var(--purple)' : 'var(--muted)', display: 'block' }}>{badge.title}</strong>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{badge.description}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

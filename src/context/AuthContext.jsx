@@ -1,14 +1,24 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../config/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion, getCountFromServer } from 'firebase/firestore';
+import { BADGES } from '../data/badges';
 
 const AuthContext = createContext();
+
+// Dia de estudo com virada às 6h (offsetDays = -1 para ontem)
+const getStudyDayStr = (offsetDays = 0) => {
+  const day = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  day.setHours(0, 0, 0, 0);
+  day.setDate(day.getDate() + offsetDays);
+  return day.toISOString().split('T')[0];
+};
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unlockedBadges, setUnlockedBadges] = useState([]); // fila de badges recém-conquistadas para o toast
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -84,7 +94,39 @@ export function AuthProvider({ children }) {
   const logout = () => signOut(auth);
   const resetPassword = (email) => sendPasswordResetEmail(auth, email);
 
-  const recordStudy = async (wordsCount) => {
+  // Confere o catálogo e concede as badges novas. "data" é o userData já com as últimas alterações.
+  const awardBadges = async (data) => {
+    if (!currentUser) return [];
+    const owned = data.badges || [];
+
+    let wordsCount = 0;
+    if (!owned.includes('words_100')) {
+      try {
+        const agg = await getCountFromServer(collection(db, `users/${currentUser.uid}/flashcard_progress`));
+        wordsCount = agg.data().count;
+      } catch (err) { console.error(err); } // offline: confere na próxima vez
+    }
+
+    const stats = {
+      streak: data.currentStreak || 0,
+      dailyStreak: data.dailyStreak || 0,
+      wordsCount,
+      voiceLabCount: (data.voiceLabProgress || []).length,
+      libraryLevels: data.libraryLevelsCompleted || []
+    };
+    const earned = BADGES.filter(b => !owned.includes(b.id) && b.check(stats));
+    if (earned.length === 0) return [];
+
+    const ids = earned.map(b => b.id);
+    await updateDoc(doc(db, 'users', currentUser.uid), { badges: arrayUnion(...ids) });
+    setUserData(prev => ({ ...prev, badges: [...(prev.badges || []), ...ids] }));
+    setUnlockedBadges(prev => [...prev, ...earned]);
+    return earned;
+  };
+
+  const dismissUnlockedBadge = useCallback(() => setUnlockedBadges(prev => prev.slice(1)), []);
+
+  const recordStudy = async (wordsCount, extraUpdates = {}) => {
     if (!currentUser || !userData) return false;
     
     const now = new Date();
@@ -134,13 +176,43 @@ export function AuthProvider({ children }) {
       wordsStudiedToday: newWordsToday,
       lastStudyDate: todayStr,
       currentStreak: newStreak,
-      lastStreakDate: newStreakDate
+      lastStreakDate: newStreakDate,
+      ...extraUpdates
     };
 
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData(prev => ({ ...prev, ...updates }));
 
-    return { goalJustReached, streakGoalCompleted, newStreak };
+    const earnedBadges = await awardBadges({ ...userData, ...updates });
+
+    return { goalJustReached, streakGoalCompleted, newStreak, earnedBadges };
+  };
+
+  // Daily concluído: atualiza a sequência de dias com Daily e conta para o streak
+  const recordDailyCompletion = async () => {
+    if (!currentUser || !userData) return false;
+    const todayStr = getStudyDayStr();
+    let dailyStreak = userData.dailyStreak || 0;
+    if (userData.lastDailyDate === todayStr) {
+      // já contou hoje
+    } else if (userData.lastDailyDate === getStudyDayStr(-1)) {
+      dailyStreak += 1;
+    } else {
+      dailyStreak = 1;
+    }
+    return recordStudy(3, { dailyStreak, lastDailyDate: todayStr });
+  };
+
+  // Concede retroativamente as badges de nível para episódios já concluídos
+  const syncLibraryLevels = async (levels) => {
+    if (!currentUser || !userData) return;
+    const current = userData.libraryLevelsCompleted || [];
+    const missing = levels.filter(l => l && !current.includes(l));
+    if (missing.length === 0) return;
+    const libraryLevelsCompleted = [...current, ...missing];
+    await setDoc(doc(db, 'users', currentUser.uid), { libraryLevelsCompleted }, { merge: true });
+    setUserData(prev => ({ ...prev, libraryLevelsCompleted }));
+    await awardBadges({ ...userData, libraryLevelsCompleted });
   };
 
   const setStreakGoal = async (goal) => {
@@ -165,15 +237,23 @@ export function AuthProvider({ children }) {
     setUserData(prev => ({ ...prev, libraryFavorites: newFavs }));
   };
 
-  const toggleLibraryProgress = async (episodeId) => {
+  const toggleLibraryProgress = async (episodeId, level) => {
     if (!currentUser || !userData) return;
     const currentProg = userData.libraryProgress || [];
-    const newProg = currentProg.includes(episodeId)
-      ? currentProg.filter(id => id !== episodeId)
-      : [...currentProg, episodeId];
-    
-    await setDoc(doc(db, 'users', currentUser.uid), { libraryProgress: newProg }, { merge: true });
-    setUserData(prev => ({ ...prev, libraryProgress: newProg }));
+    const isMarking = !currentProg.includes(episodeId);
+    const newProg = isMarking
+      ? [...currentProg, episodeId]
+      : currentProg.filter(id => id !== episodeId);
+
+    const updates = { libraryProgress: newProg };
+    const levels = userData.libraryLevelsCompleted || [];
+    if (isMarking && level && !levels.includes(level)) {
+      updates.libraryLevelsCompleted = [...levels, level];
+    }
+
+    await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
+    setUserData(prev => ({ ...prev, ...updates }));
+    if (updates.libraryLevelsCompleted) await awardBadges({ ...userData, ...updates });
   };
 
   const recordVoiceLabProgress = async (challengeId) => {
@@ -181,28 +261,9 @@ export function AuthProvider({ children }) {
     const currentProg = userData.voiceLabProgress || [];
     if (currentProg.includes(challengeId)) return; // Already completed
 
-    const newProg = [...currentProg, challengeId];
-    const badges = userData.badges || [];
-    let newBadges = [...badges];
-    let earnedBadge = false;
-
-    if (newProg.length === 1 && !badges.includes('voice_lab_first')) {
-      newBadges.push('voice_lab_first');
-      earnedBadge = true;
-    }
-
-    const updates = { 
-      voiceLabProgress: newProg,
-      badges: newBadges
-    };
-
-    await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
-    setUserData(prev => ({ ...prev, ...updates }));
-
-    // Count towards streak
-    await recordStudy(1);
-
-    return { earnedBadge };
+    // Salva o progresso junto com o streak; as badges são conferidas no recordStudy
+    const result = await recordStudy(1, { voiceLabProgress: [...currentProg, challengeId] });
+    return { earnedBadge: (result?.earnedBadges || []).length > 0 };
   };
 
   const updateFlashcardProgress = async (wordId, score) => {
@@ -335,6 +396,10 @@ export function AuthProvider({ children }) {
     logout,
     resetPassword,
     recordStudy,
+    recordDailyCompletion,
+    syncLibraryLevels,
+    unlockedBadges,
+    dismissUnlockedBadge,
     toggleLibraryFavorite,
     toggleLibraryProgress,
     recordVoiceLabProgress,

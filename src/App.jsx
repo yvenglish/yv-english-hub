@@ -2,6 +2,7 @@ import React, { Suspense, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import InstallPrompt from './components/InstallPrompt';
+import BadgeToast from './components/BadgeToast';
 import Navbar from './components/layout/Navbar';
 import StudentLayout from './components/layout/StudentLayout';
 
@@ -65,6 +66,7 @@ function App() {
   return (
     <BrowserRouter>
       <InstallPrompt />
+      <BadgeToast />
       <Suspense fallback={SplashContent}>
         <Routes>
           <Route path="/login" element={<Login />} />

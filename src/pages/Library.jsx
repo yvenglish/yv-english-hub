@@ -10,7 +10,7 @@ let cachedEpisodesData = null;
 let lastFetchTime = 0;
 
 export default function Library() {
-  const { userData, toggleLibraryFavorite, toggleLibraryProgress } = useAuth();
+  const { userData, toggleLibraryFavorite, toggleLibraryProgress, syncLibraryLevels } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
@@ -56,6 +56,14 @@ export default function Library() {
   const favorites = userData?.libraryFavorites || [];
   const completed = userData?.libraryProgress || [];
 
+  // Badges de nível para episódios concluídos antes de as badges existirem
+  useEffect(() => {
+    if (episodes.length === 0 || completed.length === 0) return;
+    const levels = [...new Set(episodes.filter(ep => completed.includes(ep.id)).map(ep => ep.level))];
+    syncLibraryLevels(levels);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [episodes]);
+
   const handleFilter = (f) => setFilter(f);
 
   const filteredEpisodes = useMemo(() => {
@@ -91,7 +99,7 @@ export default function Library() {
         isFavorite={favorites.includes(selectedEpisode.id)}
         isCompleted={completed.includes(selectedEpisode.id)}
         onToggleFavorite={() => toggleLibraryFavorite(selectedEpisode.id)}
-        onToggleProgress={() => toggleLibraryProgress(selectedEpisode.id)}
+        onToggleProgress={() => toggleLibraryProgress(selectedEpisode.id, selectedEpisode.level)}
       />
     );
   }

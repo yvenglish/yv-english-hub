@@ -5,9 +5,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { requestNotificationPermission } from '../services/notificationService';
+import WeekTask from '../components/production/WeekTask';
 
 export default function StudentHub() {
-  const { currentUser, userData, logout, recordStudy, addWordToFlashcards } = useAuth();
+  const { currentUser, userData, logout, recordDailyCompletion, addWordToFlashcards } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -304,8 +305,8 @@ export default function StudentHub() {
          updateData.totalQuestions = questionsList.length;
 
          let isGoalReached = false;
-         if (recordStudy) {
-           const result = await recordStudy(3); // Conta como meta diária do streak
+         if (recordDailyCompletion) {
+           const result = await recordDailyCompletion(); // Conta para o streak e para a sequência de Dailies
            isGoalReached = result?.goalJustReached || false;
            if (result?.streakGoalCompleted) setStreakGoalAchieved(true);
          }
@@ -415,6 +416,7 @@ export default function StudentHub() {
                   <div className="card-head">
                     <p className="card-number">Semana {index + 1}</p>
                     <h2 className="card-title">{week.title}</h2>
+                    {week.task && <span style={{ display: 'inline-block', marginTop: 6, fontSize: '0.7rem', fontWeight: 800, color: 'var(--amber)', textTransform: 'uppercase' }}>✍️ Tem tarefa</span>}
                   </div>
                   <div className="card-body">
                     <p className="card-focus">{week.description}</p>
@@ -731,6 +733,11 @@ export default function StudentHub() {
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+              {selectedWeek.task && (
+                <div style={{ marginTop: 24 }}>
+                  <WeekTask week={selectedWeek} />
                 </div>
               )}
             </div>

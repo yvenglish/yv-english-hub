@@ -9,6 +9,8 @@ import ExtraContentAdminTab from '../components/admin/ExtraContentAdminTab';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import AdminModal from '../components/admin/AdminModal';
 import { createStudent } from '../services/studentService';
+import ProductionAdminTab from '../components/admin/ProductionAdminTab';
+import { TASK_TYPES } from '../data/production';
 import './AdminHub.css';
 
 export default function AdminHub() {
@@ -41,6 +43,8 @@ export default function AdminHub() {
   const [weekDescription, setWeekDescription] = useState('');
   const [weekStudents, setWeekStudents] = useState([]);
   const [weekLinks, setWeekLinks] = useState([]);
+  const [weekTaskPrompt, setWeekTaskPrompt] = useState('');
+  const [weekTaskType, setWeekTaskType] = useState('text');
   const [currentLinkTitle, setCurrentLinkTitle] = useState('');
   const [currentLinkUrl, setCurrentLinkUrl] = useState('');
   const [currentLinkType, setCurrentLinkType] = useState('link'); // 'link' or 'recording'
@@ -290,6 +294,8 @@ export default function AdminHub() {
     setWeekDescription(week.description);
     setWeekStudents([week.studentId]);
     setWeekLinks(week.links || []);
+    setWeekTaskPrompt(week.task?.prompt || '');
+    setWeekTaskType(week.task?.type || 'text');
     
     const dt = week.createdAt ? new Date(week.createdAt) : new Date();
     setWeekYear(week.year || dt.getFullYear().toString());
@@ -301,6 +307,7 @@ export default function AdminHub() {
   const cancelEditWeek = () => {
     setEditingWeek(null);
     setWeekTitle(''); setWeekDescription(''); setWeekStudents([]); setWeekLinks([]);
+    setWeekTaskPrompt(''); setWeekTaskType('text');
     setWeekYear(new Date().getFullYear().toString());
     setWeekMonth((new Date().getMonth() + 1).toString());
     setWeekNumber('1');
@@ -321,6 +328,7 @@ export default function AdminHub() {
           description: weekDescription,
           studentId: weekStudents[0],
           links: weekLinks,
+          task: weekTaskPrompt.trim() ? { prompt: weekTaskPrompt.trim(), type: weekTaskType } : null,
           year: weekYear,
           month: weekMonth,
           weekNumber: weekNumber,
@@ -334,6 +342,7 @@ export default function AdminHub() {
             description: weekDescription,
             studentId,
             links: weekLinks,
+            task: weekTaskPrompt.trim() ? { prompt: weekTaskPrompt.trim(), type: weekTaskType } : null,
             year: weekYear,
             month: weekMonth,
             weekNumber: weekNumber,
@@ -886,7 +895,7 @@ export default function AdminHub() {
         )}
 
         <div className="admin-main-tabs">
-          {['analytics', 'students', 'weeks', 'daily', 'vocabulary', 'library', 'voice-lab', 'extra'].map(tab => (
+          {['analytics', 'students', 'correções', 'weeks', 'daily', 'vocabulary', 'library', 'voice-lab', 'extra'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 20px', whiteSpace: 'nowrap', borderRadius: 999, border: activeTab === tab ? 'none' : '1px solid var(--line)', background: activeTab === tab ? 'var(--plum)' : 'transparent', color: activeTab === tab ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: 800, textTransform: 'capitalize' }}>
               {tab === 'analytics' ? 'Analytics' : tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : tab === 'voice-lab' ? 'Voice Lab' : tab === 'extra' ? 'Conteúdo Extra' : 'Vocabulário Global'}
             </button>
@@ -1021,6 +1030,13 @@ export default function AdminHub() {
                   <input type="text" value={weekTitle} onChange={e => setWeekTitle(e.target.value)} placeholder="Título (opcional)" style={{ flex: 2, minWidth: 200, padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
                 </div>
                 <textarea value={weekDescription} onChange={e => setWeekDescription(e.target.value)} rows="3" placeholder="Descrição" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }}></textarea>
+                <div style={{ padding: 15, border: '1px solid var(--line)', borderRadius: 12, background: 'var(--bg)', display: 'grid', gap: 10 }}>
+                  <h4 style={{ margin: 0, fontSize: '0.9rem' }}>✍️ Tarefa da Semana (opcional)</h4>
+                  <textarea value={weekTaskPrompt} onChange={e => setWeekTaskPrompt(e.target.value)} rows="3" placeholder="Ex: Record a 1-minute audio describing your weekend using the past simple." style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--paper)', color: 'var(--text)' }}></textarea>
+                  <select value={weekTaskType} onChange={e => setWeekTaskType(e.target.value)} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--paper)', color: 'var(--text)' }}>
+                    {Object.entries(TASK_TYPES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </div>
                 <div style={{ padding: 15, border: '1px solid var(--line)', borderRadius: 12, background: 'var(--bg)' }}>
                   <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem' }}>Selecionar Alunos ({weekStudents.length})</h4>
                   {weekStudents.length > 0 && !editingWeek && (
@@ -1658,6 +1674,7 @@ export default function AdminHub() {
         {activeTab === 'extra' && (
           <ExtraContentAdminTab setLoading={setLoading} students={students} />
         )}
+        {activeTab === 'correções' && <ProductionAdminTab setLoading={setLoading} />}
       </main>
 
       {/* Daily Conflict Modal */}
