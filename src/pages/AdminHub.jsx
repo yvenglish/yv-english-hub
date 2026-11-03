@@ -521,24 +521,69 @@ export default function AdminHub() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
+        // Aceita uma lista de palavras ou { "deck": { "title", "description", "icon" }, "words": [...] }
         const data = JSON.parse(event.target.result);
-        if (!Array.isArray(data)) throw new Error("JSON deve ser uma array.");
-        if (!window.confirm(`Importar ${data.length} flashcards?`)) return;
+        const words = Array.isArray(data) ? data : data.words;
+        const deckInfo = Array.isArray(data) ? null : data.deck;
+        if (!Array.isArray(words)) throw new Error('Use uma lista de palavras ou { "deck": {...}, "words": [...] }.');
+        if (deckInfo && !deckInfo.title) throw new Error('O deck precisa de "title".');
+        const courseLabel = COURSES[adminCourse].label;
+        const msg = deckInfo
+          ? `Importar ${words.length} flashcards no deck "${deckInfo.title}" (${courseLabel})?`
+          : `Importar ${words.length} flashcards (${courseLabel})?`;
+        if (!window.confirm(msg)) return;
         setLoading(true);
-        for (const item of data) {
-          if (item.term && item.translation) {
-            await addDoc(collection(db, 'vocabulary_global'), {
-              term: item.term,
+
+        // Palavras que já existem neste curso são reaproveitadas, sem duplicar
+        const existingByTerm = new Map(vocabWords.map(w => [w.term.trim().toLowerCase(), w.id]));
+        const wordIds = [];
+        let created = 0;
+        for (const item of words) {
+          if (!item.term || !item.translation) continue;
+          const key = item.term.trim().toLowerCase();
+          let id = existingByTerm.get(key);
+          if (!id) {
+            const ref = await addDoc(collection(db, 'vocabulary_global'), {
+              term: item.term.trim(),
               translation: item.translation,
               imageUrl: item.imageUrl || '',
+              tags: Array.isArray(item.tags) ? item.tags : (item.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
+              sentences: item.sentences || [],
               course: adminCourse,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString()
             });
+            id = ref.id;
+            existingByTerm.set(key, id);
+            created++;
           }
+          if (!wordIds.includes(id)) wordIds.push(id);
+        }
+
+        let deckMsg = '';
+        if (deckInfo) {
+          // Deck com o mesmo nome no curso recebe as palavras novas; senão, cria um deck novo
+          const existingDeck = decks.find(d => d.title.trim().toLowerCase() === deckInfo.title.trim().toLowerCase());
+          if (existingDeck) {
+            const merged = [...new Set([...(existingDeck.wordIds || []), ...wordIds])];
+            await updateDoc(doc(db, 'decks', existingDeck.id), { wordIds: merged, updatedAt: new Date().toISOString() });
+            deckMsg = ` Deck "${existingDeck.title}" atualizado (${merged.length} palavras).`;
+          } else {
+            await addDoc(collection(db, 'decks'), {
+              title: deckInfo.title.trim(),
+              description: deckInfo.description || '',
+              icon: deckInfo.icon || '',
+              wordIds,
+              course: adminCourse,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+            deckMsg = ` Deck "${deckInfo.title}" criado com ${wordIds.length} palavras.`;
+          }
+          fetchDecks();
         }
         fetchVocabWords();
-        alert("Importação concluída com sucesso!");
+        alert(`Importação concluída! ${created} palavras novas, ${wordIds.length - created} já existiam.${deckMsg}`);
       } catch (err) {
         console.error(err);
         alert("Erro ao ler JSON: " + err.message);
