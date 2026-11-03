@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../config/firebase';
-import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { requestNotificationPermission } from '../services/notificationService';
 
 export default function StudentHub() {
