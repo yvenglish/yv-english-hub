@@ -2,11 +2,20 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
 
+// Só guarda o tema quando o aluno troca no perfil. A chave antiga ('yv_theme') salvava o tema
+// automaticamente e deixava gente presa no modo claro; ela é ignorada para todo mundo voltar ao escuro.
+const STORAGE_KEY = 'yv_theme_choice';
+
+const readSavedTheme = () => {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
+
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('yv_theme');
-    return saved || 'dark';
-  });
+  const [theme, setTheme] = useState(() => readSavedTheme() || 'dark');
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -15,10 +24,15 @@ export function ThemeProvider({ children }) {
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('yv_theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  const toggleTheme = () => setTheme(prev => {
+    const next = prev === 'light' ? 'dark' : 'light';
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch { /* sem storage: vale só nesta sessão */ }
+    return next;
+  });
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
