@@ -8,6 +8,16 @@ import { registerSW } from 'virtual:pwa-register'
 
 console.log('YV English Hub - v1.0.1');
 
+// Depois de um deploy, os arquivos das páginas mudam de nome. Quem estava com a versão antiga aberta
+// tenta carregar um arquivo que não existe mais: recarrega uma vez para pegar a versão nova.
+window.addEventListener('vite:preloadError', (event) => {
+  const lastReload = Number(sessionStorage.getItem('chunkReloadAt') || 0);
+  if (Date.now() - lastReload < 10000) return; // evita loop de reload
+  event.preventDefault();
+  sessionStorage.setItem('chunkReloadAt', String(Date.now()));
+  window.location.reload();
+});
+
 // Auto update service worker immediately when a new version is detected
 const updateSW = registerSW({
   onNeedRefresh() {
