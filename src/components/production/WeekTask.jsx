@@ -11,7 +11,7 @@ const titleStyle = { fontSize: '0.9rem', textTransform: 'uppercase', color: 'var
 // Tarefa de produção da semana: o aluno responde por escrito e/ou em áudio e a teacher corrige.
 // O documento em "submissions" usa o mesmo id da semana (cada semana é de um aluno só).
 export default function WeekTask({ week }) {
-  const { currentUser, userData, recordStudy } = useAuth();
+  const { currentUser, userData, recordStudy, activeCourseInfo } = useAuth();
   const task = week.task;
   const needsText = task?.type !== 'audio';
   const needsAudio = task?.type !== 'text';
@@ -177,7 +177,7 @@ export default function WeekTask({ week }) {
                   value={text}
                   onChange={e => setText(e.target.value.slice(0, MAX_TEXT_LENGTH))}
                   rows="5"
-                  placeholder="Write your answer in English..."
+                  placeholder={activeCourseInfo.answerPlaceholder}
                   style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--paper)', color: 'var(--text)', fontSize: '1rem', resize: 'vertical' }}
                 />
                 <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'right' }}>{text.length}/{MAX_TEXT_LENGTH}</p>

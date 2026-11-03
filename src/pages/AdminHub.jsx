@@ -11,12 +11,15 @@ import AdminModal from '../components/admin/AdminModal';
 import { createStudent } from '../services/studentService';
 import ProductionAdminTab from '../components/admin/ProductionAdminTab';
 import { TASK_TYPES } from '../data/production';
+import { COURSES, inCourse, getUserCourses } from '../data/courses';
 import './AdminHub.css';
 
 export default function AdminHub() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('students');
+  // Curso que o admin está gerenciando: filtra os conteúdos e marca os novos
+  const [adminCourse, setAdminCourse] = useState('en');
   const [students, setStudents] = useState([]);
   const [studentSearch, setStudentSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -111,6 +114,13 @@ export default function AdminHub() {
     fetchVocabWords();
     fetchDailyBank();
   }, []);
+
+  useEffect(() => {
+    fetchWeeks();
+    fetchDecks();
+    fetchVocabWords();
+    fetchDailyBank();
+  }, [adminCourse]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (activeTab === 'weeks') fetchWeeks();
@@ -209,7 +219,7 @@ export default function AdminHub() {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, 'weeks'));
-      setWeeks(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setWeeks(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(w => inCourse(w, adminCourse)));
     } catch (err) { console.error(err); }
     setLoading(false);
   };
@@ -218,7 +228,7 @@ export default function AdminHub() {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, 'daily_bank'));
-      setBankItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setBankItems(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(b => inCourse(b, adminCourse)));
     } catch (err) { console.error(err); }
     setLoading(false);
   };
@@ -238,7 +248,7 @@ export default function AdminHub() {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, 'vocabulary_global'));
-      setVocabWords(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setVocabWords(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(w => inCourse(w, adminCourse)));
     } catch (err) { console.error(err); }
     setLoading(false);
   };
@@ -247,7 +257,7 @@ export default function AdminHub() {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, 'decks'));
-      setDecks(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setDecks(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(d => inCourse(d, adminCourse)));
     } catch (err) { console.error(err); }
     setLoading(false);
   };
@@ -348,7 +358,7 @@ export default function AdminHub() {
             weekNumber: weekNumber,
             updatedAt: new Date().toISOString()
           };
-          await addDoc(collection(db, 'weeks'), { ...payload, createdAt: new Date().toISOString() });
+          await addDoc(collection(db, 'weeks'), { ...payload, course: adminCourse, createdAt: new Date().toISOString() });
         }
       }
       setIsWeekModalOpen(false);
@@ -436,7 +446,7 @@ export default function AdminHub() {
       if (editingBankItem) {
         await updateDoc(doc(db, 'daily_bank', editingBankItem.id), payload);
       } else {
-        await addDoc(collection(db, 'daily_bank'), { ...payload, createdAt: new Date().toISOString() });
+        await addDoc(collection(db, 'daily_bank'), { ...payload, course: adminCourse, createdAt: new Date().toISOString() });
       }
       cancelEditBankItem();
       setIsDailyModalOpen(false);
@@ -461,6 +471,7 @@ export default function AdminHub() {
           contentId,
           scheduledDate: date,
           status: 'pending',
+          course: adminCourse,
           createdAt: new Date().toISOString()
         };
         await addDoc(collection(db, 'daily_assignments'), payload);
@@ -520,6 +531,7 @@ export default function AdminHub() {
               term: item.term,
               translation: item.translation,
               imageUrl: item.imageUrl || '',
+              course: adminCourse,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString()
             });
@@ -556,6 +568,7 @@ export default function AdminHub() {
               learningGoal: item.learningGoal || '',
               content: item.content,
               questions: item.questions || [],
+              course: adminCourse,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString()
             });
@@ -587,7 +600,7 @@ export default function AdminHub() {
         updatedAt: new Date().toISOString() 
       };
       if (editingWord) await updateDoc(doc(db, 'vocabulary_global', editingWord.id), payload);
-      else await addDoc(collection(db, 'vocabulary_global'), { ...payload, createdAt: new Date().toISOString() });
+      else await addDoc(collection(db, 'vocabulary_global'), { ...payload, course: adminCourse, createdAt: new Date().toISOString() });
       setEditingWord(null); setWordTerm(''); setWordTranslation(''); setWordImage(''); setWordTags(''); setWordSentences([]);
       setIsWordModalOpen(false);
       fetchVocabWords();
@@ -613,7 +626,7 @@ export default function AdminHub() {
         updatedAt: new Date().toISOString() 
       };
       if (editingDeck) await updateDoc(doc(db, 'decks', editingDeck.id), payload);
-      else await addDoc(collection(db, 'decks'), { ...payload, createdAt: new Date().toISOString() });
+      else await addDoc(collection(db, 'decks'), { ...payload, course: adminCourse, createdAt: new Date().toISOString() });
       setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon('');
       setIsDeckModalOpen(false);
       fetchDecks();
@@ -894,6 +907,16 @@ export default function AdminHub() {
           </div>
         )}
 
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+          <strong style={{ fontSize: '0.85rem' }}>Curso:</strong>
+          {Object.values(COURSES).map(c => (
+            <button key={c.id} onClick={() => setAdminCourse(c.id)} style={{ padding: '8px 16px', borderRadius: 999, border: adminCourse === c.id ? 'none' : '1px solid var(--line)', background: adminCourse === c.id ? 'var(--amber)' : 'transparent', color: adminCourse === c.id ? '#fff' : 'var(--text)', fontWeight: 800, cursor: 'pointer' }}>
+              {c.flag} {c.label}
+            </button>
+          ))}
+          <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Semanas, Daily, vocabulário, biblioteca, Voice Lab e extras mostram e criam conteúdo deste curso.</span>
+        </div>
+
         <div className="admin-main-tabs">
           {['analytics', 'students', 'correções', 'weeks', 'daily', 'vocabulary', 'library', 'voice-lab', 'extra'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 20px', whiteSpace: 'nowrap', borderRadius: 999, border: activeTab === tab ? 'none' : '1px solid var(--line)', background: activeTab === tab ? 'var(--plum)' : 'transparent', color: activeTab === tab ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: 800, textTransform: 'capitalize' }}>
@@ -912,7 +935,7 @@ export default function AdminHub() {
             
             <div style={{ marginBottom: 20 }}>
               <input type="text" placeholder="Buscar aluno (nome ou email)..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)', marginBottom: 15 }} />
-              <button onClick={() => setNewStudent({ name: '', email: '', password: '', plan: 'Foundation', dueDate: '' })} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>
+              <button onClick={() => setNewStudent({ name: '', email: '', password: '', plan: 'Foundation', dueDate: '', courses: [adminCourse] })} style={{ padding: '12px 24px', background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>
                 + Novo Aluno
               </button>
             </div>
@@ -928,6 +951,22 @@ export default function AdminHub() {
                   <select value={newStudent.plan} onChange={e => setNewStudent({...newStudent, plan: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }}>
                     <option value="Foundation">Foundation</option><option value="Fluency">Fluency</option><option value="Performance">Performance</option>
                   </select>
+                  <div style={{ display: 'flex', gap: 15, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Cursos:</label>
+                    {Object.values(COURSES).map(c => {
+                      const current = getUserCourses(newStudent);
+                      const checked = current.includes(c.id);
+                      return (
+                        <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                          <input type="checkbox" checked={checked} onChange={() => {
+                            const next = checked ? current.filter(x => x !== c.id) : [...current, c.id];
+                            if (next.length > 0) setNewStudent({...newStudent, courses: next});
+                          }} />
+                          {c.flag} {c.label}
+                        </label>
+                      );
+                    })}
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Dia de Vencimento da Mensalidade</label>
                     <input type="number" min="1" max="31" placeholder="Ex: 5" value={newStudent.dueDate} onChange={e => setNewStudent({...newStudent, dueDate: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
@@ -951,13 +990,29 @@ export default function AdminHub() {
                   <select value={editingStudent.active ? 'true' : 'false'} onChange={e => setEditingStudent({...editingStudent, active: e.target.value === 'true'})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }}>
                     <option value="true">Ativo</option><option value="false">Inativo</option>
                   </select>
+                  <div style={{ display: 'flex', gap: 15, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Cursos:</label>
+                    {Object.values(COURSES).map(c => {
+                      const current = getUserCourses(editingStudent);
+                      const checked = current.includes(c.id);
+                      return (
+                        <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                          <input type="checkbox" checked={checked} onChange={() => {
+                            const next = checked ? current.filter(x => x !== c.id) : [...current, c.id];
+                            if (next.length > 0) setEditingStudent({...editingStudent, courses: next});
+                          }} />
+                          {c.flag} {c.label}
+                        </label>
+                      );
+                    })}
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Dia de Vencimento da Mensalidade</label>
                     <input type="number" min="1" max="31" placeholder="Ex: 5" value={editingStudent.dueDate || ''} onChange={e => setEditingStudent({...editingStudent, dueDate: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', gap: 10 }}>
-                        <button onClick={async () => { await updateDoc(doc(db, 'users', editingStudent.id), { name: editingStudent.name, plan: editingStudent.plan, active: editingStudent.active, dueDate: editingStudent.dueDate || null }); setEditingStudent(null); fetchStudents(); }} style={{ padding: '10px 20px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>
+                        <button onClick={async () => { await updateDoc(doc(db, 'users', editingStudent.id), { name: editingStudent.name, plan: editingStudent.plan, active: editingStudent.active, dueDate: editingStudent.dueDate || null, courses: getUserCourses(editingStudent) }); setEditingStudent(null); fetchStudents(); }} style={{ padding: '10px 20px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>
                       <button onClick={() => setEditingStudent(null)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 8, cursor: 'pointer' }}>Cancelar</button>
                     </div>
                     <button onClick={() => setStudentToDelete(editingStudent)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Excluir Aluno</button>
@@ -974,6 +1029,7 @@ export default function AdminHub() {
                     <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>{student.email}</p>
                   </div>
                   <div className="admin-student-actions-wrapper">
+                    <span title="Cursos" style={{ fontSize: '1rem' }}>{getUserCourses(student).map(c => COURSES[c].flag).join(' ')}</span>
                     <span style={{ background: 'rgba(138, 124, 255, 0.15)', color: 'var(--purple)', padding: '4px 12px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 800 }}>{student.plan}</span>
                     <div className="admin-student-actions">
                       <button onClick={() => setEditingStudent(student)} style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'transparent', border: '1px solid var(--line)', color: 'var(--text)', borderRadius: 6, cursor: 'pointer' }}>Editar Acesso</button>
@@ -1666,13 +1722,13 @@ export default function AdminHub() {
           </section>
         )}
 
-        {activeTab === 'library' && <LibraryAdminTab setLoading={setLoading} />}
+        {activeTab === 'library' && <LibraryAdminTab setLoading={setLoading} adminCourse={adminCourse} />}
         {activeTab === 'voice-lab' && (
-          <VoiceLabAdminTab setLoading={setLoading} />
+          <VoiceLabAdminTab setLoading={setLoading} adminCourse={adminCourse} />
         )}
 
         {activeTab === 'extra' && (
-          <ExtraContentAdminTab setLoading={setLoading} students={students} />
+          <ExtraContentAdminTab setLoading={setLoading} students={students} adminCourse={adminCourse} />
         )}
         {activeTab === 'correções' && <ProductionAdminTab setLoading={setLoading} />}
       </main>

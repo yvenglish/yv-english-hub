@@ -87,7 +87,7 @@ export default function InstallPrompt() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ width: 44, height: 44, background: 'rgba(255,255,255,0.1)', borderRadius: 12, display: 'grid', placeItems: 'center', fontWeight: 'bold', color: '#fff' }}>YV</div>
         <div style={{ flex: 1 }}>
-          <h4 style={{ margin: 0, color: '#fff', fontSize: '0.95rem' }}>Baixar o App YV English</h4>
+          <h4 style={{ margin: 0, color: '#fff', fontSize: '0.95rem' }}>Baixar o App YV Language Club</h4>
           <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.8rem' }}>
             {isIOS ? 'Toque em Compartilhar e depois "Adicionar à Tela de Início"' : 'Instale para acessar mais rápido e offline.'}
           </p>

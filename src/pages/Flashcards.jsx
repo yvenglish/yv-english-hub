@@ -8,10 +8,11 @@ import ClassicMode from '../components/flashcards/ClassicMode';
 import MultipleChoiceMode from '../components/flashcards/MultipleChoiceMode';
 import MatchMode from '../components/flashcards/MatchMode';
 import WrittenMode from '../components/flashcards/WrittenMode';
+import { inCourse } from '../data/courses';
 
 export default function Flashcards() {
   const navigate = useNavigate();
-  const { currentUser, userData, recordStudy, getDueFlashcards } = useAuth();
+  const { currentUser, userData, recordStudy, getDueFlashcards, activeCourse } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list', 'mode_select', 'playing'
@@ -33,7 +34,7 @@ export default function Flashcards() {
       }
       loadData();
     }
-  }, [currentUser, userData, navigate]);
+  }, [currentUser, userData, navigate, activeCourse]);
 
   const loadData = async () => {
     setLoading(true);
@@ -47,10 +48,11 @@ export default function Flashcards() {
         getDueFlashcards()
       ]);
 
-      const allWords = wordsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Só palavras e decks do curso ativo
+      const allWords = wordsSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(w => inCourse(w, activeCourse));
       setGlobalWords(allWords);
 
-      const allDecks = decksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const allDecks = decksSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(d => inCourse(d, activeCourse));
       const assignments = assignSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       // 4. Assemble student's decks

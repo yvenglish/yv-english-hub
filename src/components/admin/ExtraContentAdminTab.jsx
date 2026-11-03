@@ -3,7 +3,9 @@ import { db } from '../../config/firebase';
 import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import AdminModal from './AdminModal';
 
-export default function ExtraContentAdminTab({ setLoading, students }) {
+import { inCourse } from '../../data/courses';
+
+export default function ExtraContentAdminTab({ setLoading, students, adminCourse }) {
   const [contents, setContents] = useState([]);
   const [editingContent, setEditingContent] = useState(null);
   
@@ -19,13 +21,13 @@ export default function ExtraContentAdminTab({ setLoading, students }) {
 
   useEffect(() => {
     fetchContents();
-  }, []);
+  }, [adminCourse]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchContents = async () => {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, 'extra_contents'));
-      setContents(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setContents(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(c => inCourse(c, adminCourse)));
     } catch (err) {
       console.error(err);
     }
@@ -77,6 +79,7 @@ export default function ExtraContentAdminTab({ setLoading, students }) {
 
       if (editingContent === 'new') {
         payload.createdAt = new Date().toISOString();
+        payload.course = adminCourse;
         await addDoc(collection(db, 'extra_contents'), payload);
       } else {
         await updateDoc(doc(db, 'extra_contents', editingContent.id), payload);

@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logocircular.jpeg'],
       manifest: {
-        name: 'YV English Hub',
-        short_name: 'YV Hub',
-        description: 'Plataforma de ensino YV English',
+        name: 'YV Language Club',
+        short_name: 'YV Club',
+        description: 'Plataforma de ensino YV Language Club',
         theme_color: '#05002e',
         background_color: '#05002e',
         display: 'standalone',

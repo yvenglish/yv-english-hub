@@ -4,7 +4,9 @@ import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import AdminModal from './AdminModal';
 
-export default function VoiceLabAdminTab({ setLoading }) {
+import { inCourse } from '../../data/courses';
+
+export default function VoiceLabAdminTab({ setLoading, adminCourse }) {
   const [challenges, setChallenges] = useState([]);
   const [editingChallenge, setEditingChallenge] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,7 +27,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, 'voice_lab_challenges'));
-      setChallenges(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.createdAt?.localeCompare(a.createdAt)));
+      setChallenges(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => inCourse(c, adminCourse)).sort((a,b) => b.createdAt?.localeCompare(a.createdAt)));
     } catch (err) {
       console.error(err);
       alert('Erro ao carregar desafios.');
@@ -36,14 +38,14 @@ export default function VoiceLabAdminTab({ setLoading }) {
   const loadLibraryEpisodes = async () => {
     try {
       const snap = await getDocs(collection(db, 'library_episodes'));
-      setLibraryEpisodes(snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => b.createdAt?.localeCompare(a.createdAt)));
+      setLibraryEpisodes(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(ep => inCourse(ep, adminCourse)).sort((a,b) => b.createdAt?.localeCompare(a.createdAt)));
     } catch (err) {}
   };
 
   useEffect(() => {
     loadChallenges();
     loadLibraryEpisodes();
-  }, []);
+  }, [adminCourse]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleEdit = (challenge) => {
     setEditingChallenge(challenge);
@@ -126,6 +128,7 @@ export default function VoiceLabAdminTab({ setLoading }) {
       const docId = editingChallenge ? editingChallenge.id : Date.now().toString();
       if (!editingChallenge) {
         payload.createdAt = new Date().toISOString();
+        payload.course = adminCourse;
       }
 
       await setDoc(doc(db, 'voice_lab_challenges', docId), payload, { merge: true });

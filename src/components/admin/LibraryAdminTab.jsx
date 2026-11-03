@@ -4,7 +4,9 @@ import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc, writeBatch } fr
 import { EPISODES as STATIC_EPISODES } from '../../data/libraryData';
 import AdminModal from './AdminModal';
 
-export default function LibraryAdminTab({ setLoading }) {
+import { inCourse } from '../../data/courses';
+
+export default function LibraryAdminTab({ setLoading, adminCourse }) {
   const [episodes, setEpisodes] = useState([]);
   const [editingEpisode, setEditingEpisode] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,13 +36,13 @@ export default function LibraryAdminTab({ setLoading }) {
 
   useEffect(() => {
     fetchEpisodes();
-  }, []);
+  }, [adminCourse]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchEpisodes = async () => {
     setLoading(true);
     try {
       const snap = await getDocs(collection(db, 'library_episodes'));
-      setEpisodes(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setEpisodes(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(ep => inCourse(ep, adminCourse)));
     } catch (err) {
       console.error(err);
     }
@@ -121,7 +123,7 @@ export default function LibraryAdminTab({ setLoading }) {
       if (editingEpisode !== 'new') {
         await updateDoc(doc(db, 'library_episodes', editingEpisode.id), payload);
       } else {
-        await addDoc(collection(db, 'library_episodes'), { ...payload, createdAt: new Date().toISOString() });
+        await addDoc(collection(db, 'library_episodes'), { ...payload, course: adminCourse, createdAt: new Date().toISOString() });
       }
       cancelEdit();
       fetchEpisodes();

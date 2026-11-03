@@ -4,7 +4,7 @@ import { db } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 export default function Glossary() {
-  const { currentUser } = useAuth();
+  const { currentUser, activeCourse, activeCourseInfo } = useAuth();
   const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,7 +13,7 @@ export default function Glossary() {
     if (currentUser) {
       fetchGlossary();
     }
-  }, [currentUser]);
+  }, [currentUser, activeCourse]);
 
   const fetchGlossary = async () => {
     try {
@@ -35,7 +35,7 @@ export default function Glossary() {
       const matchedWords = wordIds
         .map(id => {
           const vocabData = globalVocab[id];
-          if (vocabData && vocabData.term) {
+          if (vocabData && vocabData.term && (vocabData.course || 'en') === activeCourse) {
             return {
               id,
               term: vocabData.term,
@@ -59,7 +59,7 @@ export default function Glossary() {
   const handleSpeak = (text) => {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
+      utterance.lang = activeCourseInfo.speechLang;
       window.speechSynthesis.speak(utterance);
     } else {
       alert("Seu navegador não suporta áudio nativo.");

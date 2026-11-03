@@ -3,6 +3,7 @@ import { auth, db } from '../config/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion, getCountFromServer } from 'firebase/firestore';
 import { BADGES } from '../data/badges';
+import { getUserCourses, COURSES } from '../data/courses';
 
 const AuthContext = createContext();
 
@@ -19,6 +20,25 @@ export function AuthProvider({ children }) {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unlockedBadges, setUnlockedBadges] = useState([]); // fila de badges recém-conquistadas para o toast
+  const [courseChoice, setCourseChoice] = useState(() => {
+    try { return localStorage.getItem('yv_course'); } catch { return null; }
+  });
+
+  // Curso ativo do aluno: a última escolha no seletor, se ele ainda fizer esse curso
+  const userCourses = getUserCourses(userData);
+  const activeCourse = userCourses.includes(courseChoice) ? courseChoice : userCourses[0];
+
+  const setActiveCourse = (course) => {
+    setCourseChoice(course);
+    try { localStorage.setItem('yv_course', course); } catch { /* sem storage */ }
+  };
+
+  // O tema de cores segue o curso (ver [data-course] no index.css). A área admin fica no tema padrão.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (userData && userData.role !== 'master') root.dataset.course = activeCourse;
+    else delete root.dataset.course;
+  }, [userData, activeCourse]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -333,16 +353,18 @@ export function AuthProvider({ children }) {
     if (!currentUser) return false;
     const cleanTerm = term.trim();
 
-    // Reaproveita a palavra se ela já existir no vocabulário global
-    const wordSnap = await getDocs(query(collection(db, 'vocabulary_global'), where('term', '==', cleanTerm), limit(1)));
+    // Reaproveita a palavra se ela já existir no vocabulário global do mesmo curso
+    const wordSnap = await getDocs(query(collection(db, 'vocabulary_global'), where('term', '==', cleanTerm)));
+    const existing = wordSnap.docs.find(d => (d.data().course || 'en') === activeCourse);
     let wordId;
-    if (!wordSnap.empty) {
-      wordId = wordSnap.docs[0].id;
+    if (existing) {
+      wordId = existing.id;
     } else {
       const newWord = await addDoc(collection(db, 'vocabulary_global'), {
         term: cleanTerm,
         translation: translation.trim(),
         tags: ['daily'],
+        course: activeCourse,
         source: 'daily_content',
         createdBy: currentUser.uid,
         createdAt: new Date().toISOString()
@@ -392,6 +414,10 @@ export function AuthProvider({ children }) {
   const value = {
     currentUser,
     userData,
+    userCourses,
+    activeCourse,
+    activeCourseInfo: COURSES[activeCourse],
+    setActiveCourse,
     login,
     logout,
     resetPassword,

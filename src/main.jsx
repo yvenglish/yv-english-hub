@@ -6,7 +6,7 @@ import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { registerSW } from 'virtual:pwa-register'
 
-console.log('YV English Hub - v1.0.1');
+console.log('YV Language Club - v1.1.0');
 
 // Depois de um deploy, os arquivos das páginas mudam de nome. Quem estava com a versão antiga aberta
 // tenta carregar um arquivo que não existe mais: recarrega uma vez para pegar a versão nova.

@@ -6,9 +6,10 @@ import { db } from '../config/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { requestNotificationPermission } from '../services/notificationService';
 import WeekTask from '../components/production/WeekTask';
+import { inCourse } from '../data/courses';
 
 export default function StudentHub() {
-  const { currentUser, userData, logout, recordDailyCompletion, addWordToFlashcards } = useAuth();
+  const { currentUser, userData, logout, recordDailyCompletion, addWordToFlashcards, activeCourse, activeCourseInfo } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,20 +55,25 @@ export default function StudentHub() {
     return url;
   };
 
-  const initializedRef = useRef(false);
+  // Guarda o curso já carregado: trocar de curso no seletor recarrega o conteúdo
+  const initializedRef = useRef(null);
   
   useEffect(() => {
-    if (currentUser && userData && !initializedRef.current) {
-      initializedRef.current = true;
+    if (currentUser && userData && initializedRef.current !== activeCourse) {
+      const isFirstLoad = initializedRef.current === null;
+      initializedRef.current = activeCourse;
+      dailyAssignmentRef.current = null;
+      setDailyAssignment(null);
+      setDailyContentDetails(null);
       fetchWeeks();
       fetchDailyAssignment();
       fetchExtraContents();
       
-      if ('Notification' in window && Notification.permission === 'default' && userData?.plan !== 'Foundation') {
+      if (isFirstLoad && 'Notification' in window && Notification.permission === 'default' && userData?.plan !== 'Foundation') {
          setShowNotificationBanner(true);
       }
     }
-  }, [currentUser, userData]);
+  }, [currentUser, userData, activeCourse]);
 
   useEffect(() => {
     if (userData?.completedExtraContents) {
@@ -99,7 +105,7 @@ export default function StudentHub() {
     try {
       const q = query(collection(db, 'weeks'), where('studentId', '==', currentUser.uid));
       const snap = await getDocs(q);
-      const fetchedWeeks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const fetchedWeeks = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(w => inCourse(w, activeCourse));
       fetchedWeeks.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
       setWeeks(fetchedWeeks);
     } catch (err) { console.error(err); }
@@ -109,7 +115,7 @@ export default function StudentHub() {
     try {
       const q = query(collection(db, 'extra_contents'), where('assignedTo', 'array-contains-any', [currentUser.uid, 'all']));
       const snap = await getDocs(q);
-      const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => inCourse(c, activeCourse));
       setExtraContents(fetched);
     } catch (err) { console.error(err); }
   };
@@ -131,7 +137,8 @@ export default function StudentHub() {
       const planName = userData?.plan || 'Foundation';
       const q = query(collection(db, 'daily_assignments'), where('studentId', '==', currentUser.uid));
       const snap = await getDocs(q);
-      const assignments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const allAssignments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const assignments = allAssignments.filter(a => inCourse(a, activeCourse));
       
       const today = new Date().toISOString().split('T')[0];
       const valid = assignments.filter(a => a.scheduledDate <= today);
@@ -157,8 +164,8 @@ export default function StudentHub() {
         if (!completedToday && planName !== 'Foundation') {
            // Auto-Pilot: Fetch bank items
            const bankSnap = await getDocs(collection(db, 'daily_bank'));
-           const allBankItems = bankSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-           const doneContentIds = assignments.map(a => a.contentId);
+           const allBankItems = bankSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => inCourse(item, activeCourse));
+           const doneContentIds = allAssignments.map(a => a.contentId);
            const available = allBankItems.filter(item => !doneContentIds.includes(item.id));
            
            if (available.length > 0) {
@@ -169,6 +176,7 @@ export default function StudentHub() {
                   contentId: picked.id,
                   scheduledDate: today,
                   status: 'pending',
+                  course: activeCourse,
                   createdAt: new Date().toISOString(),
                   isAutoPilot: true
                };
@@ -331,7 +339,7 @@ export default function StudentHub() {
           <div className="hero-grid">
             <div className="hero-body">
               <p className="eyebrow">Sua área pessoal</p>
-              <h1>Hello,<br/><em>{studentName}</em> ✦</h1>
+              <h1>{activeCourseInfo.greeting},<br/><em>{studentName}</em> ✦</h1>
               <p className="hero-sub">Seu painel com semanas, Daily Content, exercícios extras, flashcards inteligentes e conteúdos recomendados pela Yas.</p>
               <div className="hero-actions">
                 <button onClick={() => document.getElementById('weeksSection').scrollIntoView({ behavior: 'smooth' })}>Ver semanas</button>

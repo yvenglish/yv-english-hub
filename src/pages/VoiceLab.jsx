@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import VoiceLabPlayer from '../components/voice-lab/VoiceLabPlayer';
 
 export default function VoiceLab() {
-  const { userData } = useAuth();
+  const { userData, activeCourse } = useAuth();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -35,6 +35,7 @@ export default function VoiceLab() {
 
   const filteredChallenges = useMemo(() => {
     let result = challenges.filter(c => {
+      if ((c.course || 'en') !== activeCourse) return false;
       // Search
       if (search && !c.title.toLowerCase().includes(search.toLowerCase()) && !(c.description || '').toLowerCase().includes(search.toLowerCase())) return false;
       
@@ -52,7 +53,7 @@ export default function VoiceLab() {
     });
 
     return result;
-  }, [challenges, search, filter, completed]);
+  }, [challenges, search, filter, completed, activeCourse]);
 
   if (selectedChallenge) {
     return (

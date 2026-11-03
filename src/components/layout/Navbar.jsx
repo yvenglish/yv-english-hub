@@ -4,9 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { db } from '../../config/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { COURSES } from '../../data/courses';
 
 export default function Navbar() {
-  const { userData, logout, setStreakGoal } = useAuth();
+  const { currentUser, userData, logout, setStreakGoal, userCourses, activeCourse, setActiveCourse } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,7 +40,7 @@ export default function Navbar() {
     if (!searchData) {
       try {
         const [weeksSnap, libSnap] = await Promise.all([
-          getDocs(query(collection(db, 'weeks'), where('studentId', '==', userData?.uid || ''))),
+          getDocs(query(collection(db, 'weeks'), where('studentId', '==', currentUser?.uid || ''))),
           getDocs(collection(db, 'library_episodes'))
         ]);
         const weeks = weeksSnap.docs.map(d => ({ id: d.id, ...d.data(), searchType: 'week' }));
@@ -55,6 +56,7 @@ export default function Navbar() {
     if (!searchData || !searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
     return searchData.filter(item => {
+      if ((item.course || 'en') !== activeCourse) return false;
       const titleMatch = (item.title || '').toLowerCase().includes(q);
       const descMatch = (item.description || item.level || '').toLowerCase().includes(q);
       return titleMatch || descMatch;
@@ -87,7 +89,7 @@ export default function Navbar() {
     <nav className="navbar">
       {/* Esquerda: Logo e Links */}
       <div className="nav-left">
-        <img src="/logo.png" alt="YV English" style={{ height: 40, cursor: 'pointer', transform: 'scale(1.8)', transformOrigin: 'left center', marginLeft: '10px' }} onClick={() => navigate('/')} />
+        <img src="/logo.png" alt="YV Language Club" style={{ height: 40, cursor: 'pointer', transform: 'scale(1.8)', transformOrigin: 'left center', marginLeft: '10px' }} onClick={() => navigate('/')} />
         
         <div className="nav-links">
           <NavLink 
@@ -295,6 +297,22 @@ export default function Navbar() {
             </div>
           )}
         </div>
+
+        {/* Seletor de curso: só aparece para quem faz mais de um idioma */}
+        {userCourses.length > 1 && (
+          <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 99, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            {userCourses.map(c => (
+              <button
+                key={c}
+                onClick={() => setActiveCourse(c)}
+                title={COURSES[c].label}
+                style={{ padding: '6px 10px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 800, background: activeCourse === c ? 'var(--amber)' : 'transparent', color: '#fff' }}
+              >
+                {COURSES[c].flag} {c.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Círculo de Progresso */}
         <div onClick={() => setShowStreakModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', padding: '6px 16px 6px 6px', borderRadius: 99, border: '1px solid rgba(200, 136, 58, 0.3)', cursor: 'pointer', transition: '0.2s' }} className="hover-scale streak-pill-container">

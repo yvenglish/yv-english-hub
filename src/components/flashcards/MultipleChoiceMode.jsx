@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
-  const { updateFlashcardProgress } = useAuth();
+  const { updateFlashcardProgress, activeCourseInfo } = useAuth();
 
   const [cards, setCards] = useState(deck.words);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -75,7 +75,7 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
   const playAudio = () => {
     if ('speechSynthesis' in window && currentCard) {
       const utterance = new SpeechSynthesisUtterance(currentCard.term);
-      utterance.lang = 'en-US';
+      utterance.lang = activeCourseInfo.speechLang;
       window.speechSynthesis.speak(utterance);
     }
   };

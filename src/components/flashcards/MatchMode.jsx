@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MatchMode({ deck, onFinish }) {
+  const { activeCourseInfo } = useAuth();
   const [cards, setCards] = useState([]);
   const [selectedOne, setSelectedOne] = useState(null);
   const [matchedIds, setMatchedIds] = useState([]);
@@ -44,7 +46,7 @@ export default function MatchMode({ deck, onFinish }) {
       // play audio if it's english
       if (card.type === 'term' && 'speechSynthesis' in window) {
         const u = new SpeechSynthesisUtterance(card.text);
-        u.lang = 'en-US';
+        u.lang = activeCourseInfo.speechLang;
         window.speechSynthesis.speak(u);
       }
     } else {

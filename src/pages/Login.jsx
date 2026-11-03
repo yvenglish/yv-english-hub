@@ -53,7 +53,7 @@ export default function Login() {
     <div className="login-page">
       <main className="login-shell">
         <div className="brand">
-          <img src="/logo.png" alt="YV English" className="logo" style={{ marginBottom: 15 }} />
+          <img src="/logo.png" alt="YV Language Club" className="logo" style={{ marginBottom: 15 }} />
           <p>Language Academy & Method</p>
         </div>
         
@@ -112,7 +112,7 @@ export default function Login() {
             </form>
           </div>
         </section>
-        <p className="footer-note">YV English · from understanding to speaking</p>
+        <p className="footer-note">YV Language Club · from understanding to speaking</p>
       </main>
     </div>
   );

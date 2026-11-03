@@ -10,7 +10,7 @@ let cachedEpisodesData = null;
 let lastFetchTime = 0;
 
 export default function Library() {
-  const { userData, toggleLibraryFavorite, toggleLibraryProgress, syncLibraryLevels } = useAuth();
+  const { userData, toggleLibraryFavorite, toggleLibraryProgress, syncLibraryLevels, activeCourse } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
@@ -68,6 +68,7 @@ export default function Library() {
 
   const filteredEpisodes = useMemo(() => {
     let result = episodes.filter(ep => {
+      if ((ep.course || 'en') !== activeCourse) return false;
       // Search
       if (search && !ep.title.toLowerCase().includes(search.toLowerCase())) return false;
       
@@ -86,7 +87,7 @@ export default function Library() {
     });
 
     return result;
-  }, [episodes, search, filter, favorites]);
+  }, [episodes, search, filter, favorites, activeCourse]);
 
   if (selectedEpisode) {
     return (

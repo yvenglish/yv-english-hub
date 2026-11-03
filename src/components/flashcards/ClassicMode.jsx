@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function ClassicMode({ deck, onFinish }) {
-  const { updateFlashcardProgress } = useAuth();
+  const { updateFlashcardProgress, activeCourseInfo } = useAuth();
   
   // Create a local state to allow appending cards that the user got wrong
   const [cards, setCards] = useState(deck.words);
@@ -38,7 +38,7 @@ export default function ClassicMode({ deck, onFinish }) {
   const playAudio = () => {
     if ('speechSynthesis' in window && currentCard) {
       const utterance = new SpeechSynthesisUtterance(currentCard.term);
-      utterance.lang = 'en-US';
+      utterance.lang = activeCourseInfo.speechLang;
       window.speechSynthesis.speak(utterance);
     }
   };

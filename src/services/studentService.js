@@ -11,7 +11,7 @@ const getSecondaryAuth = () => {
 
 // Cria a conta do aluno com a senha definida pela teacher.
 // Para trocar depois, o aluno usa "Esqueci minha senha" no login.
-export const createStudent = async ({ name, email, password, plan, dueDate }) => {
+export const createStudent = async ({ name, email, password, plan, dueDate, courses }) => {
   const secondaryAuth = getSecondaryAuth();
   const cleanEmail = email.trim().toLowerCase();
 
@@ -25,6 +25,7 @@ export const createStudent = async ({ name, email, password, plan, dueDate }) =>
     email: cleanEmail,
     active: true,
     dueDate: dueDate || null,
+    courses: courses?.length ? courses : ['en'],
     createdAt: new Date().toISOString()
   });
 
