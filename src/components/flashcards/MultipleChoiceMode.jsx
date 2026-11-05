@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
 
+// Embaralhamento uniforme (Fisher–Yates); sort com Math.random tende a repetir as mesmas ordens
+const shuffle = (list) => {
+  const arr = [...list];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
 export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
   const { updateFlashcardProgress, activeCourseInfo , activeCourse } = useAuth();
   const h = UI_TEXTS[activeCourse];
@@ -27,20 +37,20 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
     // 1 Correct option
     const correct = currentCard.translation;
     
-    // Pick 3 random wrong options from globalWords
-    const wrongPool = globalWords.filter(w => w.id !== currentCard.id && w.translation !== correct);
-    
-    // Shuffle wrong pool
-    const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random());
-    const selectedWrong = shuffledWrong.slice(0, 3).map(w => w.translation);
-    
-    // Pad if not enough words in global DB
+    // Opções erradas saem do próprio deck; só completa com outras palavras do curso se o deck tiver menos de 4 traduções
+    const otherTranslations = (words) => [...new Set(words.map(w => w.translation))].filter(t => t && t !== correct);
+    let selectedWrong = shuffle(otherTranslations(deck.words)).slice(0, 3);
+    if (selectedWrong.length < 3) {
+      const fillers = shuffle(otherTranslations(globalWords).filter(t => !selectedWrong.includes(t)));
+      selectedWrong = [...selectedWrong, ...fillers].slice(0, 3);
+    }
+
+    // Último recurso: o curso inteiro tem menos de 4 palavras
     while (selectedWrong.length < 3) {
       selectedWrong.push(h.extraOption(selectedWrong.length + 1));
     }
     
-    const allOptions = [correct, ...selectedWrong].sort(() => 0.5 - Math.random());
-    setOptions(allOptions);
+    setOptions(shuffle([correct, ...selectedWrong]));
   };
 
   const handleSelect = async (opt) => {

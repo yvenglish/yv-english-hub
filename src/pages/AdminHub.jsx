@@ -14,6 +14,18 @@ import { TASK_TYPES } from '../data/production';
 import { COURSES, inCourse, getUserCourses } from '../data/courses';
 import './AdminHub.css';
 
+const ADMIN_TAB_LABELS = {
+  analytics: 'Analytics',
+  students: 'Alunos',
+  'correções': 'Correções',
+  weeks: 'Semanas',
+  daily: 'Daily Content',
+  vocabulary: 'Vocabulário Global',
+  library: 'Biblioteca',
+  'voice-lab': 'Voice Lab',
+  extra: 'Conteúdo Extra'
+};
+
 export default function AdminHub() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -965,7 +977,7 @@ export default function AdminHub() {
         <div className="admin-main-tabs">
           {['analytics', 'students', 'correções', 'weeks', 'daily', 'vocabulary', 'library', 'voice-lab', 'extra'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 20px', whiteSpace: 'nowrap', borderRadius: 999, border: activeTab === tab ? 'none' : '1px solid var(--line)', background: activeTab === tab ? 'var(--plum)' : 'transparent', color: activeTab === tab ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: 800, textTransform: 'capitalize' }}>
-              {tab === 'analytics' ? 'Analytics' : tab === 'daily' ? 'Daily Content' : tab === 'students' ? 'Alunos' : tab === 'weeks' ? 'Semanas' : tab === 'library' ? 'Biblioteca' : tab === 'voice-lab' ? 'Voice Lab' : tab === 'extra' ? 'Conteúdo Extra' : 'Vocabulário Global'}
+              {ADMIN_TAB_LABELS[tab]}
             </button>
           ))}
         </div>
