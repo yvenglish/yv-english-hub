@@ -229,10 +229,7 @@ export default function StudentHub() {
     else setShowDailyModal(true);
   };
 
-  const handleFlashcardsClick = () => {
-    if (planName === 'Foundation') setShowUpgradeModal(true);
-    else navigate('/flashcards');
-  };
+  const handleFlashcardsClick = () => navigate('/flashcards');
 
 
 

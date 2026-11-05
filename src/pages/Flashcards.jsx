@@ -33,11 +33,8 @@ export default function Flashcards() {
   const [showCompleteModal, setShowCompleteModal] = useState(null); // stores the completion message
 
   useEffect(() => {
+    // Games e flashcards ficam liberados para todos os planos
     if (currentUser) {
-      if (userData?.plan === 'Foundation') {
-        navigate('/');
-        return;
-      }
       loadData();
     }
   }, [currentUser, userData, navigate, activeCourse]);
