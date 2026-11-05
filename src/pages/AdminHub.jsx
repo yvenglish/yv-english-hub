@@ -13,6 +13,7 @@ import ProductionAdminTab from '../components/admin/ProductionAdminTab';
 import GamesAdminTab from '../components/admin/GamesAdminTab';
 import { TASK_TYPES } from '../data/production';
 import { COURSES, inCourse, getUserCourses } from '../data/courses';
+import { SUGGESTED_DECK_ICONS, getDeckIcon } from '../data/deckIcons';
 import './AdminHub.css';
 
 const ADMIN_TAB_LABELS = {
@@ -1507,6 +1508,13 @@ export default function AdminHub() {
                     <div className="admin-flex-row">
                       <input type="text" value={deckTitle} onChange={e => setDeckTitle(e.target.value)} placeholder="Título do Deck (ex: Body Parts)" style={{ flex: 2, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                       <input type="text" value={deckIcon} onChange={e => setDeckIcon(e.target.value)} placeholder="Emoji (opcional, ex: 👕)" style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--muted)', marginRight: 4 }}>Sugestões:</span>
+                      {SUGGESTED_DECK_ICONS.map(icon => (
+                        <button key={icon} type="button" onClick={() => setDeckIcon(icon)} style={{ fontSize: '1.2rem', padding: '2px 6px', borderRadius: 8, cursor: 'pointer', border: deckIcon === icon ? '2px solid var(--amber)' : '1px solid var(--line)', background: 'transparent' }}>{icon}</button>
+                      ))}
+                      {!deckIcon && deckTitle && <span style={{ fontSize: '0.75rem', color: 'var(--muted)', marginLeft: 6 }}>Sem emoji, o aluno vê {getDeckIcon({ title: deckTitle })}</span>}
                     </div>
                     <input type="text" value={deckDescription} onChange={e => setDeckDescription(e.target.value)} placeholder="Descrição (opcional)" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
                     

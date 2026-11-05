@@ -12,6 +12,7 @@ import SpeedRoundMode from '../components/flashcards/SpeedRoundMode';
 import GamesSection from '../components/games/GamesSection';
 import { inCourse } from '../data/courses';
 import { REVIEW_BATCH_SIZE } from '../data/srs';
+import { getDeckIcon } from '../data/deckIcons';
 import { UI_TEXTS } from '../data/uiTexts';
 
 export default function Flashcards() {
@@ -25,6 +26,7 @@ export default function Flashcards() {
   
   const [studentDecks, setStudentDecks] = useState([]);
   const [globalWords, setGlobalWords] = useState([]);
+  const [masteredIds, setMasteredIds] = useState(new Set()); // palavras que o aluno já domina
   
   const [selectedDeck, setSelectedDeck] = useState(null);
   const [selectedMode, setSelectedMode] = useState('');
@@ -44,13 +46,17 @@ export default function Flashcards() {
     try {
       const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', currentUser.uid));
       
-      const [wordsSnap, decksSnap, assignSnap, dueFlashcards, difficultFlashcards] = await Promise.all([
+      const [wordsSnap, decksSnap, assignSnap, dueFlashcards, difficultFlashcards, progressSnap] = await Promise.all([
         getDocs(collection(db, 'vocabulary_global')),
         getDocs(collection(db, 'decks')),
         getDocs(q),
         getDueFlashcards(),
-        getDifficultFlashcards()
+        getDifficultFlashcards(),
+        getDocs(collection(db, `users/${currentUser.uid}/flashcard_progress`))
       ]);
+
+      // "Dominada" = acertou pelo menos 2 vezes seguidas (próxima revisão em 6+ dias)
+      setMasteredIds(new Set(progressSnap.docs.filter(d => (d.data().repetitions || 0) >= 2).map(d => d.id)));
 
       // Só palavras e decks do curso ativo
       const allWords = wordsSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(w => inCourse(w, activeCourse));
@@ -72,6 +78,7 @@ export default function Flashcards() {
               id: deckData.id,
               title: deckData.title,
               description: deckData.description,
+              icon: deckData.icon,
               words: deckWords
             });
           }
@@ -289,10 +296,22 @@ export default function Flashcards() {
                               className="deck-card"
                               style={{ background: 'var(--paper)', border: '1px solid var(--line)', padding: '22px 22px 18px', borderRadius: 22, textAlign: 'left', cursor: 'pointer', transition: '0.25s', display: 'flex', flexDirection: 'column', gap: 6 }}
                             >
-                              <span style={{ fontSize: '1.7rem' }}>{deck.id === 'custom_words_deck' ? '📝' : (deck.icon || '🗂️')}</span>
+                              <span style={{ fontSize: '1.7rem' }}>{deck.id === 'custom_words_deck' ? '📝' : getDeckIcon(deck)}</span>
                               <h3 style={{ fontSize: '1.15rem', margin: '4px 0 0', color: 'var(--text)', lineHeight: 1.25 }}>{deck.title}</h3>
                               {deck.description && <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>{deck.description}</p>}
-                              <span style={{ marginTop: 'auto', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              {(() => {
+                                const mastered = deck.words.filter(w => masteredIds.has(w.id)).length;
+                                const pct = deck.words.length ? Math.round((mastered / deck.words.length) * 100) : 0;
+                                return (
+                                  <span style={{ marginTop: 'auto', paddingTop: 10, display: 'grid', gap: 4 }}>
+                                    <span style={{ height: 6, background: 'var(--line)', borderRadius: 99, overflow: 'hidden' }}>
+                                      <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: pct === 100 ? '#2ed573' : 'var(--amber)', borderRadius: 99 }} />
+                                    </span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 700 }}>{pct === 100 ? h.deckAllMastered : h.deckMastered(mastered, deck.words.length)}</span>
+                                  </span>
+                                );
+                              })()}
+                              <span style={{ paddingTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ background: 'var(--cream)', padding: '4px 10px', borderRadius: 99, fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--plum)' }}>{h.cardsCount(deck.words.length)}</span>
                                 <span style={{ color: 'var(--amber)', fontWeight: 800 }}>→</span>
                               </span>
