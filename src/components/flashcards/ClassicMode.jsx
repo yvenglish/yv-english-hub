@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { UI_TEXTS } from '../../data/uiTexts';
 
 export default function ClassicMode({ deck, onFinish }) {
-  const { updateFlashcardProgress, activeCourseInfo } = useAuth();
+  const { updateFlashcardProgress, activeCourseInfo , activeCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   
   // Create a local state to allow appending cards that the user got wrong
   const [cards, setCards] = useState(deck.words);
@@ -48,10 +50,10 @@ export default function ClassicMode({ deck, onFinish }) {
   return (
     <div style={{ width: 'min(100%, 500px)', perspective: 1000, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
-        <span>Flashcard Clássico</span>
+        <span>{h.modeClassic}</span>
         <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
           <span>{currentIndex + 1} / {cards.length}</span>
-          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>Sair</button>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>{h.exit}</button>
         </div>
       </div>
 
@@ -81,7 +83,7 @@ export default function ClassicMode({ deck, onFinish }) {
         
         
         <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-          {showBack ? 'Tradução' : 'Toque para virar'}
+          {showBack ? h.translation : h.tapToFlip}
         </p>
 
         {currentCard.sentences && currentCard.sentences.length > 0 && (
@@ -112,10 +114,10 @@ export default function ClassicMode({ deck, onFinish }) {
 
       {showBack && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 24 }}>
-          <button onClick={() => handleNext(0)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#ff4d4d', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>Errei</button>
-          <button onClick={() => handleNext(1)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#ff9933', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>Difícil</button>
-          <button onClick={() => handleNext(2)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#4caf50', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>Bom</button>
-          <button onClick={() => handleNext(3)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#2196f3', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>Fácil</button>
+          <button onClick={() => handleNext(0)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#ff4d4d', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>{h.wrong}</button>
+          <button onClick={() => handleNext(1)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#ff9933', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>{h.hard}</button>
+          <button onClick={() => handleNext(2)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#4caf50', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>{h.good}</button>
+          <button onClick={() => handleNext(3)} style={{ padding: '12px', borderRadius: 16, border: 'none', background: '#2196f3', color: 'white', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>{h.easy}</button>
         </div>
       )}
     </div>

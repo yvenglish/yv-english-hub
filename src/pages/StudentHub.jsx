@@ -7,9 +7,11 @@ import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arra
 import { requestNotificationPermission } from '../services/notificationService';
 import WeekTask from '../components/production/WeekTask';
 import { inCourse } from '../data/courses';
+import { UI_TEXTS } from '../data/uiTexts';
 
 export default function StudentHub() {
   const { currentUser, userData, logout, recordDailyCompletion, addWordToFlashcards, activeCourse, activeCourseInfo } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -338,19 +340,19 @@ export default function StudentHub() {
         <div className="hero-inner">
           <div className="hero-grid">
             <div className="hero-body">
-              <p className="eyebrow">Sua área pessoal</p>
+              <p className="eyebrow">{h.eyebrow}</p>
               <h1>{activeCourseInfo.greeting},<br/><em>{studentName}</em> ✦</h1>
-              <p className="hero-sub">Seu painel com semanas, Daily Content, exercícios extras, flashcards inteligentes e conteúdos recomendados pela Yas.</p>
+              <p className="hero-sub">{h.heroSub}</p>
               <div className="hero-actions">
-                <button onClick={() => document.getElementById('weeksSection').scrollIntoView({ behavior: 'smooth' })}>Ver semanas</button>
-                <button className="ghost" onClick={handleFlashcardsClick}>Estudar flashcards</button>
+                <button onClick={() => document.getElementById('weeksSection').scrollIntoView({ behavior: 'smooth' })}>{h.seeWeeks}</button>
+                <button className="ghost" onClick={handleFlashcardsClick}>{h.studyFlashcards}</button>
               </div>
             </div>
 
             <aside className="hero-panel">
-              <span>Fluency Path</span>
-              <strong>Focus now</strong>
-              <p>{weeks.length > 0 ? [...weeks].sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0].title : 'Aguardando novo material...'}</p>
+              <span>{h.panelKicker}</span>
+              <strong>{h.panelTitle}</strong>
+              <p>{weeks.length > 0 ? [...weeks].sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0].title : h.waitingMaterial}</p>
             </aside>
           </div>
         </div>
@@ -360,11 +362,11 @@ export default function StudentHub() {
         {showNotificationBanner && (
           <div style={{ background: 'rgba(138, 124, 255, 0.15)', border: '1px solid var(--purple)', borderRadius: 16, padding: '16px 24px', marginBottom: 30, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 15 }}>
             <div>
-              <h4 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '1rem' }}>Lembrete Diário 🔔</h4>
-              <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>Ative as notificações para receber seu alerta diário de estudos às 14h.</p>
+              <h4 style={{ margin: '0 0 5px 0', color: '#fff', fontSize: '1rem' }}>{h.reminderTitle}</h4>
+              <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>{h.reminderText}</p>
             </div>
             <button onClick={handleEnableNotifications} style={{ background: 'var(--purple)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 99, fontWeight: 'bold', cursor: 'pointer' }}>
-              Ativar Alertas
+              {h.enableAlerts}
             </button>
           </div>
         )}
@@ -372,64 +374,64 @@ export default function StudentHub() {
         <section className="quick-grid" aria-label="Atalhos principais">
           <button className="feature-card" onClick={handleDailyClick}>
             <span className="feature-icon">📌</span>
-            <span className="feature-kicker">Daily Content</span>
-            <strong>Texto e exercícios de hoje</strong>
+            <span className="feature-kicker">{h.dailyKicker}</span>
+            <strong>{h.dailyTitle}</strong>
             <small>
               {dailyAssignment 
-                ? (dailyAssignment.status === 'completed' ? 'Feito hoje! ✅' : 'Novo material disponível!')
-                : 'Você está em dia com os materiais.'}
+                ? (dailyAssignment.status === 'completed' ? h.dailyDone : h.dailyNew)
+                : h.dailyUpToDate}
             </small>
           </button>
 
           <button className="feature-card" onClick={handleFlashcardsClick}>
             <span className="feature-icon">🃏</span>
-            <span className="feature-kicker">Smart Review</span>
-            <strong>Flashcards do glossário</strong>
-            <small>Revisão com algoritmo de repetição</small>
+            <span className="feature-kicker">{h.reviewKicker}</span>
+            <strong>{h.reviewTitle}</strong>
+            <small>{h.reviewText}</small>
           </button>
           
           <button className="feature-card" onClick={() => window.open('https://the-fluency-times.vercel.app/', '_blank')}>
             <span className="feature-icon" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <span>🗞️</span>
-              <span style={{ fontSize: '0.65rem', background: 'rgba(200, 136, 58, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--amber)', fontWeight: 800 }}>NEWS</span>
+              <span style={{ fontSize: '0.65rem', background: 'rgba(200, 136, 58, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--amber)', fontWeight: 800 }}>{h.newsBadge}</span>
             </span>
-            <span className="feature-kicker">The Fluency Times</span>
-            <strong>Notícias no seu nível</strong>
-            <small>Leitura, áudio e interpretação</small>
+            <span className="feature-kicker">{h.newsKicker}</span>
+            <strong>{h.newsTitle}</strong>
+            <small>{h.newsText}</small>
           </button>
 
           <button className="feature-card" onClick={() => navigate('/library')}>
             <span className="feature-icon" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <span>🎧</span>
-              <span style={{ fontSize: '0.65rem', background: 'rgba(138, 124, 255, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--purple)', fontWeight: 800 }}>LIBRARY</span>
+              <span style={{ fontSize: '0.65rem', background: 'rgba(138, 124, 255, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--purple)', fontWeight: 800 }}>{h.libraryBadge}</span>
             </span>
-            <span className="feature-kicker">YV Input</span>
-            <strong>Biblioteca de Imersão</strong>
-            <small>Pratique o seu listening com materiais autênticos</small>
+            <span className="feature-kicker">{h.libraryKicker}</span>
+            <strong>{h.libraryTitle}</strong>
+            <small>{h.libraryText}</small>
           </button>
         </section>
 
         <section className="section-block" id="weeksSection">
           <div className="section-heading">
-            <p>Semanas</p>
-            <h2>Material organizado por aula</h2>
-            <span>Abra cada semana para ver foco, exercícios, vocabulário e links extras.</span>
+            <p>{h.weeksKicker}</p>
+            <h2>{h.weeksTitle}</h2>
+            <span>{h.weeksText}</span>
           </div>
           <section className="weeks-grid">
             {weeks.length === 0 ? (
-              <p style={{ color: 'var(--muted)' }}>Nenhuma semana disponível ainda.</p>
+              <p style={{ color: 'var(--muted)' }}>{h.noWeeks}</p>
             ) : (
               weeks.map((week, index) => (
                 <article key={week.id} className="week-card" onClick={() => setSelectedWeek(week)}>
                   <div className="card-head">
-                    <p className="card-number">Semana {index + 1}</p>
+                    <p className="card-number">{h.weekLabel} {index + 1}</p>
                     <h2 className="card-title">{week.title}</h2>
-                    {week.task && <span style={{ display: 'inline-block', marginTop: 6, fontSize: '0.7rem', fontWeight: 800, color: 'var(--amber)', textTransform: 'uppercase' }}>✍️ Tem tarefa</span>}
+                    {week.task && <span style={{ display: 'inline-block', marginTop: 6, fontSize: '0.7rem', fontWeight: 800, color: 'var(--amber)', textTransform: 'uppercase' }}>{h.hasTask}</span>}
                   </div>
                   <div className="card-body">
                     <p className="card-focus">{week.description}</p>
                     <div className="card-cta">
-                      <span>Ver material</span>
+                      <span>{h.seeMaterial}</span>
                       <span className="card-cta-arrow">→</span>
                     </div>
                   </div>
@@ -441,13 +443,13 @@ export default function StudentHub() {
 
         <section className="section-block" id="extraContentSection" style={{ marginTop: 40, borderTop: '1px solid var(--line)', paddingTop: 40 }}>
           <div className="section-heading">
-            <p>Conteúdo Extra</p>
-            <h2 style={{ fontSize: '1.4rem' }}>Recomendações para você</h2>
-            <span>Podcasts, livros e materiais sugeridos pela teacher.</span>
+            <p>{h.extraKicker}</p>
+            <h2 style={{ fontSize: '1.4rem' }}>{h.extraTitle}</h2>
+            <span>{h.extraText}</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 15 }}>
             {extraContents.length === 0 ? (
-              <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Nenhum material extra recomendado no momento.</p>
+              <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{h.noExtra}</p>
             ) : (
               extraContents.map(content => (
                 <article key={content.id} style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -469,11 +471,11 @@ export default function StudentHub() {
                     </div>
                     {localCompletedExtras.includes(content.id) ? (
                       <button onClick={() => handleToggleExtraCompleted(content.id)} style={{ background: 'transparent', border: '1px solid #2D7158', padding: '4px 10px', borderRadius: 99, fontSize: '0.7rem', cursor: 'pointer', color: '#2D7158', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        ✓ Visto
+                        {h.seen}
                       </button>
                     ) : (
                       <button onClick={() => handleToggleExtraCompleted(content.id)} style={{ background: 'transparent', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 99, fontSize: '0.7rem', cursor: 'pointer', color: 'var(--text)', whiteSpace: 'nowrap' }}>
-                        Marcar Visto
+                        {h.markSeen}
                       </button>
                     )}
                   </div>
@@ -502,11 +504,11 @@ export default function StudentHub() {
           <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 450, borderRadius: 28, overflow: 'hidden', position: 'relative', border: '1px solid var(--plum)', textAlign: 'center', padding: 40 }}>
             <button onClick={() => setShowUpgradeModal(false)} style={{ position: 'absolute', top: 20, right: 20, background: 'var(--cream)', border: '1px solid var(--line)', color: 'var(--text)', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold' }}>✕</button>
             <span style={{ fontSize: '3.5rem', display: 'block', margin: '0 auto 15px' }}>🔒</span>
-            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.2rem', color: 'var(--plum)', marginBottom: 15, lineHeight: 1.1 }}>Ops...</h2>
+            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.2rem', color: 'var(--plum)', marginBottom: 15, lineHeight: 1.1 }}>{h.upgradeTitle}</h2>
             <p style={{ color: 'var(--text)', fontSize: '1rem', lineHeight: 1.6, marginBottom: 30 }}>
-              Este recurso incrível só faz parte do plano <strong>Fluency</strong> ou superior. Quer ter acesso? Fale com a teacher para fazer o upgrade e destravar todo o seu potencial agora mesmo!
+              {h.upgradeBefore} <strong>Fluency</strong> {h.upgradeAfter}
             </p>
-            <button onClick={() => setShowUpgradeModal(false)} style={{ padding: '14px 28px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1rem', width: '100%', cursor: 'pointer' }}>Entendi</button>
+            <button onClick={() => setShowUpgradeModal(false)} style={{ padding: '14px 28px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1rem', width: '100%', cursor: 'pointer' }}>{h.understood}</button>
           </div>
         </div>
       )}
@@ -516,8 +518,8 @@ export default function StudentHub() {
           <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 800, borderRadius: 32, overflow: 'hidden', position: 'relative', border: '1px solid var(--line)', maxHeight: '100%', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
             <div style={{ padding: '30px 30px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
               <div>
-                <span style={{ fontSize: '0.7rem', background: 'rgba(200, 136, 58, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--amber)', fontWeight: 'bold', textTransform: 'uppercase' }}>YV DAILY EXERCISE</span>
-                <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '1.8rem', color: 'var(--plum)', margin: '10px 0 0' }}>Daily Content</h2>
+                <span style={{ fontSize: '0.7rem', background: 'rgba(200, 136, 58, 0.15)', padding: '2px 8px', borderRadius: 99, color: 'var(--amber)', fontWeight: 'bold', textTransform: 'uppercase' }}>{h.dailyModalKicker}</span>
+                <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '1.8rem', color: 'var(--plum)', margin: '10px 0 0' }}>{h.dailyModalTitle}</h2>
               </div>
               <button onClick={() => setShowDailyModal(false)} style={{ background: 'var(--cream)', border: '1px solid var(--line)', color: 'var(--text)', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold' }}>✕</button>
             </div>
@@ -526,7 +528,7 @@ export default function StudentHub() {
               {!dailyAssignment || !dailyContentDetails ? (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
                   <span style={{ fontSize: '3rem', display: 'block', margin: '0 auto 15px' }}>✨</span>
-                  <p>Você está em dia com todos os exercícios!</p>
+                  <p>{h.dailyAllDone}</p>
                 </div>
               ) : (
                 <>
@@ -558,7 +560,7 @@ export default function StudentHub() {
                             <strong style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', textAlign: 'right' }}>{activeTranslation.translation}</strong>
                             {planName !== 'Foundation' && (
                               addedWords.includes(activeTranslation.text.toLowerCase()) ? (
-                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#2ed573' }}>✓ Nos seus flashcards</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#2ed573' }}>{h.inFlashcards}</span>
                               ) : (
                                 <button
                                   type="button"
@@ -566,7 +568,7 @@ export default function StudentHub() {
                                   disabled={addingWord}
                                   style={{ padding: '4px 12px', fontSize: '0.75rem', fontWeight: 800, background: 'transparent', color: 'var(--amber)', border: '1px solid var(--amber)', borderRadius: 999, cursor: addingWord ? 'wait' : 'pointer' }}
                                 >
-                                  {addingWord ? 'Adicionando...' : '+ Flashcards'}
+                                  {addingWord ? h.adding : '+ Flashcards'}
                                 </button>
                               )
                             )}
@@ -574,16 +576,16 @@ export default function StudentHub() {
                         </>
                       ) : (
                         <>
-                          <span style={{ color: '#bbaacb', fontSize: '0.85rem' }}>Click a highlighted word</span>
-                          <strong style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', opacity: 0.5, textAlign: 'right' }}>A tradução aparecerá aqui.</strong>
+                          <span style={{ color: '#bbaacb', fontSize: '0.85rem' }}>{h.clickWord}</span>
+                          <strong style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', color: '#fff', opacity: 0.5, textAlign: 'right' }}>{h.translationHere}</strong>
                         </>
                       )}
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 20 }}>
                       <div>
-                        <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--muted)', margin: '0 0 5px 0' }}>Read</p>
-                        <h4 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: '2.4rem', fontWeight: 500, color: 'var(--text)' }}>The Text</h4>
+                        <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--muted)', margin: '0 0 5px 0' }}>{h.read}</p>
+                        <h4 style={{ margin: 0, fontFamily: 'Georgia, serif', fontSize: '2.4rem', fontWeight: 500, color: 'var(--text)' }}>{h.theText}</h4>
                       </div>
                     </div>
 
@@ -659,11 +661,11 @@ export default function StudentHub() {
                   {dailyAssignment.status === 'completed' && (
                     <div style={{ marginTop: 25, textAlign: 'center', padding: 20, background: '#EAF7F1', borderRadius: 16, color: '#2D7158', border: '1px solid #2D7158' }}>
                       <span style={{ fontSize: '2rem', display: 'block', marginBottom: 10 }}>🎉</span>
-                      <h3 style={{ margin: '0 0 5px' }}>Exercício Concluído!</h3>
-                      <p style={{ margin: hasNextPending ? '0 0 15px' : 0 }}>Você acertou {dailyAssignment.score} de {dailyAssignment.totalQuestions} questões.</p>
+                      <h3 style={{ margin: '0 0 5px' }}>{h.exerciseDone}</h3>
+                      <p style={{ margin: hasNextPending ? '0 0 15px' : 0 }}>{h.score(dailyAssignment.score, dailyAssignment.totalQuestions)}</p>
                       {hasNextPending && (
                         <button onClick={() => fetchDailyAssignment(true)} style={{ padding: '10px 20px', background: '#2D7158', color: '#fff', border: 'none', borderRadius: 99, fontWeight: 'bold', cursor: 'pointer' }}>
-                          Próximo Exercício ➔
+                          {h.nextExercise}
                         </button>
                       )}
                     </div>
@@ -671,7 +673,7 @@ export default function StudentHub() {
                   
                   {dailyAssignment.status === 'pending' && Object.keys(dailyAssignment.studentAnswers || {}).length > 0 && Object.keys(dailyAssignment.studentAnswers || {}).length < (dailyContentDetails.questions?.length || 1) && (
                     <div style={{ marginTop: 25, textAlign: 'center', padding: 15, color: 'var(--muted)' }}>
-                      Faltam {(dailyContentDetails.questions?.length || 1) - Object.keys(dailyAssignment.studentAnswers || {}).length} perguntas para concluir o exercício.
+                      {h.remaining((dailyContentDetails.questions?.length || 1) - Object.keys(dailyAssignment.studentAnswers || {}).length)}
                     </div>
                   )}
                 </>
@@ -695,16 +697,16 @@ export default function StudentHub() {
             <div style={{ padding: '30px', overflowY: 'auto', flex: 1, background: 'var(--paper)', WebkitOverflowScrolling: 'touch' }}>
               {(!selectedWeek.links || selectedWeek.links.length === 0) ? (
                 <>
-                  <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 20, fontWeight: 800 }}>Materiais da Aula</h3>
+                  <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 20, fontWeight: 800 }}>{h.classMaterials}</h3>
                   <div style={{ padding: 30, textAlign: 'center', background: 'var(--cream)', borderRadius: 20, border: '1px dashed var(--line)' }}>
-                    <p style={{ color: 'var(--muted)', margin: 0 }}>Nenhum material extra cadastrado.</p>
+                    <p style={{ color: 'var(--muted)', margin: 0 }}>{h.noClassMaterials}</p>
                   </div>
                 </>
               ) : (
                 <div style={{ display: 'grid', gap: 24 }}>
                   {selectedWeek.links.filter(l => l.type === 'recording').length > 0 && (
                     <div>
-                      <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 }}>Gravações da Aula</h3>
+                      <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 }}>{h.recordings}</h3>
                       <div style={{ display: 'grid', gap: 14 }}>
                         {selectedWeek.links.filter(l => l.type === 'recording').map((link, i) => (
                           <div key={i} onClick={() => {
@@ -727,7 +729,7 @@ export default function StudentHub() {
 
                   {selectedWeek.links.filter(l => l.type !== 'recording').length > 0 && (
                     <div>
-                      <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 }}>Materiais Extras</h3>
+                      <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 }}>{h.extraMaterials}</h3>
                       <div style={{ display: 'grid', gap: 14 }}>
                         {selectedWeek.links.filter(l => l.type !== 'recording').map((link, i) => (
                           <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px', background: 'var(--cream)', borderRadius: 20, textDecoration: 'none', color: 'var(--text)', border: '1px solid var(--line)', alignItems: 'center' }}>
@@ -761,7 +763,7 @@ export default function StudentHub() {
               setActiveVideoUrl(null);
               setSelectedWeek(null);
               navigate(location.pathname, { replace: true, state: {} });
-            }} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '10px 20px', borderRadius: 99, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 'bold' }}>← Voltar à Home</button>
+            }} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '10px 20px', borderRadius: 99, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 'bold' }}>{h.backHome}</button>
             <button onClick={() => setActiveVideoUrl(null)} style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', width: 44, height: 44, borderRadius: '50%', cursor: 'pointer', display: 'grid', placeItems: 'center', fontWeight: 'bold', flexShrink: 0 }}>✕</button>
           </div>
           <div style={{ background: '#000', width: '100%', maxWidth: 900, margin: '0 auto', borderRadius: 16, overflow: 'hidden', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.5)', height: '70vh', minHeight: 300 }}>
@@ -779,16 +781,16 @@ export default function StudentHub() {
           <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 450, borderRadius: 28, overflow: 'hidden', position: 'relative', border: '1px solid #FF5A1E', textAlign: 'center', padding: '50px 40px', boxShadow: '0 20px 60px rgba(255, 90, 30, 0.2)' }}>
             <span style={{ fontSize: '5rem', display: 'block', margin: '0 auto 15px', animation: 'bounce 1s infinite' }}>{streakGoalAchieved ? '🏆' : '🔥'}</span>
             <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: '#FF5A1E', marginBottom: 15, lineHeight: 1.1 }}>
-              {streakGoalAchieved ? 'Objetivo Concluído!' : 'Meta Atingida!'}
+              {streakGoalAchieved ? h.goalDone : h.goalReached}
             </h2>
             <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: 10 }}>
               {streakGoalAchieved 
-                ? `Incrível! Você completou sua meta de ${userData?.streakGoal || 3} dias seguidos de estudo.`
-                : 'Parabéns! Você completou o Daily Content de hoje e aumentou sua ofensiva.'}
+                ? h.goalDoneText(userData?.streakGoal || 3)
+                : h.goalReachedText}
             </p>
-            <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: 30 }}>Você está em um streak de <strong>{userData?.currentStreak || 0} dias</strong>. Continue assim!</p>
+            <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: 30 }}>{h.streakBefore} <strong>{userData?.currentStreak || 0} {h.days}</strong>{h.streakAfter}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button onClick={() => { setShowGoalModal(false); setStreakGoalAchieved(false); }} style={{ padding: '16px 28px', background: '#FF5A1E', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1.1rem', width: '100%', cursor: 'pointer', transition: '0.2s' }}>Fechar</button>
+              <button onClick={() => { setShowGoalModal(false); setStreakGoalAchieved(false); }} style={{ padding: '16px 28px', background: '#FF5A1E', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1.1rem', width: '100%', cursor: 'pointer', transition: '0.2s' }}>{h.close}</button>
             </div>
           </div>
         </div>
@@ -798,10 +800,10 @@ export default function StudentHub() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 450, borderRadius: 28, overflow: 'hidden', position: 'relative', border: '1px solid var(--plum)', textAlign: 'center', padding: '50px 40px', boxShadow: '0 20px 60px rgba(138, 124, 255, 0.2)' }}>
             <span style={{ fontSize: '5rem', display: 'block', margin: '0 auto 15px', animation: 'bounce 1s infinite' }}>🎉</span>
-            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--plum)', marginBottom: 15, lineHeight: 1.1 }}>Daily Concluído!</h2>
-            <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: 30 }}>Muito bem! Você completou sua tarefa diária.</p>
+            <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--plum)', marginBottom: 15, lineHeight: 1.1 }}>{h.dailyFinished}</h2>
+            <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: 30 }}>{h.dailyFinishedText}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button onClick={() => setShowCompleteModal(false)} style={{ padding: '16px 28px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1.1rem', width: '100%', cursor: 'pointer', transition: '0.2s' }}>Fechar</button>
+              <button onClick={() => setShowCompleteModal(false)} style={{ padding: '16px 28px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1.1rem', width: '100%', cursor: 'pointer', transition: '0.2s' }}>{h.close}</button>
             </div>
           </div>
         </div>

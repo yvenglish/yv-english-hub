@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { UI_TEXTS } from '../data/uiTexts';
 
 export default function Glossary() {
   const { currentUser, activeCourse, activeCourseInfo } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   const [words, setWords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,7 +64,7 @@ export default function Glossary() {
       utterance.lang = activeCourseInfo.speechLang;
       window.speechSynthesis.speak(utterance);
     } else {
-      alert("Seu navegador não suporta áudio nativo.");
+      alert(h.noSpeech);
     }
   };
 
@@ -83,9 +85,9 @@ export default function Glossary() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px', minHeight: '80vh' }}>
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--plum)', marginBottom: 10 }}>📖 Meu Glossário</h1>
+        <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--plum)', marginBottom: 10 }}>{h.glossaryTitle}</h1>
         <p style={{ color: 'var(--muted)', fontSize: '1.1rem' }}>
-          O seu dicionário pessoal com todas as palavras que você já aprendeu.
+          {h.glossaryText}
         </p>
       </div>
 
@@ -93,7 +95,7 @@ export default function Glossary() {
         <span style={{ position: 'absolute', left: 18, top: '50%', transform: 'translateY(-50%)', fontSize: '1.2rem', color: 'var(--amber)' }}>🔍</span>
         <input 
           type="text" 
-          placeholder="Buscar palavra em inglês ou português..." 
+          placeholder={h.glossarySearch} 
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           style={{
@@ -114,12 +116,12 @@ export default function Glossary() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>Carregando glossário...</div>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>{h.glossaryLoading}</div>
       ) : words.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 60, background: 'var(--paper)', borderRadius: 24, border: '1px solid var(--line)' }}>
           <span style={{ fontSize: '3rem', display: 'block', marginBottom: 20 }}>🌱</span>
-          <h2 style={{ color: 'var(--plum)', marginBottom: 10 }}>Glossário Vazio</h2>
-          <p style={{ color: 'var(--muted)' }}>Você ainda não recebeu nenhuma palavra. Continue estudando para desbloquear seu vocabulário!</p>
+          <h2 style={{ color: 'var(--plum)', marginBottom: 10 }}>{h.glossaryEmpty}</h2>
+          <p style={{ color: 'var(--muted)' }}>{h.glossaryEmptyText}</p>
         </div>
       ) : sortedLetters.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>Nenhuma palavra encontrada para "{searchTerm}".</div>
@@ -150,7 +152,7 @@ export default function Glossary() {
                           width: 40, height: 40, borderRadius: '50%', background: 'var(--amber-soft)', border: 'none', cursor: 'pointer', display: 'grid', placeItems: 'center', color: '#6A4100', fontSize: '1.1rem', transition: 'transform 0.2s', boxShadow: '0 2px 8px rgba(200, 136, 58, 0.2)'
                         }}
                         className="hover-scale"
-                        title={`Ouvir a pronúncia de ${word.term}`}
+                        title={h.listenTo(word.term)}
                       >
                         🔊
                       </button>

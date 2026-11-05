@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { UI_TEXTS } from '../../data/uiTexts';
 
 export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
-  const { updateFlashcardProgress, activeCourseInfo } = useAuth();
+  const { updateFlashcardProgress, activeCourseInfo , activeCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
 
   const [cards, setCards] = useState(deck.words);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -34,7 +36,7 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
     
     // Pad if not enough words in global DB
     while (selectedWrong.length < 3) {
-      selectedWrong.push(`Opção Extra ${selectedWrong.length + 1}`);
+      selectedWrong.push(h.extraOption(selectedWrong.length + 1));
     }
     
     const allOptions = [correct, ...selectedWrong].sort(() => 0.5 - Math.random());
@@ -85,10 +87,10 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
   return (
     <div style={{ width: 'min(100%, 600px)', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
-        <span>Múltiplas Respostas</span>
+        <span>{h.modeMultiple}</span>
         <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
           <span>{currentIndex + 1} / {cards.length}</span>
-          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>Sair</button>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>{h.exit}</button>
         </div>
       </div>
 
@@ -105,13 +107,13 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
         </button>
 
         {currentCard.imageUrl && (
-          <img src={currentCard.imageUrl} alt="Visual tip" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 16, marginBottom: 15, display: 'block', margin: '0 auto 15px' }} />
+          <img src={currentCard.imageUrl} alt={h.visualTip} style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 16, marginBottom: 15, display: 'block', margin: '0 auto 15px' }} />
         )}
         
         <h2 style={{ fontSize: '2.2rem', margin: '0 0 10px', fontFamily: '"Playfair Display", serif', color: 'var(--text)' }}>
           {currentCard.term}
         </h2>
-        <p style={{ color: 'var(--muted)', margin: 0 }}>Qual é a tradução correta?</p>
+        <p style={{ color: 'var(--muted)', margin: 0 }}>{h.whichTranslation}</p>
       </div>
 
       <div style={{ display: 'grid', gap: 12 }}>

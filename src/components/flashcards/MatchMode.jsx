@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { UI_TEXTS } from '../../data/uiTexts';
 
 export default function MatchMode({ deck, onFinish }) {
-  const { activeCourseInfo } = useAuth();
+  const { activeCourseInfo , activeCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   const [cards, setCards] = useState([]);
   const [selectedOne, setSelectedOne] = useState(null);
   const [matchedIds, setMatchedIds] = useState([]);
@@ -128,10 +130,10 @@ export default function MatchMode({ deck, onFinish }) {
         }
       `}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
-        <span>Combinar Cartões</span>
+        <span>{h.modeMatch}</span>
         <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
           <span>Etapa {chunkIndex + 1} de {Math.ceil(deck.words.length / CHUNK_SIZE)}</span>
-          <button onClick={() => onFinish({ earlyExit: true, studiedCount: chunkIndex * CHUNK_SIZE })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>Sair</button>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: chunkIndex * CHUNK_SIZE })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>{h.exit}</button>
         </div>
       </div>
 

@@ -15,3 +15,18 @@ export const BADGES = [
   { id: 'library_hard', icon: '🌳', title: 'Hard', description: '1º episódio Hard', check: s => s.libraryLevels.includes('hard') },
   { id: 'voice_lab_first', icon: '🎙️', title: 'Voice Lab', description: '1º desafio', check: s => s.voiceLabCount >= 1 }
 ];
+
+// Título e descrição em espanhol para o curso ES
+const BADGES_ES = {
+  streak_3: ['Racha 3', '3 días seguidos'], streak_5: ['Racha 5', '5 días seguidos'], streak_10: ['Racha 10', '10 días seguidos'],
+  streak_15: ['Racha 15', '15 días seguidos'], streak_20: ['Racha 20', '20 días seguidos'], streak_30: ['Racha 30', '30 días seguidos'],
+  daily_3: ['Diario x3', 'Contenido diario 3 días seguidos'], daily_7: ['Diario x7', 'Contenido diario 7 días seguidos'],
+  words_100: ['100 palabras', '100 palabras estudiadas'],
+  library_easy: ['Fácil', '1.er episodio Fácil'], library_medium: ['Medio', '1.er episodio Medio'], library_hard: ['Difícil', '1.er episodio Difícil'],
+  voice_lab_first: ['Voice Lab', '1.er desafío']
+};
+
+export const getBadgeText = (badge, course) => {
+  const es = course === 'es' && BADGES_ES[badge.id];
+  return es ? { title: es[0], description: es[1] } : { title: badge.title, description: badge.description };
+};

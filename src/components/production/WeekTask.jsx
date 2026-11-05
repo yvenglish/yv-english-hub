@@ -3,7 +3,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
-import { TASK_TYPES, RUBRIC, RUBRIC_LEVELS, MAX_TEXT_LENGTH, MAX_AUDIO_SECONDS } from '../../data/production';
+import { RUBRIC, MAX_TEXT_LENGTH, MAX_AUDIO_SECONDS, getTaskTypeLabel, getRubricLabel, getRubricLevel } from '../../data/production';
+import { UI_TEXTS } from '../../data/uiTexts';
 
 const boxStyle = { padding: 20, background: 'var(--cream)', borderRadius: 20, border: '1px solid var(--line)' };
 const titleStyle = { fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 15, fontWeight: 800 };
@@ -11,7 +12,8 @@ const titleStyle = { fontSize: '0.9rem', textTransform: 'uppercase', color: 'var
 // Tarefa de produção da semana: o aluno responde por escrito e/ou em áudio e a teacher corrige.
 // O documento em "submissions" usa o mesmo id da semana (cada semana é de um aluno só).
 export default function WeekTask({ week }) {
-  const { currentUser, userData, recordStudy, activeCourseInfo } = useAuth();
+  const { currentUser, userData, recordStudy, activeCourseInfo, activeCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   const task = week.task;
   const needsText = task?.type !== 'audio';
   const needsAudio = task?.type !== 'text';
@@ -48,10 +50,10 @@ export default function WeekTask({ week }) {
   if (userData?.plan === 'Foundation') {
     return (
       <div>
-        <h3 style={titleStyle}>Tarefa da Semana</h3>
+        <h3 style={titleStyle}>{h.taskTitle}</h3>
         <div style={{ ...boxStyle, textAlign: 'center' }}>
           <span style={{ fontSize: '2rem' }}>🔒</span>
-          <p style={{ margin: '10px 0 0', color: 'var(--muted)' }}>Responda tarefas e receba correção da teacher no plano <strong>Fluency</strong> ou superior.</p>
+          <p style={{ margin: '10px 0 0', color: 'var(--muted)' }}>{h.taskLockedBefore} <strong>Fluency</strong> {h.taskLockedAfter}</p>
         </div>
       </div>
     );
@@ -94,13 +96,13 @@ export default function WeekTask({ week }) {
       }, 1000);
     } catch (err) {
       console.error(err);
-      alert('Não foi possível acessar o microfone. Verifique as permissões do navegador.');
+      alert(h.micError);
     }
   };
 
   const handleSubmit = async () => {
-    if (needsText && !text.trim()) return alert('Escreva sua resposta antes de enviar.');
-    if (needsAudio && !audioBlob) return alert('Grave seu áudio antes de enviar.');
+    if (needsText && !text.trim()) return alert(h.writeFirst);
+    if (needsAudio && !audioBlob) return alert(h.recordFirst);
     setSending(true);
     try {
       let audioUrl = null;
@@ -131,7 +133,7 @@ export default function WeekTask({ week }) {
       await recordStudy(1);
     } catch (err) {
       console.error(err);
-      alert('Erro ao enviar a tarefa. Tente novamente.');
+      alert(h.sendError);
     }
     setSending(false);
   };
@@ -140,12 +142,12 @@ export default function WeekTask({ week }) {
 
   return (
     <div>
-      <h3 style={titleStyle}>Tarefa da Semana · {TASK_TYPES[task.type]}</h3>
+      <h3 style={titleStyle}>{h.taskTitle} · {getTaskTypeLabel(task.type, activeCourse)}</h3>
       <div style={{ ...boxStyle, display: 'grid', gap: 16 }}>
         <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{task.prompt}</p>
 
         {!loaded ? (
-          <p style={{ margin: 0, color: 'var(--muted)' }}>Carregando...</p>
+          <p style={{ margin: 0, color: 'var(--muted)' }}>{h.loading}</p>
         ) : submission ? (
           <>
             {submission.text && (
@@ -155,19 +157,19 @@ export default function WeekTask({ week }) {
 
             {submission.status === 'reviewed' && submission.feedback ? (
               <div style={{ padding: 16, background: 'var(--paper)', borderRadius: 12, border: '1px solid var(--amber)' }}>
-                <p style={{ margin: '0 0 12px', fontWeight: 800, color: 'var(--amber)' }}>✨ Feedback da teacher</p>
+                <p style={{ margin: '0 0 12px', fontWeight: 800, color: 'var(--amber)' }}>{h.teacherFeedback}</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8, marginBottom: submission.feedback.comment ? 12 : 0 }}>
                   {RUBRIC.filter(r => submission.feedback[r.key]).map(r => (
                     <div key={r.key} style={{ fontSize: '0.85rem' }}>
-                      <span style={{ color: 'var(--muted)' }}>{r.label}</span><br />
-                      <strong>{'★'.repeat(submission.feedback[r.key])}{'☆'.repeat(3 - submission.feedback[r.key])}</strong> {RUBRIC_LEVELS[submission.feedback[r.key]]}
+                      <span style={{ color: 'var(--muted)' }}>{getRubricLabel(r, activeCourse)}</span><br />
+                      <strong>{'★'.repeat(submission.feedback[r.key])}{'☆'.repeat(3 - submission.feedback[r.key])}</strong> {getRubricLevel(submission.feedback[r.key], activeCourse)}
                     </div>
                   ))}
                 </div>
                 {submission.feedback.comment && <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{submission.feedback.comment}</p>}
               </div>
             ) : (
-              <p style={{ margin: 0, color: 'var(--muted)', fontWeight: 600 }}>✅ Enviado! Aguardando a correção da teacher.</p>
+              <p style={{ margin: 0, color: 'var(--muted)', fontWeight: 600 }}>{h.sentWaiting}</p>
             )}
           </>
         ) : (
@@ -189,11 +191,11 @@ export default function WeekTask({ week }) {
               <div style={{ display: 'grid', gap: 10 }}>
                 {isRecording ? (
                   <button onClick={stopRecording} style={{ padding: 14, background: '#ff4757', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>
-                    ⏹ Parar gravação ({formatTime(seconds)} / {formatTime(MAX_AUDIO_SECONDS)})
+                    {h.stopRecording} ({formatTime(seconds)} / {formatTime(MAX_AUDIO_SECONDS)})
                   </button>
                 ) : (
                   <button onClick={startRecording} style={{ padding: 14, background: 'transparent', color: 'var(--plum)', border: '1px solid var(--plum)', borderRadius: 12, fontWeight: 800, cursor: 'pointer' }}>
-                    🎙️ {audioBlob ? 'Gravar de novo' : 'Gravar áudio'} (até {MAX_AUDIO_SECONDS / 60} min)
+                    🎙️ {audioBlob ? h.recordAgain : h.recordAudio} {h.upTo(MAX_AUDIO_SECONDS / 60)}
                   </button>
                 )}
                 {audioPreviewUrl && !isRecording && <audio controls src={audioPreviewUrl} style={{ width: '100%' }} />}
@@ -201,7 +203,7 @@ export default function WeekTask({ week }) {
             )}
 
             <button onClick={handleSubmit} disabled={sending || isRecording} style={{ padding: 14, background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 999, fontWeight: 800, fontSize: '1rem', cursor: sending ? 'wait' : 'pointer', opacity: isRecording ? 0.5 : 1 }}>
-              {sending ? 'Enviando...' : 'Enviar para a teacher'}
+              {sending ? h.sending : h.sendToTeacher}
             </button>
           </>
         )}

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { BADGES } from '../data/badges';
+import { BADGES, getBadgeText } from '../data/badges';
+import { UI_TEXTS } from '../data/uiTexts';
 
 export default function Account() {
-  const { userData, logout } = useAuth();
+  const { userData, logout, activeCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
@@ -23,7 +25,7 @@ export default function Account() {
 
   // Format the due date if it exists
   const formatDueDate = (dateStr) => {
-    if (!dateStr) return 'Não definida';
+    if (!dateStr) return h.notSet;
     const parts = dateStr.split('-');
     if (parts.length === 3) {
       return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
@@ -40,7 +42,7 @@ export default function Account() {
         </button>
 
         <h1 style={{ fontFamily: '"Playfair Display", serif', fontSize: '3rem', color: 'var(--text)', marginBottom: 40 }}>
-          Minha Conta
+          {h.accountTitle}
         </h1>
 
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 24, padding: 40, display: 'flex', flexDirection: 'column', gap: 30 }}>
@@ -51,7 +53,7 @@ export default function Account() {
               {initial}
             </div>
             <div>
-              <h2 style={{ margin: '0 0 5px', fontSize: '1.8rem', color: 'var(--text)' }}>{userData?.name || 'Aluno'}</h2>
+              <h2 style={{ margin: '0 0 5px', fontSize: '1.8rem', color: 'var(--text)' }}>{userData?.name || h.student}</h2>
               <p style={{ margin: 0, color: 'var(--muted)', fontSize: '1rem' }}>{userData?.email}</p>
             </div>
           </div>
@@ -62,21 +64,21 @@ export default function Account() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
             <div style={{ background: 'var(--cream)', padding: 20, borderRadius: 16 }}>
               <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--plum)', marginBottom: 5 }}>
-                Plano Atual
+                {h.currentPlan}
               </span>
               <strong style={{ fontSize: '1.2rem', color: 'var(--text)' }}>{userData?.plan || 'Foundation'}</strong>
             </div>
 
             <div style={{ background: 'var(--cream)', padding: 20, borderRadius: 16 }}>
               <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--plum)', marginBottom: 5 }}>
-                Vencimento da Mensalidade
+                {h.dueDate}
               </span>
               <strong style={{ fontSize: '1.2rem', color: 'var(--text)' }}>{formatDueDate(userData?.dueDate)}</strong>
             </div>
 
             <div style={{ background: 'var(--cream)', padding: 20, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
               <span style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--plum)', marginBottom: 15 }}>
-                Pagamento via Pix
+                {h.pixTitle}
               </span>
               {/* Fallback caso a imagem não exista, mostra um quadrado estilizado */}
               <div style={{ position: 'relative', width: 130, height: 130 }}>
@@ -90,17 +92,17 @@ export default function Account() {
                   Adicione pix.jpeg na pasta public
                 </div>
               </div>
-              <p style={{ margin: '15px 0 0', fontSize: '0.85rem', color: 'var(--muted)' }}>Escaneie para pagar a mensalidade</p>
+              <p style={{ margin: '15px 0 0', fontSize: '0.85rem', color: 'var(--muted)' }}>{h.pixScan}</p>
               <button 
                 onClick={handleCopyPix} 
                 style={{ marginTop: 15, padding: '8px 16px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
               >
-                {copied ? '✅ Chave Copiada!' : 'Copiar Chave Pix'}
+                {copied ? h.pixCopied : h.pixCopy}
               </button>
               
               {copied && (
                 <div style={{ position: 'fixed', bottom: 30, left: '50%', transform: 'translateX(-50%)', background: '#2D7158', color: '#fff', padding: '12px 24px', borderRadius: 99, fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', zIndex: 9999, fontSize: '0.9rem', textAlign: 'center' }}>
-                  Chave Pix copiada para a área de transferência!
+                  {h.pixCopiedToast}
                 </div>
               )}
             </div>
@@ -110,15 +112,15 @@ export default function Account() {
 
           {/* Badges / Conquistas */}
           <div>
-            <h3 style={{ margin: '0 0 20px', color: 'var(--text)', fontSize: '1.2rem' }}>Minhas Conquistas <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 500 }}>{(userData?.badges || []).filter(id => BADGES.some(b => b.id === id)).length}/{BADGES.length}</span></h3>
+            <h3 style={{ margin: '0 0 20px', color: 'var(--text)', fontSize: '1.2rem' }}>{h.achievements} <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 500 }}>{(userData?.badges || []).filter(id => BADGES.some(b => b.id === id)).length}/{BADGES.length}</span></h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 15 }}>
               {BADGES.map(badge => {
                 const owned = (userData?.badges || []).includes(badge.id);
                 return (
-                  <div key={badge.id} title={owned ? 'Conquistada!' : 'Ainda bloqueada'} style={{ background: 'var(--bg)', padding: 15, borderRadius: 16, textAlign: 'center', border: owned ? '1px solid var(--line)' : '1px dashed var(--line)', opacity: owned ? 1 : 0.4 }}>
+                  <div key={badge.id} title={owned ? h.badgeOwned : h.badgeLocked} style={{ background: 'var(--bg)', padding: 15, borderRadius: 16, textAlign: 'center', border: owned ? '1px solid var(--line)' : '1px dashed var(--line)', opacity: owned ? 1 : 0.4 }}>
                     <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10, filter: owned ? 'none' : 'grayscale(1)' }}>{badge.icon}</span>
-                    <strong style={{ fontSize: '0.8rem', color: owned ? 'var(--purple)' : 'var(--muted)', display: 'block' }}>{badge.title}</strong>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{badge.description}</span>
+                    <strong style={{ fontSize: '0.8rem', color: owned ? 'var(--purple)' : 'var(--muted)', display: 'block' }}>{getBadgeText(badge, activeCourse).title}</strong>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{getBadgeText(badge, activeCourse).description}</span>
                   </div>
                 );
               })}
@@ -135,7 +137,7 @@ export default function Account() {
               onMouseEnter={e => { e.currentTarget.style.background = '#ff4d4d'; e.currentTarget.style.color = '#fff'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#ff4d4d'; }}
             >
-              Sair da Conta
+              {h.logoutAccount}
             </button>
           </div>
 

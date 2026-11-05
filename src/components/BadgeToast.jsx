@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getBadgeText } from '../data/badges';
+import { UI_TEXTS } from '../data/uiTexts';
 
 // Mostra, uma de cada vez, as badges que o aluno acabou de conquistar
 export default function BadgeToast() {
-  const { unlockedBadges, dismissUnlockedBadge } = useAuth();
+  const { unlockedBadges, dismissUnlockedBadge, activeCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   const badge = unlockedBadges[0];
 
   useEffect(() => {
@@ -21,9 +24,9 @@ export default function BadgeToast() {
     >
       <span style={{ fontSize: '2.2rem', lineHeight: 1 }}>{badge.icon}</span>
       <div>
-        <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--amber)' }}>Nova conquista!</p>
-        <strong style={{ color: '#fff', fontSize: '1rem' }}>{badge.title}</strong>
-        <span style={{ color: '#bbaacb', fontSize: '0.85rem' }}> · {badge.description}</span>
+        <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--amber)' }}>{h.newBadge}</p>
+        <strong style={{ color: '#fff', fontSize: '1rem' }}>{getBadgeText(badge, activeCourse).title}</strong>
+        <span style={{ color: '#bbaacb', fontSize: '0.85rem' }}> · {getBadgeText(badge, activeCourse).description}</span>
       </div>
     </div>
   );

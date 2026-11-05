@@ -5,9 +5,11 @@ import { useTheme } from '../../context/ThemeContext';
 import { db } from '../../config/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { COURSES } from '../../data/courses';
+import { UI_TEXTS } from '../../data/uiTexts';
 
 export default function Navbar() {
   const { currentUser, userData, logout, setStreakGoal, userCourses, activeCourse, setActiveCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -108,7 +110,7 @@ export default function Navbar() {
           >
             {({ isActive }) => (
               <>
-                Início
+                {h.navHome}
                 {isActive && (
                   <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--amber)', borderRadius: '3px 3px 0 0' }} />
                 )}
@@ -138,7 +140,7 @@ export default function Navbar() {
             onMouseEnter={e => e.currentTarget.style.opacity = 1}
             onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
           >
-            Semanas
+            {h.navWeeks}
           </a>
 
           <NavLink 
@@ -186,7 +188,7 @@ export default function Navbar() {
               }}
               onClick={() => navigate('/library')}
             >
-              Biblioteca ▾
+              {h.navLibrary} ▾
               {(location.pathname === '/library' || location.pathname === '/voice-lab') && (
                 <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--amber)', borderRadius: '3px 3px 0 0' }} />
               )}
@@ -235,7 +237,7 @@ export default function Navbar() {
           <span style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }}>🔍</span>
           <input 
             type="text" 
-            placeholder="Buscar..." 
+            placeholder={h.searchPlaceholder} 
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setIsDropdownOpen(true); }}
             onFocus={handleSearchFocus}
@@ -280,7 +282,7 @@ export default function Navbar() {
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <strong style={{ fontSize: '0.9rem', color: '#fff' }}>{item.title}</strong>
                         <span style={{ fontSize: '0.65rem', background: item.searchType === 'week' ? 'rgba(200, 136, 58, 0.2)' : 'rgba(138, 124, 255, 0.2)', color: item.searchType === 'week' ? 'var(--amber)' : 'var(--purple)', padding: '2px 8px', borderRadius: 99, textTransform: 'uppercase', fontWeight: 800 }}>
-                          {item.searchType === 'week' ? 'Semana' : 'Biblioteca'}
+                          {item.searchType === 'week' ? h.searchWeek : h.searchLibrary}
                         </span>
                       </div>
                       <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -291,7 +293,7 @@ export default function Navbar() {
                 </div>
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
-                  Nenhum resultado encontrado.
+                  {h.noResults}
                 </div>
               )}
             </div>
@@ -364,7 +366,7 @@ export default function Navbar() {
                     setShowMenu(false);
                   }} 
                   style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', color: 'var(--text)', padding: '8px 15px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '0.9rem' }}
-                >👤 Minha Conta
+                >👤 {h.navAccount}
               </button>
               <button 
                   onClick={() => {
@@ -372,10 +374,10 @@ export default function Navbar() {
                     setShowMenu(false);
                   }} 
                   style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', color: 'var(--text)', padding: '8px 15px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '0.9rem' }}
-                >📖 Meu Glossário
+                >📖 {h.navGlossary}
               </button>
               <button onClick={toggleTheme} style={{ width: '100%', padding: '12px 20px', background: 'transparent', border: 'none', color: 'var(--text)', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.95rem' }}>
-                {theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+                {theme === 'dark' ? h.lightMode : h.darkMode}
               </button>
               <div style={{ height: 1, background: 'var(--line)', margin: '5px 0' }} />
               <button onClick={handleLogout} style={{ width: '100%', padding: '12px 20px', background: 'transparent', border: 'none', color: '#ff4d4d', textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.95rem', fontWeight: 'bold' }}>
@@ -392,25 +394,25 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div className={`mobile-menu ${showMenu ? 'open' : ''}`}>
-        <NavLink to="/" onClick={() => setShowMenu(false)}>Início</NavLink>
+        <NavLink to="/" onClick={() => setShowMenu(false)}>{h.navHome}</NavLink>
         <a href="/#weeksSection" onClick={(e) => {
           if (location.pathname !== '/') {
             e.preventDefault();
             navigate('/#weeksSection');
           }
           setShowMenu(false);
-        }}>Semanas</a>
+        }}>{h.navWeeks}</a>
         <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>Flashcards</NavLink>
         <NavLink to="/library" onClick={() => setShowMenu(false)}>Input Library</NavLink>
         <NavLink to="/voice-lab" onClick={() => setShowMenu(false)}>Voice Lab</NavLink>
-        <NavLink to="/glossary" onClick={() => setShowMenu(false)}>Glossário</NavLink>
+        <NavLink to="/glossary" onClick={() => setShowMenu(false)}>{h.navGlossary}</NavLink>
         
         {/* Mobile Search Bar */}
         <div style={{ position: 'relative', margin: '15px 20px' }} ref={mobileSearchRef}>
           <span style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }}>🔍</span>
           <input 
             type="text" 
-            placeholder="Buscar..." 
+            placeholder={h.searchPlaceholder} 
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setIsDropdownOpen(true); }}
             onFocus={handleSearchFocus}
@@ -456,7 +458,7 @@ export default function Navbar() {
                 </div>
               ) : (
                 <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
-                  Nenhum resultado encontrado.
+                  {h.noResults}
                 </div>
               )}
             </div>
@@ -464,9 +466,9 @@ export default function Navbar() {
         </div>
 
         <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
-        <button onClick={() => { navigate('/account'); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>Minha Conta</button>
-        <button onClick={() => { toggleTheme(); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro'}</button>
-        <button onClick={() => { handleLogout(); setShowMenu(false); }} style={{ background: 'transparent', color: 'var(--amber)', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>Sair</button>
+        <button onClick={() => { navigate('/account'); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{h.navAccount}</button>
+        <button onClick={() => { toggleTheme(); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{theme === 'dark' ? h.lightMode : h.darkMode}</button>
+        <button onClick={() => { handleLogout(); setShowMenu(false); }} style={{ background: 'transparent', color: 'var(--amber)', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{h.navLogout}</button>
       </div>
 
       {/* Streak Modal */}

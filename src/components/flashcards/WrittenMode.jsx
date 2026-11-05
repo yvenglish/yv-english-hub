@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { UI_TEXTS } from '../../data/uiTexts';
 
 export default function WrittenMode({ deck, onFinish }) {
-  const { updateFlashcardProgress, activeCourseInfo } = useAuth();
+  const { updateFlashcardProgress, activeCourseInfo , activeCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
 
   const [cards, setCards] = useState(deck.words);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -66,10 +68,10 @@ export default function WrittenMode({ deck, onFinish }) {
   return (
     <div style={{ width: 'min(100%, 600px)', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
-        <span>Revisão Escrita</span>
+        <span>{h.modeWritten}</span>
         <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
           <span>{currentIndex + 1} / {cards.length}</span>
-          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>Sair</button>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: currentIndex })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>{h.exit}</button>
         </div>
       </div>
 
@@ -82,7 +84,7 @@ export default function WrittenMode({ deck, onFinish }) {
           <img src={currentCard.imageUrl} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 16, marginBottom: 20, display: 'block', margin: '0 auto 20px' }} />
         )}
         
-        <p style={{ color: 'var(--muted)', margin: '0 0 10px', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold' }}>Traduza para o inglês</p>
+        <p style={{ color: 'var(--muted)', margin: '0 0 10px', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold' }}>{h.translateTo}</p>
         <h2 style={{ fontSize: '2.5rem', margin: '0 0 30px', fontFamily: '"Playfair Display", serif', color: 'var(--text)' }}>
           {currentCard.translation}
         </h2>
@@ -94,7 +96,7 @@ export default function WrittenMode({ deck, onFinish }) {
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             disabled={status !== 'typing'}
-            placeholder="Digite em inglês..."
+            placeholder={h.typeIn}
             enterKeyHint="go"
             style={{ 
               width: '100%', padding: '16px', borderRadius: 12, 
@@ -106,7 +108,7 @@ export default function WrittenMode({ deck, onFinish }) {
           
           {status === 'typing' ? (
             <button type="submit" onClick={handleSubmit} onTouchEnd={(e) => { e.preventDefault(); handleSubmit(e); }} style={{ padding: '16px', background: 'var(--plum)', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
-              Verificar
+              {h.check}
             </button>
           ) : (
             <div style={{ animation: 'fadeIn 0.3s' }}>
@@ -116,7 +118,7 @@ export default function WrittenMode({ deck, onFinish }) {
                 </div>
               )}
               <button type="button" onClick={handleNext} onTouchEnd={(e) => { e.preventDefault(); handleNext(); }} style={{ width: '100%', padding: '16px', background: status === 'correct' ? '#2D7158' : '#9D2828', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>
-                Continuar →
+                {h.continueArrow}
               </button>
             </div>
           )}
