@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
 
@@ -10,16 +10,32 @@ export default function MatchMode({ deck, onFinish }) {
   const [matchedIds, setMatchedIds] = useState([]);
   const [isWrong, setIsWrong] = useState(false);
   
-  // Break into chunks of 6 if deck is large
+  // Divide o deck em etapas de até 6 pares, com tamanhos equilibrados
+  // (7 palavras viram 4 + 3, nunca 6 + 1)
   const [chunkIndex, setChunkIndex] = useState(0);
-  const CHUNK_SIZE = 6;
+  const MAX_PAIRS = 6;
+  const chunks = useMemo(() => {
+    const words = deck.words;
+    const count = Math.max(1, Math.ceil(words.length / MAX_PAIRS));
+    const base = Math.floor(words.length / count);
+    const extra = words.length % count;
+    const result = [];
+    let start = 0;
+    for (let i = 0; i < count; i++) {
+      const size = base + (i < extra ? 1 : 0);
+      result.push(words.slice(start, start + size));
+      start += size;
+    }
+    return result;
+  }, [deck]);
+  const pairsBefore = chunks.slice(0, chunkIndex).reduce((sum, c) => sum + c.length, 0);
   
   useEffect(() => {
     loadChunk();
   }, [chunkIndex, deck]);
 
   const loadChunk = () => {
-    const chunkWords = deck.words.slice(chunkIndex * CHUNK_SIZE, (chunkIndex + 1) * CHUNK_SIZE);
+    const chunkWords = chunks[chunkIndex] || [];
     if (chunkWords.length === 0) {
       onFinish();
       return;
@@ -65,8 +81,7 @@ export default function MatchMode({ deck, onFinish }) {
         setSelectedOne(null);
         
         // Check if chunk is finished
-        const chunkWords = deck.words.slice(chunkIndex * CHUNK_SIZE, (chunkIndex + 1) * CHUNK_SIZE);
-        if (newMatched.length === chunkWords.length) {
+        if (newMatched.length === chunks[chunkIndex].length) {
           setTimeout(() => {
             setChunkIndex(c => c + 1);
           }, 800);
@@ -132,8 +147,8 @@ export default function MatchMode({ deck, onFinish }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, color: 'var(--muted)' }}>
         <span>{h.modeMatch}</span>
         <div style={{ display: 'flex', gap: 15, alignItems: 'center' }}>
-          <span>Etapa {chunkIndex + 1} de {Math.ceil(deck.words.length / CHUNK_SIZE)}</span>
-          <button onClick={() => onFinish({ earlyExit: true, studiedCount: chunkIndex * CHUNK_SIZE })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>{h.exit}</button>
+          <span>{h.stageOf(chunkIndex + 1, chunks.length)}</span>
+          <button onClick={() => onFinish({ earlyExit: true, studiedCount: pairsBefore })} style={{ background: 'none', border: 'none', color: 'var(--plum)', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>{h.exit}</button>
         </div>
       </div>
 

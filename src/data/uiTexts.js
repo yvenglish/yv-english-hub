@@ -31,7 +31,7 @@ export const UI_TEXTS = {
     streakBefore: 'Você está em um streak de', days: 'dias', streakAfter: '. Continue assim!', close: 'Fechar',
     dailyFinished: 'Daily Concluído!', dailyFinishedText: 'Muito bem! Você completou sua tarefa diária.',
     // Menu
-    navHome: 'Início', navWeeks: 'Semanas', navLibrary: 'Biblioteca', navGlossary: 'Glossário', navAccount: 'Minha Conta', navLogout: 'Sair',
+    navHome: 'Início', navWeeks: 'Semanas', navGames: 'Games', navLibrary: 'Biblioteca', navGlossary: 'Glossário', navAccount: 'Minha Conta', navLogout: 'Sair',
     lightMode: '☀️ Modo Claro', darkMode: '🌙 Modo Escuro', searchPlaceholder: 'Buscar...', noResults: 'Nenhum resultado encontrado.', searchWeek: 'Semana', searchLibrary: 'Biblioteca',
     // Flashcards
     fcLooseTitle: 'Minhas Palavras Soltas', fcLooseDesc: 'Palavras avulsas que a teacher separou para você.',
@@ -47,7 +47,7 @@ export const UI_TEXTS = {
     modeMatch: 'Combinar Cartões', modeMatchText: 'Conecte a palavra em inglês com a sua tradução.',
     modeWritten: 'Revisão Escrita', modeWrittenText: 'Pratique o spelling digitando a palavra em inglês.',
     exit: 'Sair', translation: 'Tradução', tapToFlip: 'Toque para virar', wrong: 'Errei', hard: 'Difícil', good: 'Bom', easy: 'Fácil',
-    extraOption: (n) => `Opção Extra ${n}`, visualTip: 'Dica visual', whichTranslation: 'Qual é a tradução correta?',
+    extraOption: (n) => `Opção Extra ${n}`, stageOf: (a, b) => `Etapa ${a} de ${b}`, visualTip: 'Dica visual', whichTranslation: 'Qual é a tradução correta?',
     translateTo: 'Traduza para o inglês', typeIn: 'Digite em inglês...', check: 'Verificar', continueArrow: 'Continuar →',
     // Glossário
     noSpeech: 'Seu navegador não suporta áudio nativo.', glossaryTitle: '📖 Meu Glossário',
@@ -97,7 +97,7 @@ export const UI_TEXTS = {
     goalReachedText: '¡Felicidades! Completaste el contenido diario de hoy y aumentaste tu racha.',
     streakBefore: 'Llevas una racha de', days: 'días', streakAfter: '. ¡Sigue así!', close: 'Cerrar',
     dailyFinished: '¡Contenido diario completado!', dailyFinishedText: '¡Muy bien! Completaste tu tarea diaria.',
-    navHome: 'Inicio', navWeeks: 'Semanas', navLibrary: 'Biblioteca', navGlossary: 'Glosario', navAccount: 'Mi cuenta', navLogout: 'Salir',
+    navHome: 'Inicio', navWeeks: 'Semanas', navGames: 'Juegos', navLibrary: 'Biblioteca', navGlossary: 'Glosario', navAccount: 'Mi cuenta', navLogout: 'Salir',
     lightMode: '☀️ Modo claro', darkMode: '🌙 Modo oscuro', searchPlaceholder: 'Buscar...', noResults: 'No se encontraron resultados.', searchWeek: 'Semana', searchLibrary: 'Biblioteca',
     fcLooseTitle: 'Mis palabras sueltas', fcLooseDesc: 'Palabras sueltas que la profe separó para ti.',
     fcReviewTitle: 'Repaso del día', fcReviewDesc: 'Palabras listas para repasar hoy (repetición espaciada).',
@@ -112,7 +112,7 @@ export const UI_TEXTS = {
     modeMatch: 'Unir tarjetas', modeMatchText: 'Une la palabra en español con su traducción.',
     modeWritten: 'Repaso escrito', modeWrittenText: 'Practica la ortografía escribiendo la palabra en español.',
     exit: 'Salir', translation: 'Traducción', tapToFlip: 'Toca para girar', wrong: 'Fallé', hard: 'Difícil', good: 'Bien', easy: 'Fácil',
-    extraOption: (n) => `Opción extra ${n}`, visualTip: 'Pista visual', whichTranslation: '¿Cuál es la traducción correcta?',
+    extraOption: (n) => `Opción extra ${n}`, stageOf: (a, b) => `Etapa ${a} de ${b}`, visualTip: 'Pista visual', whichTranslation: '¿Cuál es la traducción correcta?',
     translateTo: 'Traduce al español', typeIn: 'Escribe en español...', check: 'Comprobar', continueArrow: 'Continuar →',
     noSpeech: 'Tu navegador no admite audio nativo.', glossaryTitle: '📖 Mi glosario',
     glossaryText: 'Tu diccionario personal con todas las palabras que ya aprendiste.',

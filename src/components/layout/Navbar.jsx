@@ -159,7 +159,7 @@ export default function Navbar() {
           >
             {({ isActive }) => (
               <>
-                Flashcards
+                {h.navGames}
                 {isActive && (
                   <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--amber)', borderRadius: '3px 3px 0 0' }} />
                 )}
@@ -402,7 +402,7 @@ export default function Navbar() {
           }
           setShowMenu(false);
         }}>{h.navWeeks}</a>
-        <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>Flashcards</NavLink>
+        <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>{h.navGames}</NavLink>
         <NavLink to="/library" onClick={() => setShowMenu(false)}>Input Library</NavLink>
         <NavLink to="/voice-lab" onClick={() => setShowMenu(false)}>Voice Lab</NavLink>
         <NavLink to="/glossary" onClick={() => setShowMenu(false)}>{h.navGlossary}</NavLink>
