@@ -35,7 +35,9 @@ export const UI_TEXTS = {
     lightMode: '☀️ Modo Claro', darkMode: '🌙 Modo Escuro', searchPlaceholder: 'Buscar...', noResults: 'Nenhum resultado encontrado.', searchWeek: 'Semana', searchLibrary: 'Biblioteca',
     // Flashcards
     fcLooseTitle: 'Minhas Palavras Soltas', fcLooseDesc: 'Palavras avulsas que a teacher separou para você.',
-    fcReviewTitle: 'Revisão do Dia', fcReviewDesc: 'Palavras prontas para serem revisadas hoje (Spaced Repetition).',
+    fcReviewTitle: 'Daily Review', fcReviewDesc: 'Suas palavras para revisar hoje (Spaced Repetition).',
+    fcReviewMoreTitle: (n) => `Daily Review · rodada ${n}`, fcReviewMoreDesc: (left) => `Você ainda tem ${left} palavras atrasadas. Mais uma rodada?`,
+    fcHardTitle: 'Palavras Difíceis', fcHardDesc: 'As palavras que você mais errou. Vale uma revisão extra!',
     fcEmptyDeck: 'Este deck está vazio!', fcReviewDone: 'Revisão Concluída!', fcScore: (s, t) => `Você acertou ${s} de ${t}.`,
     fcEarlyExit: 'Sessão interrompida. Progresso até aqui foi salvo!',
     fcGoalText: 'Parabéns! Você revisou suas palavras de hoje e aumentou sua ofensiva.',
@@ -66,7 +68,21 @@ export const UI_TEXTS = {
     writeFirst: 'Escreva sua resposta antes de enviar.', recordFirst: 'Grave seu áudio antes de enviar.', sendError: 'Erro ao enviar a tarefa. Tente novamente.',
     loading: 'Carregando...', teacherFeedback: '✨ Feedback da teacher', sentWaiting: '✅ Enviado! Aguardando a correção da teacher.',
     stopRecording: '⏹ Parar gravação', recordAgain: 'Gravar de novo', recordAudio: 'Gravar áudio', upTo: (m) => `(até ${m} min)`,
-    sending: 'Enviando...', sendToTeacher: 'Enviar para a teacher'
+    sending: 'Enviando...', sendToTeacher: 'Enviar para a teacher',
+    // Jogos
+    gamesTitle: 'Jogos', gamesSubtitle: 'Pratique o vocabulário jogando. Escolha o seu nível!', allLevels: 'Todos',
+    noGames: 'Nenhum jogo disponível ainda.', bestScore: (n) => `Recorde: ${n}`, itemsCount: (n) => `${n} itens`,
+    gameTypeWordGuess: 'Word Guess', gameTypeImage: 'Jogo de imagem', gameTypeSentence: 'Monte a frase', gameTypeListen: 'Ouça e escolha',
+    next: 'Próximo →', gameOver: 'Fim de jogo!', finalScore: (s, t) => `Você fez ${s} de ${t} pontos.`, newRecord: '🏆 Novo recorde!',
+    playAgain: 'Jogar de novo', backToGames: 'Voltar aos jogos',
+    wgHint: 'Dica', wgShowMeaning: 'Ver significado (vale menos pontos)', wgMeaning: 'Significado', wgTriesLeft: (n) => `${n} tentativas`,
+    wgSolved: 'Acertou! 🎉', wgFailed: 'A palavra era:',
+    sbInstruction: 'Toque nas palavras na ordem certa.', sbClear: 'Limpar', sbCorrect: 'Perfeito! 🎉', sbWrong: 'Quase! Tente de novo.', sbAnswer: 'Resposta:',
+    lsInstruction: 'Ouça e escolha a tradução.', lsPlay: '🔊 Ouvir de novo',
+    imPhase: (n) => `Fase ${n} de 3`, imFind: 'Encontre:', imFindInstr: 'Clique no lugar certo da imagem.',
+    imLabel: 'Rotule a imagem', imLabelInstr: 'Escolha uma palavra e clique no número certo.',
+    imFast: 'Rodada rápida', imFastInstr: 'Qual é a palavra? Um erro e acaba!', imTimeUp: 'Tempo esgotado!',
+    srTitle: 'Speed Round', srText: 'Quantas traduções você acerta em 60 segundos?', srTime: (s) => `⏱ ${s}s`, srHits: (n) => `✓ ${n}`
   },
   es: {
     eyebrow: 'Tu área personal',
@@ -100,7 +116,9 @@ export const UI_TEXTS = {
     navHome: 'Inicio', navWeeks: 'Semanas', navGames: 'Juegos', navLibrary: 'Biblioteca', navGlossary: 'Glosario', navAccount: 'Mi cuenta', navLogout: 'Salir',
     lightMode: '☀️ Modo claro', darkMode: '🌙 Modo oscuro', searchPlaceholder: 'Buscar...', noResults: 'No se encontraron resultados.', searchWeek: 'Semana', searchLibrary: 'Biblioteca',
     fcLooseTitle: 'Mis palabras sueltas', fcLooseDesc: 'Palabras sueltas que la profe separó para ti.',
-    fcReviewTitle: 'Repaso del día', fcReviewDesc: 'Palabras listas para repasar hoy (repetición espaciada).',
+    fcReviewTitle: 'Repaso diario', fcReviewDesc: 'Tus palabras para repasar hoy (repetición espaciada).',
+    fcReviewMoreTitle: (n) => `Repaso diario · ronda ${n}`, fcReviewMoreDesc: (left) => `Todavía tienes ${left} palabras atrasadas. ¿Otra ronda?`,
+    fcHardTitle: 'Palabras difíciles', fcHardDesc: 'Las palabras que más fallaste. ¡Vale la pena un repaso extra!',
     fcEmptyDeck: '¡Este mazo está vacío!', fcReviewDone: '¡Repaso completado!', fcScore: (s, t) => `Acertaste ${s} de ${t}.`,
     fcEarlyExit: 'Sesión interrumpida. ¡Tu progreso se guardó!',
     fcGoalText: '¡Felicidades! Repasaste tus palabras de hoy y aumentaste tu racha.',
@@ -128,6 +146,19 @@ export const UI_TEXTS = {
     writeFirst: 'Escribe tu respuesta antes de enviar.', recordFirst: 'Graba tu audio antes de enviar.', sendError: 'Error al enviar la tarea. Inténtalo de nuevo.',
     loading: 'Cargando...', teacherFeedback: '✨ Comentarios de la profe', sentWaiting: '✅ ¡Enviado! Esperando la corrección de la profe.',
     stopRecording: '⏹ Detener grabación', recordAgain: 'Grabar de nuevo', recordAudio: 'Grabar audio', upTo: (m) => `(hasta ${m} min)`,
-    sending: 'Enviando...', sendToTeacher: 'Enviar a la profe'
+    sending: 'Enviando...', sendToTeacher: 'Enviar a la profe',
+    gamesTitle: 'Juegos', gamesSubtitle: 'Practica el vocabulario jugando. ¡Elige tu nivel!', allLevels: 'Todos',
+    noGames: 'Todavía no hay juegos disponibles.', bestScore: (n) => `Récord: ${n}`, itemsCount: (n) => `${n} ítems`,
+    gameTypeWordGuess: 'Adivina la palabra', gameTypeImage: 'Juego de imagen', gameTypeSentence: 'Arma la frase', gameTypeListen: 'Escucha y elige',
+    next: 'Siguiente →', gameOver: '¡Fin del juego!', finalScore: (s, t) => `Hiciste ${s} de ${t} puntos.`, newRecord: '🏆 ¡Nuevo récord!',
+    playAgain: 'Jugar otra vez', backToGames: 'Volver a los juegos',
+    wgHint: 'Pista', wgShowMeaning: 'Ver significado (vale menos puntos)', wgMeaning: 'Significado', wgTriesLeft: (n) => `${n} intentos`,
+    wgSolved: '¡Acertaste! 🎉', wgFailed: 'La palabra era:',
+    sbInstruction: 'Toca las palabras en el orden correcto.', sbClear: 'Borrar', sbCorrect: '¡Perfecto! 🎉', sbWrong: '¡Casi! Inténtalo de nuevo.', sbAnswer: 'Respuesta:',
+    lsInstruction: 'Escucha y elige la traducción.', lsPlay: '🔊 Escuchar otra vez',
+    imPhase: (n) => `Fase ${n} de 3`, imFind: 'Encuentra:', imFindInstr: 'Haz clic en el lugar correcto de la imagen.',
+    imLabel: 'Etiqueta la imagen', imLabelInstr: 'Elige una palabra y haz clic en el número correcto.',
+    imFast: 'Ronda rápida', imFastInstr: '¿Cuál es la palabra? ¡Un error y se acaba!', imTimeUp: '¡Se acabó el tiempo!',
+    srTitle: 'Speed Round', srText: '¿Cuántas traducciones aciertas en 60 segundos?', srTime: (s) => `⏱ ${s}s`, srHits: (n) => `✓ ${n}`
   }
 };

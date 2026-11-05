@@ -1,14 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
 
 export default function MatchMode({ deck, onFinish }) {
-  const { activeCourseInfo , activeCourse } = useAuth();
+  const { activeCourseInfo, activeCourse, updateFlashcardProgress } = useAuth();
   const h = UI_TEXTS[activeCourse];
   const [cards, setCards] = useState([]);
   const [selectedOne, setSelectedOne] = useState(null);
   const [matchedIds, setMatchedIds] = useState([]);
   const [isWrong, setIsWrong] = useState(false);
+  const missedIds = useRef(new Set()); // palavras que o aluno errou pelo menos uma vez
   
   // Divide o deck em etapas de até 6 pares, com tamanhos equilibrados
   // (7 palavras viram 4 + 3, nunca 6 + 1)
@@ -79,6 +80,7 @@ export default function MatchMode({ deck, onFinish }) {
         const newMatched = [...matchedIds, card.id];
         setMatchedIds(newMatched);
         setSelectedOne(null);
+        updateFlashcardProgress(card.id, missedIds.current.has(card.id) ? 1 : 2);
         
         // Check if chunk is finished
         if (newMatched.length === chunks[chunkIndex].length) {
@@ -88,6 +90,8 @@ export default function MatchMode({ deck, onFinish }) {
         }
       } else {
         // Wrong match
+        missedIds.current.add(selectedOne.id);
+        missedIds.current.add(card.id);
         setIsWrong(true);
         setTimeout(() => {
           setIsWrong(false);

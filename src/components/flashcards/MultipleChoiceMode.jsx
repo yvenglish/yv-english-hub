@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { scoreFromAnswer } from '../../data/srs';
 import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
 
@@ -20,6 +21,7 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [options, setOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
+  const shownAt = useRef(Date.now()); // quando a pergunta apareceu
   const [isCorrect, setIsCorrect] = useState(null);
   const [score, setScore] = useState(0);
 
@@ -29,6 +31,7 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
     if (currentCard) {
       generateOptions();
       setSelectedOption(null);
+      shownAt.current = Date.now();
       setIsCorrect(null);
     }
   }, [currentIndex, currentCard]);
@@ -60,7 +63,8 @@ export default function MultipleChoiceMode({ deck, globalWords, onFinish }) {
     const isAnsCorrect = opt === currentCard.translation;
     
     // Save to SRS (Score 2 for correct in multiple choice, 0 for wrong)
-    await updateFlashcardProgress(currentCard.id, isAnsCorrect ? 2 : 0);
+    // Acertar em até 5 segundos conta como "fácil"
+    await updateFlashcardProgress(currentCard.id, scoreFromAnswer(isAnsCorrect, (Date.now() - shownAt.current) / 1000, 5));
 
     let nextCards = cards;
     if (isAnsCorrect) {

@@ -4,6 +4,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordRe
 import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion, getCountFromServer } from 'firebase/firestore';
 import { BADGES } from '../data/badges';
 import { getUserCourses, COURSES } from '../data/courses';
+import { scheduleReview, DIFFICULT_LAPSES } from '../data/srs';
 
 const AuthContext = createContext();
 
@@ -288,61 +289,11 @@ export function AuthProvider({ children }) {
 
   const updateFlashcardProgress = async (wordId, score) => {
     if (!currentUser) return;
-    
     try {
       const docRef = doc(db, `users/${currentUser.uid}/flashcard_progress`, wordId);
       const docSnap = await getDoc(docRef);
-      
-      let interval = 0;
-      let repetitions = 0;
-      let easeFactor = 2.5;
-
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        repetitions = Number(data.repetitions);
-        if (isNaN(repetitions)) repetitions = 0;
-        
-        interval = Number(data.interval);
-        if (isNaN(interval)) interval = 0;
-        
-        easeFactor = Number(data.easeFactor);
-        if (isNaN(easeFactor)) easeFactor = 2.5;
-      }
-
-      if (score === 0) {
-        repetitions = 0;
-        interval = 1;
-      } else {
-        repetitions += 1;
-        if (repetitions === 1) {
-          interval = 1;
-        } else if (repetitions === 2) {
-          interval = 2; // Acertou -> aparece em 2 dias
-        } else {
-          interval = Math.round(interval * easeFactor);
-          if (isNaN(interval) || interval < 1) interval = 1;
-        }
-        
-        easeFactor = easeFactor + (0.1 - (3 - score) * (0.08 + (3 - score) * 0.02));
-        if (isNaN(easeFactor)) easeFactor = 2.5;
-        if (easeFactor < 1.3) easeFactor = 1.3;
-      }
-
-      const nextDate = new Date();
-      if (score > 0) {
-        let daysToAdd = Number(interval);
-        if (isNaN(daysToAdd)) daysToAdd = 1;
-        nextDate.setDate(nextDate.getDate() + daysToAdd);
-      }
-      const nextReviewDate = nextDate.toISOString().split('T')[0];
-
-      await setDoc(docRef, {
-        repetitions,
-        interval,
-        easeFactor,
-        nextReviewDate,
-        lastStudied: new Date().toISOString()
-      }, { merge: true });
+      const next = scheduleReview(docSnap.exists() ? docSnap.data() : {}, score, getStudyDayStr());
+      await setDoc(docRef, { ...next, lastStudied: new Date().toISOString() }, { merge: true });
     } catch (error) {
       console.error("Error updating flashcard progress:", error);
     }
@@ -392,22 +343,57 @@ export function AuthProvider({ children }) {
     return true;
   };
 
+  // Recorde de um jogo (users/{uid}/game_scores/{gameId}). Jogar conta para o streak.
+  const saveGameScore = async (gameId, score) => {
+    if (!currentUser) return { isRecord: false, best: score };
+    const ref = doc(db, `users/${currentUser.uid}/game_scores`, gameId);
+    const snap = await getDoc(ref);
+    const prev = snap.exists() ? snap.data() : { best: 0, plays: 0 };
+    const isRecord = score > (prev.best || 0);
+    const best = Math.max(score, prev.best || 0);
+    await setDoc(ref, { best, plays: (prev.plays || 0) + 1, lastScore: score, lastPlayed: new Date().toISOString() }, { merge: true });
+    await recordStudy(Math.max(1, score));
+    return { isRecord, best };
+  };
+
+  const getGameScores = async () => {
+    if (!currentUser) return {};
+    const snap = await getDocs(collection(db, `users/${currentUser.uid}/game_scores`));
+    return Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
+  };
+
+  // Rodadas da Daily Review concluídas hoje (cada rodada tem até 7 palavras)
+  const reviewBatchesToday = userData?.reviewBatches?.date === getStudyDayStr() ? userData.reviewBatches.count : 0;
+
+  const recordReviewBatch = async () => {
+    if (!currentUser) return;
+    const reviewBatches = { date: getStudyDayStr(), count: reviewBatchesToday + 1 };
+    await setDoc(doc(db, 'users', currentUser.uid), { reviewBatches }, { merge: true });
+    setUserData(prev => ({ ...prev, reviewBatches }));
+  };
+
+  // Cards para revisar hoje, dos mais atrasados para os mais recentes
   const getDueFlashcards = async () => {
     if (!currentUser) return [];
-    
-    // Build query for cards due today or earlier (using the 6-hour shifted day)
-    const now = new Date();
-    const today = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-    today.setHours(0,0,0,0);
-    const todayStr = today.toISOString().split('T')[0];
-    
     const q = query(
       collection(db, `users/${currentUser.uid}/flashcard_progress`),
-      where('nextReviewDate', '<=', todayStr)
+      where('nextReviewDate', '<=', getStudyDayStr())
     );
-    
     const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ wordId: doc.id, ...doc.data() }));
+    return snap.docs
+      .map(d => ({ wordId: d.id, ...d.data() }))
+      .sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate));
+  };
+
+  // Palavras que o aluno errou várias vezes e ainda não consolidou
+  const getDifficultFlashcards = async () => {
+    if (!currentUser) return [];
+    const q = query(
+      collection(db, `users/${currentUser.uid}/flashcard_progress`),
+      where('lapses', '>=', DIFFICULT_LAPSES)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ wordId: d.id, ...d.data() })).filter(p => (p.repetitions || 0) < 3);
   };
 
 
@@ -431,6 +417,11 @@ export function AuthProvider({ children }) {
     recordVoiceLabProgress,
     updateFlashcardProgress,
     getDueFlashcards,
+    getDifficultFlashcards,
+    reviewBatchesToday,
+    saveGameScore,
+    getGameScores,
+    recordReviewBatch,
     addWordToFlashcards,
     setStreakGoal
   };

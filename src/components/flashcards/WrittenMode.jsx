@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { scoreFromAnswer } from '../../data/srs';
 import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
 
@@ -12,6 +13,7 @@ export default function WrittenMode({ deck, onFinish }) {
   const [status, setStatus] = useState('typing'); // 'typing', 'correct', 'wrong'
   const [score, setScore] = useState(0);
   const inputRef = useRef(null);
+  const shownAt = useRef(Date.now()); // quando a palavra apareceu
 
   const currentCard = cards[currentIndex];
 
@@ -19,6 +21,7 @@ export default function WrittenMode({ deck, onFinish }) {
     if (status === 'typing' && inputRef.current) {
       inputRef.current.focus();
     }
+    if (status === 'typing') shownAt.current = Date.now();
   }, [currentIndex, status]);
 
   const handleSubmit = async (e) => {
@@ -26,10 +29,15 @@ export default function WrittenMode({ deck, onFinish }) {
     if (!inputValue.trim() || status !== 'typing') return;
 
     const cleanString = (str) => str.trim().toLowerCase().replace(/[.,!?]/g, '');
-    const isMatch = cleanString(inputValue) === cleanString(currentCard.term);
+    // Sem acento também vale (talon = talón), mas conta como "difícil" para revisar antes
+    const noAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const exact = cleanString(inputValue) === cleanString(currentCard.term);
+    const isMatch = exact || noAccents(cleanString(inputValue)) === noAccents(cleanString(currentCard.term));
     
     // Save to SRS
-    await updateFlashcardProgress(currentCard.id, isMatch ? 2 : 0);
+    // Acertar em até 8 segundos conta como "fácil"
+    const answerScore = exact ? scoreFromAnswer(true, (Date.now() - shownAt.current) / 1000, 8) : (isMatch ? 1 : 0);
+    await updateFlashcardProgress(currentCard.id, answerScore);
 
     if (isMatch) {
       setStatus('correct');

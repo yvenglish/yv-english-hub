@@ -8,16 +8,20 @@ import ClassicMode from '../components/flashcards/ClassicMode';
 import MultipleChoiceMode from '../components/flashcards/MultipleChoiceMode';
 import MatchMode from '../components/flashcards/MatchMode';
 import WrittenMode from '../components/flashcards/WrittenMode';
+import SpeedRoundMode from '../components/flashcards/SpeedRoundMode';
+import GamesSection from '../components/games/GamesSection';
 import { inCourse } from '../data/courses';
+import { REVIEW_BATCH_SIZE } from '../data/srs';
 import { UI_TEXTS } from '../data/uiTexts';
 
 export default function Flashcards() {
   const navigate = useNavigate();
-  const { currentUser, userData, recordStudy, getDueFlashcards, activeCourse } = useAuth();
+  const { currentUser, userData, recordStudy, getDueFlashcards, getDifficultFlashcards, reviewBatchesToday, recordReviewBatch, activeCourse } = useAuth();
   const h = UI_TEXTS[activeCourse];
 
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list'); // 'list', 'mode_select', 'playing'
+  const [gamePlaying, setGamePlaying] = useState(false); // um jogo da seção Jogos está aberto
   
   const [studentDecks, setStudentDecks] = useState([]);
   const [globalWords, setGlobalWords] = useState([]);
@@ -43,11 +47,12 @@ export default function Flashcards() {
     try {
       const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', currentUser.uid));
       
-      const [wordsSnap, decksSnap, assignSnap, dueFlashcards] = await Promise.all([
+      const [wordsSnap, decksSnap, assignSnap, dueFlashcards, difficultFlashcards] = await Promise.all([
         getDocs(collection(db, 'vocabulary_global')),
         getDocs(collection(db, 'decks')),
         getDocs(q),
-        getDueFlashcards()
+        getDueFlashcards(),
+        getDifficultFlashcards()
       ]);
 
       // Só palavras e decks do curso ativo
@@ -91,14 +96,29 @@ export default function Flashcards() {
         });
       }
 
-      // 5. Fetch Daily Review (Spaced Repetition)
+      // Palavras difíceis: erradas várias vezes e ainda não consolidadas
+      const difficultWords = difficultFlashcards.map(df => allWords.find(w => w.id === df.wordId)).filter(Boolean);
+      if (difficultWords.length > 0) {
+        builtDecks.unshift({
+          id: 'difficult_words_deck',
+          title: h.fcHardTitle,
+          description: h.fcHardDesc,
+          words: difficultWords,
+          isSpecial: true
+        });
+      }
+
+      // 5. Daily Review (repetição espaçada): rodadas de 7, as mais atrasadas primeiro.
+      // Ao terminar uma rodada, se ainda houver atrasadas, aparece a próxima.
       if (dueFlashcards.length > 0) {
-        const dueWords = dueFlashcards.map(df => allWords.find(w => w.id === df.wordId)).filter(Boolean);
+        const allDue = dueFlashcards.map(df => allWords.find(w => w.id === df.wordId)).filter(Boolean);
+        const dueWords = allDue.slice(0, REVIEW_BATCH_SIZE);
+        const isExtraRound = reviewBatchesToday > 0;
         if (dueWords.length > 0) {
           builtDecks.unshift({
             id: 'daily_review_deck',
-            title: h.fcReviewTitle,
-            description: h.fcReviewDesc,
+            title: isExtraRound ? h.fcReviewMoreTitle(reviewBatchesToday + 1) : h.fcReviewTitle,
+            description: isExtraRound ? h.fcReviewMoreDesc(allDue.length) : h.fcReviewDesc,
             words: dueWords,
             isSpecial: true
           });
@@ -147,9 +167,16 @@ export default function Flashcards() {
       }
     }
 
-    if (userData && cardsStudied > 0) {
+    // O Speed Round já salvou o recorde (e o streak) sozinho
+    if (userData && cardsStudied > 0 && !result?.alreadySaved) {
       const { goalJustReached } = await recordStudy(cardsStudied);
       isGoalReached = goalJustReached;
+    }
+
+    // Rodada da Daily Review concluída: conta a rodada. A mudança no userData recarrega os decks
+    // (efeito do loadData), e a próxima rodada aparece se ainda houver palavras atrasadas.
+    if (selectedDeck.id === 'daily_review_deck' && !result?.earlyExit) {
+      await recordReviewBatch();
     }
 
     setView('list');
@@ -205,6 +232,7 @@ export default function Flashcards() {
           <>
             {view === 'list' && (
               <div>
+                {!gamePlaying && <>
                 <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--text)', marginBottom: 30 }}>
                   {h.fcMyDecks}
                 </h2>
@@ -239,6 +267,8 @@ export default function Flashcards() {
                     ))}
                   </div>
                 )}
+                </>}
+                <GamesSection onPlayingChange={setGamePlaying} />
               </div>
             )}
 
@@ -276,6 +306,12 @@ export default function Flashcards() {
                     <h3 style={{ margin: '0 0 5px', color: 'var(--text)' }}>{h.modeWritten}</h3>
                     <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>{h.modeWrittenText}</p>
                   </button>
+
+                  <button onClick={() => startGame('speed')} style={{ background: 'var(--paper)', padding: 30, borderRadius: 24, border: '1px solid var(--line)', cursor: 'pointer', transition: '0.2s', textAlign: 'left' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--plum)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--line)'}>
+                    <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 15 }}>⚡</span>
+                    <h3 style={{ margin: '0 0 5px', color: 'var(--text)' }}>{h.srTitle}</h3>
+                    <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>{h.srText}</p>
+                  </button>
                 </div>
               </div>
             )}
@@ -298,6 +334,10 @@ export default function Flashcards() {
             
             {view === 'playing' && !finishing && selectedMode === 'written' && (
               <WrittenMode deck={selectedDeck} onFinish={handleFinish} />
+            )}
+
+            {view === 'playing' && !finishing && selectedMode === 'speed' && (
+              <SpeedRoundMode deck={selectedDeck} globalWords={globalWords} onFinish={handleFinish} />
             )}
           </>
         )}
