@@ -11,7 +11,7 @@ import { inCourse } from '../data/courses';
 import { UI_TEXTS } from '../data/uiTexts';
 
 export default function StudentHub() {
-  const { currentUser, userData, logout, recordDailyCompletion, addWordToFlashcards, activeCourse, activeCourseInfo } = useAuth();
+  const { currentUser, userData, logout, recordDailyCompletion, addWordToFlashcards, activeCourse, activeCourseInfo, reviewBatchesToday } = useAuth();
   const h = UI_TEXTS[activeCourse];
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ export default function StudentHub() {
   
   // Reading State
   const [activeTranslation, setActiveTranslation] = useState(null);
-  const [dueCount, setDueCount] = useState(0); // palavras da Daily Review (vem do feed)
+  const [dueCount, setDueCount] = useState(null); // palavras da Daily Review (vem do feed; null = carregando)
   const [addedWords, setAddedWords] = useState([]);
   const [addingWord, setAddingWord] = useState(false);
   
@@ -353,17 +353,24 @@ export default function StudentHub() {
 
             <aside className="hero-panel">
               <span>{h.todayKicker}</span>
+              {/* Checklist do dia: Daily e Daily Review ganham ✓ quando concluídos.
+                  A Daily Review conta como feita depois da primeira rodada de 7 (ou se não há nada para revisar). */}
               <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
                 {[
-                  ['📌', h.todayDaily, planName === 'Foundation' ? h.todayDailyLocked : dailyAssignment?.status === 'completed' ? h.todayDailyDone : dailyAssignment ? h.todayDailyPending : '—', handleDailyClick],
-                  ['🔥', h.todayReview, h.todayReviewCount(dueCount), () => navigate('/flashcards')],
-                  ['⚡', h.todayStreak, h.todayStreakDays(userData?.currentStreak || 0), null]
-                ].map(([icon, label, value, onClick]) => (
-                  <button key={label} type="button" onClick={onClick || undefined} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: '10px 14px', color: '#fff', cursor: onClick ? 'pointer' : 'default', textAlign: 'left' }}>
-                    <span style={{ fontWeight: 700 }}>{icon} {label}</span>
-                    <span style={{ color: 'var(--amber-soft)', fontWeight: 800, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{value}</span>
+                  { icon: '📌', label: h.todayDaily, done: dailyAssignment?.status === 'completed', locked: planName === 'Foundation', onClick: handleDailyClick },
+                  { icon: '🔥', label: h.todayReview, done: reviewBatchesToday > 0 || dueCount === 0, onClick: () => navigate('/flashcards') }
+                ].map(item => (
+                  <button key={item.label} type="button" onClick={item.onClick} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, background: item.done ? 'rgba(46,213,115,0.12)' : 'rgba(255,255,255,0.06)', border: `1px solid ${item.done ? 'rgba(46,213,115,0.4)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 14, padding: '12px 14px', color: '#fff', cursor: 'pointer', textAlign: 'left' }}>
+                    <b style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.icon} {item.label}</b>
+                    <i aria-label={item.done ? 'feito' : 'pendente'} style={{ fontStyle: 'normal', width: 26, height: 26, flexShrink: 0, borderRadius: 7, display: 'grid', placeItems: 'center', fontSize: '0.95rem', fontWeight: 900, border: `2px solid ${item.done ? '#2ed573' : 'rgba(255,255,255,0.45)'}`, background: item.done ? '#2ed573' : 'transparent', color: '#fff' }}>
+                      {item.locked ? '🔒' : item.done ? '✓' : ''}
+                    </i>
                   </button>
                 ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '4px 14px 0', color: '#fff' }}>
+                  <b style={{ fontWeight: 700, fontSize: '0.95rem' }}>⚡ {h.todayStreak}</b>
+                  <b style={{ color: 'var(--amber-soft)', fontWeight: 800 }}>{h.todayStreakDays(userData?.currentStreak || 0)}</b>
+                </div>
               </div>
             </aside>
           </div>
