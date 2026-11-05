@@ -6,6 +6,7 @@ import { db } from '../config/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { requestNotificationPermission } from '../services/notificationService';
 import WeekTask from '../components/production/WeekTask';
+import HomeFeed from '../components/home/HomeFeed';
 import { inCourse } from '../data/courses';
 import { UI_TEXTS } from '../data/uiTexts';
 
@@ -36,6 +37,7 @@ export default function StudentHub() {
   
   // Reading State
   const [activeTranslation, setActiveTranslation] = useState(null);
+  const [dueCount, setDueCount] = useState(0); // palavras da Daily Review (vem do feed)
   const [addedWords, setAddedWords] = useState([]);
   const [addingWord, setAddingWord] = useState(false);
   
@@ -222,6 +224,9 @@ export default function StudentHub() {
   };
 
   const studentName = userData?.name || 'Aluno';
+  // Conteúdos extras ainda não vistos (até 3). Os vistos saem da home na próxima visita e ficam no Histórico.
+  const seenAtLoad = userData?.completedExtraContents || [];
+  const unseenExtras = extraContents.filter(c => !seenAtLoad.includes(c.id)).slice(0, 3);
   const planName = userData?.plan || 'Foundation';
 
   const handleDailyClick = () => {
@@ -347,9 +352,19 @@ export default function StudentHub() {
             </div>
 
             <aside className="hero-panel">
-              <span>{h.panelKicker}</span>
-              <strong>{h.panelTitle}</strong>
-              <p>{weeks.length > 0 ? [...weeks].sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0].title : h.waitingMaterial}</p>
+              <span>{h.todayKicker}</span>
+              <div style={{ display: 'grid', gap: 12, marginTop: 14 }}>
+                {[
+                  ['📌', h.todayDaily, planName === 'Foundation' ? h.todayDailyLocked : dailyAssignment?.status === 'completed' ? h.todayDailyDone : dailyAssignment ? h.todayDailyPending : '—', handleDailyClick],
+                  ['🔥', h.todayReview, h.todayReviewCount(dueCount), () => navigate('/flashcards')],
+                  ['⚡', h.todayStreak, h.todayStreakDays(userData?.currentStreak || 0), null]
+                ].map(([icon, label, value, onClick]) => (
+                  <button key={label} type="button" onClick={onClick || undefined} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: '10px 14px', color: '#fff', cursor: onClick ? 'pointer' : 'default', textAlign: 'left' }}>
+                    <span style={{ fontWeight: 700 }}>{icon} {label}</span>
+                    <span style={{ color: 'var(--amber-soft)', fontWeight: 800, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{value}</span>
+                  </button>
+                ))}
+              </div>
             </aside>
           </div>
         </div>
@@ -408,20 +423,25 @@ export default function StudentHub() {
           </button>
         </section>
 
+        <HomeFeed onDueCount={setDueCount} />
+
         <section className="section-block" id="weeksSection">
-          <div className="section-heading">
-            <p>{h.weeksKicker}</p>
-            <h2>{h.weeksTitle}</h2>
-            <span>{h.weeksText}</span>
+          <div className="section-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+            <div>
+              <p>{h.weeksKicker}</p>
+              <h2>{h.latestWeeksTitle}</h2>
+            </div>
+            {weeks.length > 2 && <button onClick={() => navigate('/history')} style={{ background: 'none', border: 'none', color: 'var(--amber)', fontWeight: 800, cursor: 'pointer', fontSize: '1rem' }}>{h.seeHistory}</button>}
           </div>
           <section className="weeks-grid">
             {weeks.length === 0 ? (
               <p style={{ color: 'var(--muted)' }}>{h.noWeeks}</p>
             ) : (
-              weeks.map((week, index) => (
+              // As 2 semanas mais recentes; o resto fica no Histórico
+              weeks.map((week, index) => ({ week, number: index + 1 })).slice(-2).reverse().map(({ week, number }) => (
                 <article key={week.id} className="week-card" onClick={() => setSelectedWeek(week)}>
                   <div className="card-head">
-                    <p className="card-number">{h.weekLabel} {index + 1}</p>
+                    <p className="card-number">{h.weekLabel} {number}</p>
                     <h2 className="card-title">{week.title}</h2>
                     {week.task && <span style={{ display: 'inline-block', marginTop: 6, fontSize: '0.7rem', fontWeight: 800, color: 'var(--amber)', textTransform: 'uppercase' }}>{h.hasTask}</span>}
                   </div>
@@ -445,10 +465,10 @@ export default function StudentHub() {
             <span>{h.extraText}</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 15 }}>
-            {extraContents.length === 0 ? (
+            {unseenExtras.length === 0 ? (
               <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{h.noExtra}</p>
             ) : (
-              extraContents.map(content => (
+              unseenExtras.map(content => (
                 <article key={content.id} style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

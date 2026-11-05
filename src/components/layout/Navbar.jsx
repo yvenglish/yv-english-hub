@@ -119,28 +119,26 @@ export default function Navbar() {
           </NavLink>
 
           <a 
-            href="/#weeksSection"
+            href="/history"
             onClick={(e) => {
-              if (location.pathname !== '/') {
-                e.preventDefault();
-                navigate('/#weeksSection');
-              }
+              e.preventDefault();
+              navigate('/history');
             }}
             style={{
               textDecoration: 'none',
-              color: '#ffffff',
+              color: location.pathname === '/history' ? 'var(--amber)' : '#ffffff',
               fontWeight: 500,
               fontSize: '1rem',
               display: 'flex',
               alignItems: 'center',
               height: '100%',
               whiteSpace: 'nowrap',
-              opacity: 0.8
+              opacity: location.pathname === '/history' ? 1 : 0.8
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = 1}
             onMouseLeave={e => e.currentTarget.style.opacity = 0.8}
           >
-            {h.navWeeks}
+            {h.navHistory}
           </a>
 
           <NavLink 
@@ -395,13 +393,7 @@ export default function Navbar() {
       {/* Mobile Menu */}
       <div className={`mobile-menu ${showMenu ? 'open' : ''}`}>
         <NavLink to="/" onClick={() => setShowMenu(false)}>{h.navHome}</NavLink>
-        <a href="/#weeksSection" onClick={(e) => {
-          if (location.pathname !== '/') {
-            e.preventDefault();
-            navigate('/#weeksSection');
-          }
-          setShowMenu(false);
-        }}>{h.navWeeks}</a>
+        <NavLink to="/history" onClick={() => setShowMenu(false)}>{h.navHistory}</NavLink>
         <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>{h.navGames}</NavLink>
         <NavLink to="/library" onClick={() => setShowMenu(false)}>Input Library</NavLink>
         <NavLink to="/voice-lab" onClick={() => setShowMenu(false)}>Voice Lab</NavLink>

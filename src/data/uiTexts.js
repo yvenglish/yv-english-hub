@@ -82,7 +82,21 @@ export const UI_TEXTS = {
     imPhase: (n) => `Fase ${n} de 3`, imFind: 'Encontre:', imFindInstr: 'Clique no lugar certo da imagem.',
     imLabel: 'Rotule a imagem', imLabelInstr: 'Escolha uma palavra e clique no número certo.',
     imFast: 'Rodada rápida', imFastInstr: 'Qual é a palavra? Um erro e acaba!', imTimeUp: 'Tempo esgotado!',
-    srTitle: 'Speed Round', srText: 'Quantas traduções você acerta em 60 segundos?', srTime: (s) => `⏱ ${s}s`, srHits: (n) => `✓ ${n}`
+    srTitle: 'Speed Round', srText: 'Quantas traduções você acerta em 60 segundos?', srTime: (s) => `⏱ ${s}s`, srHits: (n) => `✓ ${n}`,
+    // Home nova e Histórico
+    navHistory: 'Histórico',
+    todayKicker: 'Hoje', todayDaily: 'Daily', todayDailyDone: 'feito ✅', todayDailyPending: 'pendente', todayDailyLocked: 'plano Fluency',
+    todayReview: 'Daily Review', todayReviewCount: (n) => (n > 0 ? `${n} para revisar` : 'em dia ✅'), todayStreak: 'Streak', todayStreakDays: (n) => `${n} ${n === 1 ? 'dia' : 'dias'}`,
+    latestWeeksTitle: 'Suas últimas aulas', seeHistory: 'Ver histórico completo →',
+    feedKicker: 'Para você hoje', feedTitle: 'Seu feed', feedNews: 'Notícia', feedReview: 'Daily Review', feedEpisode: 'Biblioteca', feedVoice: 'Voice Lab',
+    feedReviewText: (n) => `${n} palavras esperando por você`, feedReviewCta: 'Revisar agora →', feedEpisodeCta: 'Assistir →', feedVoiceCta: 'Praticar →', feedNewsCta: 'Ler →',
+    feedMoreNews: 'Mais notícias →', extraSeeAll: 'Os conteúdos que você já viu estão no Histórico.',
+    historyTitle: 'Histórico', historySubtitle: 'Tudo o que você já estudou, organizado.',
+    historyWeeks: 'Semanas', historyDailies: 'Dailies feitos', historyExtras: 'Conteúdos vistos',
+    historySearch: 'Buscar por título...', historyOnlyTasks: 'Só com tarefa', historyEmptyWeeks: 'Nenhuma semana encontrada.',
+    historyEmptyDailies: 'Você ainda não fez nenhum Daily.', historyEmptyExtras: 'Você ainda não marcou nenhum conteúdo como visto.',
+    historyScore: (s, t) => `${s}/${t} acertos`, historyReread: 'Reler', historyYourAnswer: 'Sua resposta', historyCorrect: 'Correta',
+    months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
   },
   es: {
     eyebrow: 'Tu área personal',
@@ -159,6 +173,19 @@ export const UI_TEXTS = {
     imPhase: (n) => `Fase ${n} de 3`, imFind: 'Encuentra:', imFindInstr: 'Haz clic en el lugar correcto de la imagen.',
     imLabel: 'Etiqueta la imagen', imLabelInstr: 'Elige una palabra y haz clic en el número correcto.',
     imFast: 'Ronda rápida', imFastInstr: '¿Cuál es la palabra? ¡Un error y se acaba!', imTimeUp: '¡Se acabó el tiempo!',
-    srTitle: 'Speed Round', srText: '¿Cuántas traducciones aciertas en 60 segundos?', srTime: (s) => `⏱ ${s}s`, srHits: (n) => `✓ ${n}`
+    srTitle: 'Speed Round', srText: '¿Cuántas traducciones aciertas en 60 segundos?', srTime: (s) => `⏱ ${s}s`, srHits: (n) => `✓ ${n}`,
+    navHistory: 'Historial',
+    todayKicker: 'Hoy', todayDaily: 'Contenido diario', todayDailyDone: 'hecho ✅', todayDailyPending: 'pendiente', todayDailyLocked: 'plan Fluency',
+    todayReview: 'Repaso diario', todayReviewCount: (n) => (n > 0 ? `${n} por repasar` : 'al día ✅'), todayStreak: 'Racha', todayStreakDays: (n) => `${n} ${n === 1 ? 'día' : 'días'}`,
+    latestWeeksTitle: 'Tus últimas clases', seeHistory: 'Ver historial completo →',
+    feedKicker: 'Para ti hoy', feedTitle: 'Tu feed', feedNews: 'Noticia', feedReview: 'Repaso diario', feedEpisode: 'Biblioteca', feedVoice: 'Voice Lab',
+    feedReviewText: (n) => `${n} palabras te esperan`, feedReviewCta: 'Repasar ahora →', feedEpisodeCta: 'Ver →', feedVoiceCta: 'Practicar →', feedNewsCta: 'Leer →',
+    feedMoreNews: 'Más noticias →', extraSeeAll: 'Los contenidos que ya viste están en el Historial.',
+    historyTitle: 'Historial', historySubtitle: 'Todo lo que ya estudiaste, organizado.',
+    historyWeeks: 'Semanas', historyDailies: 'Contenidos diarios hechos', historyExtras: 'Contenidos vistos',
+    historySearch: 'Buscar por título...', historyOnlyTasks: 'Solo con tarea', historyEmptyWeeks: 'No se encontraron semanas.',
+    historyEmptyDailies: 'Todavía no hiciste ningún contenido diario.', historyEmptyExtras: 'Todavía no marcaste ningún contenido como visto.',
+    historyScore: (s, t) => `${s}/${t} aciertos`, historyReread: 'Releer', historyYourAnswer: 'Tu respuesta', historyCorrect: 'Correcta',
+    months: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   }
 };

@@ -14,6 +14,7 @@ const Account = React.lazy(() => import('./pages/Account'));
 const Library = React.lazy(() => import('./pages/Library'));
 const Glossary = React.lazy(() => import('./pages/Glossary'));
 const VoiceLab = React.lazy(() => import('./pages/VoiceLab'));
+const History = React.lazy(() => import('./pages/History'));
 
 function PrivateRoute({ children, requireMaster }) {
   const { currentUser, userData } = useAuth();
@@ -78,6 +79,7 @@ function App() {
             <Route path="/library" element={<Library />} />
             <Route path="/voice-lab" element={<VoiceLab />} />
             <Route path="/glossary" element={<Glossary />} />
+            <Route path="/history" element={<History />} />
           </Route>
 
           <Route path="/admin" element={<PrivateRoute requireMaster><AdminHub /></PrivateRoute>} />
