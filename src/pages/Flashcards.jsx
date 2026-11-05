@@ -229,43 +229,81 @@ export default function Flashcards() {
           <>
             {view === 'list' && (
               <div>
-                {!gamePlaying && <>
-                <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--text)', marginBottom: 30 }}>
-                  {h.fcMyDecks}
-                </h2>
-                
-                {studentDecks.length === 0 ? (
-                  <div style={{ background: 'var(--paper)', padding: 40, borderRadius: 24, textAlign: 'center', border: '1px dashed var(--line)' }}>
-                    <span style={{ fontSize: '3rem', display: 'block', marginBottom: 15 }}>📭</span>
-                    <h3 style={{ margin: '0 0 10px' }}>{h.fcNoMaterial}</h3>
-                    <p style={{ color: 'var(--muted)', margin: 0 }}>{h.fcNoMaterialText}</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-                    {studentDecks.map(deck => (
-                      <button
-                        key={deck.id}
-                        onClick={() => handleDeckClick(deck)}
-                        style={{
-                          background: 'var(--paper)', border: '1px solid var(--line)', padding: 30,
-                          borderRadius: 24, textAlign: 'left', cursor: 'pointer',
-                          transition: '0.3s', display: 'flex', flexDirection: 'column'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-5px)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                      >
-                        <span style={{ fontSize: '2rem', marginBottom: 15 }}>{deck.id === 'daily_review_deck' ? '🔥' : deck.id === 'custom_words_deck' ? '📝' : (deck.icon || '🗂️')}</span>
-                        <h3 style={{ fontSize: '1.4rem', margin: '0 0 10px', color: 'var(--text)' }}>{deck.title}</h3>
-                        {deck.description && <p style={{ margin: '0 0 15px', color: 'var(--muted)', fontSize: '0.9rem' }}>{deck.description}</p>}
-                        <div style={{ marginTop: 'auto', display: 'inline-block', background: 'var(--cream)', padding: '4px 12px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--plum)' }}>
-                          {deck.words.length} cartas
+                <style>{'.deck-card:hover { transform: translateY(-4px); border-color: var(--amber) !important; } .review-hero { transition: 0.25s; } .review-hero:hover { transform: translateY(-3px); }'}</style>
+                {!gamePlaying && (() => {
+                  const reviewDeck = studentDecks.find(d => d.id === 'daily_review_deck');
+                  const hardDeck = studentDecks.find(d => d.id === 'difficult_words_deck');
+                  return (
+                    <section style={{ display: 'grid', gridTemplateColumns: hardDeck ? 'repeat(auto-fit, minmax(300px, 1fr))' : '1fr', gap: 20 }}>
+                      {reviewDeck ? (
+                        <button onClick={() => handleDeckClick(reviewDeck)} className="review-hero" style={{ textAlign: 'left', cursor: 'pointer', border: 'none', borderRadius: 28, padding: '32px 32px 28px', color: '#fff', background: 'radial-gradient(circle at 90% 10%, rgba(240,154,74,0.45), transparent 45%), linear-gradient(135deg, var(--plum), var(--plum-mid))', boxShadow: '0 18px 40px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--amber-soft)' }}>🔥 {h.fcReviewKicker}</span>
+                          <strong style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.2rem', lineHeight: 1.1 }}>{reviewDeck.title}</strong>
+                          <span style={{ opacity: 0.85 }}>{reviewDeck.description}</span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+                            <span style={{ background: 'rgba(255,255,255,0.15)', padding: '6px 14px', borderRadius: 99, fontWeight: 800, fontSize: '0.85rem' }}>{h.cardsCount(reviewDeck.words.length)}</span>
+                            <span style={{ background: '#fff', color: 'var(--plum)', padding: '10px 20px', borderRadius: 99, fontWeight: 800 }}>{h.reviewStart}</span>
+                          </span>
+                        </button>
+                      ) : (
+                        <div style={{ borderRadius: 28, padding: '28px 32px', border: '1px solid var(--line)', background: 'var(--paper)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                          <span style={{ fontSize: '2.4rem' }}>✅</span>
+                          <div>
+                            <strong style={{ fontSize: '1.2rem', color: 'var(--text)' }}>{h.reviewUpToDate}</strong>
+                            <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>{h.reviewComeBack}</p>
+                          </div>
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                </>}
+                      )}
+                      {hardDeck && (
+                        <button onClick={() => handleDeckClick(hardDeck)} style={{ textAlign: 'left', cursor: 'pointer', borderRadius: 28, padding: '28px 28px 24px', background: 'var(--paper)', border: '1px solid var(--line)', borderLeft: '6px solid #ff6b6b', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <span style={{ fontSize: '1.8rem' }}>🧠</span>
+                          <strong style={{ fontSize: '1.4rem', color: 'var(--text)' }}>{hardDeck.title}</strong>
+                          <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{hardDeck.description}</span>
+                          <span style={{ marginTop: 'auto', alignSelf: 'flex-start', background: 'var(--cream)', padding: '4px 12px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--plum)' }}>{h.cardsCount(hardDeck.words.length)}</span>
+                        </button>
+                      )}
+                    </section>
+                  );
+                })()}
+
                 <GamesSection onPlayingChange={setGamePlaying} />
+
+                {!gamePlaying && (() => {
+                  const regularDecks = studentDecks.filter(d => !d.isSpecial);
+                  return (
+                    <section style={{ marginTop: 50 }}>
+                      <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--text)', margin: '0 0 8px' }}>{h.fcMyDecks}</h2>
+                      <p style={{ color: 'var(--muted)', margin: '0 0 20px' }}>{h.decksSubtitle}</p>
+                      {regularDecks.length === 0 ? (
+                        <div style={{ background: 'var(--paper)', padding: 40, borderRadius: 24, textAlign: 'center', border: '1px dashed var(--line)' }}>
+                          <span style={{ fontSize: '3rem', display: 'block', marginBottom: 15 }}>📭</span>
+                          <h3 style={{ margin: '0 0 10px' }}>{h.fcNoMaterial}</h3>
+                          <p style={{ color: 'var(--muted)', margin: 0 }}>{h.fcNoMaterialText}</p>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+                          {regularDecks.map(deck => (
+                            <button
+                              key={deck.id}
+                              onClick={() => handleDeckClick(deck)}
+                              className="deck-card"
+                              style={{ background: 'var(--paper)', border: '1px solid var(--line)', padding: '22px 22px 18px', borderRadius: 22, textAlign: 'left', cursor: 'pointer', transition: '0.25s', display: 'flex', flexDirection: 'column', gap: 6 }}
+                            >
+                              <span style={{ fontSize: '1.7rem' }}>{deck.id === 'custom_words_deck' ? '📝' : (deck.icon || '🗂️')}</span>
+                              <h3 style={{ fontSize: '1.15rem', margin: '4px 0 0', color: 'var(--text)', lineHeight: 1.25 }}>{deck.title}</h3>
+                              {deck.description && <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>{deck.description}</p>}
+                              <span style={{ marginTop: 'auto', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ background: 'var(--cream)', padding: '4px 10px', borderRadius: 99, fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--plum)' }}>{h.cardsCount(deck.words.length)}</span>
+                                <span style={{ color: 'var(--amber)', fontWeight: 800 }}>→</span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  );
+                })()}
+
               </div>
             )}
 
