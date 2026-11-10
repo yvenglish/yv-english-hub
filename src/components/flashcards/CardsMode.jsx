@@ -24,6 +24,12 @@ export default function CardsMode({ deck, onFinish }) {
 
   const card = queue[index];
 
+  // Virar o cartão já fala a palavra
+  const flip = useCallback(() => {
+    setFlipped(f => !f);
+    if (card) speak(card.term, activeCourseInfo.speechLang);
+  }, [card, activeCourseInfo]);
+
   const answer = useCallback((knows) => {
     if (!card || leaving) return;
     setLeaving(knows ? 'right' : 'left');
@@ -49,11 +55,11 @@ export default function CardsMode({ deck, onFinish }) {
     const onKey = (e) => {
       if (e.key === 'ArrowRight') answer(true);
       else if (e.key === 'ArrowLeft') answer(false);
-      else if (e.key === ' ') { e.preventDefault(); setFlipped(f => !f); }
+      else if (e.key === ' ') { e.preventDefault(); flip(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [answer]);
+  }, [answer, flip]);
 
   const onPointerDown = (e) => {
     start.current = e.clientX;
@@ -72,7 +78,7 @@ export default function CardsMode({ deck, onFinish }) {
     if (drag > SWIPE_DISTANCE) answer(true);
     else if (drag < -SWIPE_DISTANCE) answer(false);
     else {
-      if (!moved.current) setFlipped(f => !f); // toque sem arrastar vira o cartão
+      if (!moved.current) flip(); // toque sem arrastar vira o cartão
       setDrag(0);
     }
   };
@@ -86,7 +92,7 @@ export default function CardsMode({ deck, onFinish }) {
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
       <GameHeader title={`🃏 ${h.modeCards}`} progress={`${Math.min(index + 1, queue.length)} / ${queue.length}`} onExit={() => onFinish({ earlyExit: true, studiedCount: index })} exitLabel={h.exit} />
 
-      <div style={{ position: 'relative', height: 340, touchAction: 'pan-y' }}>
+      <div style={{ position: 'relative', height: 'calc(100dvh - 290px)', minHeight: 360, maxHeight: 680, touchAction: 'none', overscrollBehavior: 'contain' }}>
         {/* Próximo cartão aparecendo por trás */}
         {queue[index + 1] && (
           <div style={{ position: 'absolute', inset: '12px 12px 0', borderRadius: 26, background: 'var(--paper)', border: '1px solid var(--line)', opacity: 0.5 }} />
@@ -97,29 +103,36 @@ export default function CardsMode({ deck, onFinish }) {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           style={{
-            position: 'absolute', inset: 0, borderRadius: 26, border: '1px solid var(--line)', cursor: 'grab', userSelect: 'none',
+            position: 'absolute', inset: 0, borderRadius: 26, border: '1px solid var(--line)', cursor: 'grab', userSelect: 'none', touchAction: 'none', transformOrigin: '50% 100%',
             background: flipped ? 'linear-gradient(135deg, var(--plum), var(--plum-mid))' : 'var(--paper)', color: flipped ? '#fff' : 'var(--text)',
-            transform: `translateX(${offset}px) rotate(${offset / 18}deg)`, transition: start.current === null ? 'transform 0.25s, background 0.3s' : 'none',
+            transform: `translateX(${offset}px) rotate(${offset / 30}deg)`, transition: start.current === null ? 'transform 0.25s, background 0.3s' : 'none',
             display: 'grid', placeItems: 'center', padding: 30, boxShadow: '0 16px 40px rgba(0,0,0,0.18)', overflow: 'hidden'
           }}
         >
           <div style={{ position: 'absolute', inset: 0, background: tint, pointerEvents: 'none' }} />
+          <button
+            type="button"
+            aria-label="🔊"
+            onPointerDown={e => e.stopPropagation()}
+            onPointerUp={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); speak(card.term, activeCourseInfo.speechLang); }}
+            style={{ position: 'absolute', top: 16, right: 16, width: 46, height: 46, borderRadius: '50%', border: `1px solid ${flipped ? 'rgba(255,255,255,0.35)' : 'var(--line)'}`, background: flipped ? 'rgba(255,255,255,0.15)' : 'var(--cream)', cursor: 'pointer', fontSize: '1.2rem', zIndex: 2 }}
+          >🔊</button>
           {offset > 30 && <span style={{ position: 'absolute', top: 20, left: 20, color: '#2ed573', fontWeight: 900, border: '3px solid #2ed573', borderRadius: 10, padding: '4px 10px', transform: 'rotate(-12deg)' }}>{h.iKnow}</span>}
-          {offset < -30 && <span style={{ position: 'absolute', top: 20, right: 20, color: '#ff4757', fontWeight: 900, border: '3px solid #ff4757', borderRadius: 10, padding: '4px 10px', transform: 'rotate(12deg)' }}>{h.iDontKnow}</span>}
+          {offset < -30 && <span style={{ position: 'absolute', top: 76, right: 20, color: '#ff4757', fontWeight: 900, border: '3px solid #ff4757', borderRadius: 10, padding: '4px 10px', transform: 'rotate(12deg)' }}>{h.iDontKnow}</span>}
           <div style={{ display: 'grid', gap: 12, justifyItems: 'center', textAlign: 'center', pointerEvents: 'none' }}>
-            {card.imageUrl && !flipped && <img src={card.imageUrl} alt="" style={{ maxHeight: 110, borderRadius: 12 }} draggable={false} />}
-            <span style={{ fontSize: '2.2rem', fontWeight: 700, fontFamily: '"Playfair Display", serif' }}>{flipped ? card.translation : card.term}</span>
+            {card.imageUrl && !flipped && <img src={card.imageUrl} alt="" style={{ maxHeight: 180, maxWidth: '100%', borderRadius: 14 }} draggable={false} />}
+            <span style={{ fontSize: 'clamp(2rem, 7vw, 2.8rem)', fontWeight: 700, fontFamily: '"Playfair Display", serif' }}>{flipped ? card.translation : card.term}</span>
             {flipped && card.sentences?.[0]?.english && <span style={{ fontSize: '0.95rem', opacity: 0.85 }}>“{card.sentences[0].english}”</span>}
             <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{h.tapToFlip}</span>
           </div>
         </div>
       </div>
 
-      <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem', margin: '14px 0' }}>{h.swipeHint}</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr', gap: 10 }}>
-        <button onClick={() => speak(card.term, activeCourseInfo.speechLang)} style={{ padding: '0 18px', borderRadius: 16, border: '1px solid var(--line)', background: 'var(--paper)', cursor: 'pointer', fontSize: '1.2rem' }}>🔊</button>
-        <button onClick={() => answer(false)} style={{ padding: 16, borderRadius: 16, border: '2px solid #ff4757', background: 'rgba(255,71,87,0.08)', color: '#ff4757', fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>✕ {h.iDontKnow}</button>
-        <button onClick={() => answer(true)} style={{ padding: 16, borderRadius: 16, border: '2px solid #2ed573', background: 'rgba(46,213,115,0.08)', color: '#2ed573', fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>✓ {h.iKnow}</button>
+      <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '0.8rem', margin: '12px 0' }}>{h.swipeHint}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <button onClick={() => answer(false)} style={{ padding: 18, borderRadius: 18, border: '2px solid #ff4757', background: 'rgba(255,71,87,0.08)', color: '#ff4757', fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>✕ {h.iDontKnow}</button>
+        <button onClick={() => answer(true)} style={{ padding: 18, borderRadius: 18, border: '2px solid #2ed573', background: 'rgba(46,213,115,0.08)', color: '#2ed573', fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>✓ {h.iKnow}</button>
       </div>
     </div>
   );
