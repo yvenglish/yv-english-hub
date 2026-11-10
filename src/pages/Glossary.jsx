@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { wordStatus } from '../data/srs';
 import { UI_TEXTS } from '../data/uiTexts';
+
+const STATUS_STYLE = {
+  new: { background: 'rgba(138,143,184,0.15)', color: '#8a8fb8' },
+  learning: { background: 'rgba(240,154,74,0.15)', color: '#F09A4A' },
+  mastered: { background: 'rgba(46,213,115,0.15)', color: '#2ed573' }
+};
 
 export default function Glossary() {
   const { currentUser, activeCourse, activeCourseInfo } = useAuth();
@@ -17,37 +24,33 @@ export default function Glossary() {
     }
   }, [currentUser, activeCourse]);
 
+  // Todas as palavras que a teacher atribuiu (decks e palavras soltas), sem precisar estudar antes.
+  // Cada uma mostra a situação: nova, aprendendo ou dominada.
   const fetchGlossary = async () => {
     try {
-      const progressSnap = await getDocs(collection(db, `users/${currentUser.uid}/flashcard_progress`));
-      const wordIds = progressSnap.docs.map(doc => doc.id);
-      
-      if (wordIds.length === 0) {
-        setWords([]);
-        setLoading(false);
-        return;
-      }
+      const [assignSnap, decksSnap, vocabSnap, progressSnap] = await Promise.all([
+        getDocs(query(collection(db, 'vocab_assignments'), where('studentId', '==', currentUser.uid))),
+        getDocs(collection(db, 'decks')),
+        getDocs(collection(db, 'vocabulary_global')),
+        getDocs(collection(db, `users/${currentUser.uid}/flashcard_progress`))
+      ]);
 
-      const globalVocabSnap = await getDocs(collection(db, 'vocabulary_global'));
-      const globalVocab = globalVocabSnap.docs.reduce((acc, doc) => {
-        acc[doc.id] = doc.data();
-        return acc;
-      }, {});
+      const decks = Object.fromEntries(decksSnap.docs.map(d => [d.id, d.data()]));
+      const assignedIds = new Set();
+      assignSnap.docs.forEach(d => {
+        const a = d.data();
+        const ids = a.type === 'deck' ? decks[a.deckId]?.wordIds : a.wordIds;
+        (ids || []).forEach(id => assignedIds.add(id));
+      });
+      // Palavras já estudadas por outros caminhos (ex.: "+ Flashcards" do Daily) também entram
+      progressSnap.docs.forEach(d => assignedIds.add(d.id));
+      const progress = Object.fromEntries(progressSnap.docs.map(d => [d.id, d.data()]));
 
-      const matchedWords = wordIds
-        .map(id => {
-          const vocabData = globalVocab[id];
-          if (vocabData && vocabData.term && (vocabData.course || 'en') === activeCourse) {
-            return {
-              id,
-              term: vocabData.term,
-              translation: vocabData.translation,
-              imageUrl: vocabData.imageUrl
-            };
-          }
-          return null;
-        })
-        .filter(w => w !== null);
+      const matchedWords = vocabSnap.docs
+        .filter(d => assignedIds.has(d.id))
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(w => w.term && (w.course || 'en') === activeCourse)
+        .map(w => ({ id: w.id, term: w.term, translation: w.translation, imageUrl: w.imageUrl, status: wordStatus(progress[w.id]) }));
 
       matchedWords.sort((a, b) => a.term.localeCompare(b.term));
       setWords(matchedWords);
@@ -161,6 +164,9 @@ export default function Glossary() {
                         <span style={{ fontSize: '0.95rem', color: 'var(--muted)' }}>{word.translation}</span>
                       </div>
                     </div>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '4px 10px', borderRadius: 99, whiteSpace: 'nowrap', ...STATUS_STYLE[word.status] }}>
+                      {word.status === 'mastered' ? h.glossMastered : word.status === 'learning' ? h.glossLearning : h.glossNew}
+                    </span>
                   </div>
                 ))}
               </div>

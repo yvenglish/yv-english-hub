@@ -55,3 +55,9 @@ export const scoreFromAnswer = (isCorrect, seconds, fastLimit) => {
   if (!isCorrect) return 0;
   return seconds <= fastLimit ? 3 : 2;
 };
+
+// Situação da palavra para o aluno: nova (nunca estudada), aprendendo ou dominada (2+ acertos seguidos)
+export const wordStatus = (progress) => {
+  if (!progress) return 'new';
+  return (progress.repetitions || 0) >= 2 ? 'mastered' : 'learning';
+};

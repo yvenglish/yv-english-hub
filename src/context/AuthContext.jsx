@@ -247,6 +247,15 @@ export function AuthProvider({ children }) {
     setUserData(prev => ({ ...prev, ...updates }));
   };
 
+  // Palavras marcadas com ⭐ (formam o deck "Favoritas")
+  const toggleFavoriteWord = async (wordId) => {
+    if (!currentUser || !userData) return;
+    const current = userData.favoriteWords || [];
+    const favoriteWords = current.includes(wordId) ? current.filter(id => id !== wordId) : [...current, wordId];
+    await setDoc(doc(db, 'users', currentUser.uid), { favoriteWords }, { merge: true });
+    setUserData(prev => ({ ...prev, favoriteWords }));
+  };
+
   const toggleLibraryFavorite = async (episodeId) => {
     if (!currentUser || !userData) return;
     const currentFavs = userData.libraryFavorites || [];
@@ -413,6 +422,7 @@ export function AuthProvider({ children }) {
     unlockedBadges,
     dismissUnlockedBadge,
     toggleLibraryFavorite,
+    toggleFavoriteWord,
     toggleLibraryProgress,
     recordVoiceLabProgress,
     updateFlashcardProgress,

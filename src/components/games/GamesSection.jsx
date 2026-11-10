@@ -5,17 +5,12 @@ import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
 import { inCourse, getLevelLabel } from '../../data/courses';
 import { GAME_TYPES, GAME_LEVELS, playableItems } from '../../data/games';
-import WordGuess from './WordGuess';
-import SentenceBuilder from './SentenceBuilder';
-import ListenChoose from './ListenChoose';
-import ImageGame from './ImageGame';
 import { cardStyle } from './gameUi';
+import { PLAYERS } from './players';
 
-const PLAYERS = { word_guess: WordGuess, sentence_builder: SentenceBuilder, listen: ListenChoose, image: ImageGame };
-
-// Lista de jogos do curso ativo (para todos os alunos do curso), com filtro de nível e recordes.
+// "Mais jogos": jogos do curso que não pertencem a um deck do aluno (os de deck ficam na página do deck).
 // onPlayingChange avisa a página quando um jogo abre/fecha (para esconder os decks).
-export default function GamesSection({ onPlayingChange }) {
+export default function GamesSection({ onPlayingChange, excludeIds = [] }) {
   const { activeCourse, saveGameScore, getGameScores } = useAuth();
   const h = UI_TEXTS[activeCourse];
 
@@ -83,13 +78,15 @@ export default function GamesSection({ onPlayingChange }) {
     return <Player key={round} game={playing} onFinish={handleFinish} onExit={close} />;
   }
 
-  const levelsInUse = GAME_LEVELS.filter(l => games.some(g => g.level === l));
-  const visible = games.filter(g => level === 'all' || g.level === level);
+  const levelsInUse = GAME_LEVELS.filter(l => games.some(g => g.level === l && !excludeIds.includes(g.id)));
+  const available = games.filter(g => !excludeIds.includes(g.id));
+  const visible = available.filter(g => level === 'all' || g.level === level);
+  if (available.length === 0) return null;
 
   return (
     <section style={{ marginTop: 50 }}>
-      <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--text)', margin: '0 0 8px' }}>{h.gamesTitle}</h2>
-      <p style={{ color: 'var(--muted)', margin: '0 0 20px' }}>{h.gamesSubtitle}</p>
+      <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--text)', margin: '0 0 8px' }}>{h.moreGamesTitle}</h2>
+      <p style={{ color: 'var(--muted)', margin: '0 0 20px' }}>{h.moreGamesSubtitle}</p>
 
       {levelsInUse.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>

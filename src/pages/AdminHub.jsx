@@ -16,6 +16,15 @@ import { COURSES, inCourse, getUserCourses } from '../data/courses';
 import { SUGGESTED_DECK_ICONS, getDeckIcon } from '../data/deckIcons';
 import './AdminHub.css';
 
+// Jogos que a teacher pode desligar em cada deck
+const DECK_GAME_MODES = [
+  { id: 'match', label: '🧩 Combinar' },
+  { id: 'blast', label: '🚀 Blast' },
+  { id: 'listen', label: '👂 Ouça e escolha' },
+  { id: 'hangman', label: '🔤 Forca' },
+  { id: 'write', label: '✍️ Escrever' }
+];
+
 const ADMIN_TAB_LABELS = {
   analytics: 'Analytics',
   students: 'Alunos',
@@ -103,6 +112,7 @@ export default function AdminHub() {
   const [deckTitle, setDeckTitle] = useState('');
   const [deckDescription, setDeckDescription] = useState('');
   const [deckIcon, setDeckIcon] = useState('');
+  const [deckDisabledModes, setDeckDisabledModes] = useState([]); // jogos desligados neste deck
   const [deckWordIds, setDeckWordIds] = useState([]);
   const [deckWordSearch, setDeckWordSearch] = useState('');
   const [vocabAssignStudents, setVocabAssignStudents] = useState([]);
@@ -562,6 +572,7 @@ export default function AdminHub() {
               term: item.term.trim(),
               translation: item.translation,
               imageUrl: item.imageUrl || '',
+              hint: item.hint || '',
               tags: Array.isArray(item.tags) ? item.tags : (item.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean),
               sentences: item.sentences || [],
               course: adminCourse,
@@ -588,6 +599,7 @@ export default function AdminHub() {
               title: deckInfo.title.trim(),
               description: deckInfo.description || '',
               icon: deckInfo.icon || '',
+              disabledModes: Array.isArray(deckInfo.disabledGames) ? deckInfo.disabledGames : [],
               wordIds,
               course: adminCourse,
               createdAt: new Date().toISOString(),
@@ -682,12 +694,13 @@ export default function AdminHub() {
         title: deckTitle, 
         description: deckDescription, 
         icon: deckIcon,
+        disabledModes: deckDisabledModes,
         wordIds: deckWordIds, 
         updatedAt: new Date().toISOString() 
       };
       if (editingDeck) await updateDoc(doc(db, 'decks', editingDeck.id), payload);
       else await addDoc(collection(db, 'decks'), { ...payload, course: adminCourse, createdAt: new Date().toISOString() });
-      setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon('');
+      setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); setDeckDisabledModes([]);
       setIsDeckModalOpen(false);
       fetchDecks();
     } catch (e) { console.error(e); alert('Erro ao salvar deck.'); }
@@ -1498,12 +1511,12 @@ export default function AdminHub() {
             {vocabSubTab === 'decks' && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
-                  <button onClick={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); setIsDeckModalOpen(true); }} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                  <button onClick={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); setDeckDisabledModes([]); setIsDeckModalOpen(true); }} style={{ background: 'var(--amber)', color: '#000', padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
                     + Novo Deck
                   </button>
                 </div>
                 {isDeckModalOpen && (
-                  <AdminModal title={editingDeck ? '✏️ Editando Deck' : '+ Novo Deck'} onClose={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); setIsDeckModalOpen(false); }}>
+                  <AdminModal title={editingDeck ? '✏️ Editando Deck' : '+ Novo Deck'} onClose={() => { setEditingDeck(null); setDeckTitle(''); setDeckDescription(''); setDeckWordIds([]); setDeckIcon(''); setDeckDisabledModes([]); setIsDeckModalOpen(false); }}>
                     <div style={{ display: 'grid', gap: 15 }}>
                     <div className="admin-flex-row">
                       <input type="text" value={deckTitle} onChange={e => setDeckTitle(e.target.value)} placeholder="Título do Deck (ex: Body Parts)" style={{ flex: 2, padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
@@ -1517,6 +1530,17 @@ export default function AdminHub() {
                       {!deckIcon && deckTitle && <span style={{ fontSize: '0.75rem', color: 'var(--muted)', marginLeft: 6 }}>Sem emoji, o aluno vê {getDeckIcon({ title: deckTitle })}</span>}
                     </div>
                     <input type="text" value={deckDescription} onChange={e => setDeckDescription(e.target.value)} placeholder="Descrição (opcional)" style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)' }} />
+                    <div style={{ display: 'grid', gap: 6 }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Jogos deste deck <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(Cartões e Aprender ficam sempre ligados)</span></span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                        {DECK_GAME_MODES.map(m => (
+                          <label key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: '0.9rem' }}>
+                            <input type="checkbox" checked={!deckDisabledModes.includes(m.id)} onChange={() => setDeckDisabledModes(prev => prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id])} />
+                            {m.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                     
                     <div style={{ padding: 15, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 12 }}>
                       <h4 style={{ margin: '0 0 10px' }}>Selecionar Palavras ({deckWordIds.length})</h4>
@@ -1561,7 +1585,7 @@ export default function AdminHub() {
                         <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)' }}>{d.description} • {d.wordIds?.length || 0} palavras</p>
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => { setEditingDeck(d); setDeckTitle(d.title); setDeckDescription(d.description || ''); setDeckIcon(d.icon || ''); setDeckWordIds(d.wordIds || []); setIsDeckModalOpen(true); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
+                        <button onClick={() => { setEditingDeck(d); setDeckTitle(d.title); setDeckDescription(d.description || ''); setDeckIcon(d.icon || ''); setDeckDisabledModes(d.disabledModes || []); setDeckWordIds(d.wordIds || []); setIsDeckModalOpen(true); }} style={{ background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Editar</button>
                         <button onClick={() => handleDeleteDeck(d.id)} style={{ background: 'transparent', border: '1px solid red', color: 'red', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Excluir</button>
                       </div>
                     </div>
