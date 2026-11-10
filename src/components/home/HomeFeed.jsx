@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
 import { inCourse, getLevelLabel } from '../../data/courses';
 import { getLatestNews, articleUrl, newsSiteUrl } from '../../services/newsService';
+import { REVIEW_BATCH_SIZE } from '../../data/srs';
 
 const pickRandom = (list) => (list.length ? list[Math.floor(Math.random() * list.length)] : null);
 
@@ -90,7 +91,7 @@ export default function HomeFeed({ onDueCount }) {
           <button type="button" onClick={() => navigate('/flashcards')} className="review-hero" style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none', borderRadius: 28, padding: '28px 30px', color: '#fff', background: 'radial-gradient(circle at 90% 10%, rgba(240,154,74,0.45), transparent 45%), linear-gradient(135deg, var(--plum), var(--plum-mid))', boxShadow: '0 18px 40px rgba(0,0,0,0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--amber-soft)' }}>🔥 {h.feedReview}</span>
-              <strong style={{ fontFamily: '"Playfair Display", serif', fontSize: '1.9rem', lineHeight: 1.15 }}>{h.feedReviewText(dueCount)}</strong>
+              <strong style={{ fontFamily: '"Playfair Display", serif', fontSize: '1.9rem', lineHeight: 1.15 }}>{h.feedReviewText(Math.min(dueCount, REVIEW_BATCH_SIZE))}</strong>
             </span>
             <span style={{ background: '#fff', color: 'var(--plum)', padding: '12px 22px', borderRadius: 99, fontWeight: 800, whiteSpace: 'nowrap' }}>{h.feedReviewCta}</span>
           </button>
