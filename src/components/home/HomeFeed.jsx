@@ -7,6 +7,7 @@ import { UI_TEXTS } from '../../data/uiTexts';
 import { inCourse, getLevelLabel } from '../../data/courses';
 import { getLatestNews, articleUrl, newsSiteUrl } from '../../services/newsService';
 import { REVIEW_BATCH_SIZE } from '../../data/srs';
+import { fetchByIds } from '../../services/firestoreHelpers';
 
 const pickRandom = (list) => (list.length ? list[Math.floor(Math.random() * list.length)] : null);
 
@@ -54,10 +55,9 @@ export default function HomeFeed({ onDueCount }) {
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const [latest, due, wordsSnap, episodesSnap, challengesSnap] = await Promise.all([
+      const [latest, due, episodesSnap, challengesSnap] = await Promise.all([
         getLatestNews(activeCourse, 3),
         getDueFlashcards().catch(() => []),
-        getDocs(collection(db, 'vocabulary_global')).catch(() => null),
         getDocs(collection(db, 'library_episodes')).catch(() => null),
         getDocs(collection(db, 'voice_lab_challenges')).catch(() => null)
       ]);
@@ -65,7 +65,8 @@ export default function HomeFeed({ onDueCount }) {
       setNews(latest);
 
       // Só conta palavras do curso ativo
-      const courseWordIds = new Set((wordsSnap?.docs || []).filter(d => inCourse(d.data(), activeCourse)).map(d => d.id));
+      const dueWords = await fetchByIds('vocabulary_global', due.map(d => d.wordId)).catch(() => []);
+      const courseWordIds = new Set(dueWords.filter(w => inCourse(w, activeCourse)).map(w => w.id));
       const count = due.filter(d => courseWordIds.has(d.wordId)).length;
       setDueCount(count);
       onDueCount?.(count);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
@@ -24,7 +24,7 @@ export default function GamesSection({ onPlayingChange, excludeIds = [] }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const [snap, myScores] = await Promise.all([getDocs(collection(db, 'games')), getGameScores()]);
+        const [snap, myScores] = await Promise.all([getDocs(query(collection(db, 'games'), where('course', '==', activeCourse))), getGameScores()]);
         const list = snap.docs
           .map(d => ({ id: d.id, ...d.data() }))
           .filter(g => inCourse(g, activeCourse) && PLAYERS[g.type] && playableItems(g).length >= 2)

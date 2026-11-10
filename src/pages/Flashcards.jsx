@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
+import { fetchByIds } from '../services/firestoreHelpers';
 
 import CardsMode from '../components/flashcards/CardsMode';
 import LearnMode from '../components/flashcards/LearnMode';
@@ -17,6 +18,9 @@ import { REVIEW_BATCH_SIZE, wordStatus } from '../data/srs';
 import { playableItems, shuffle } from '../data/games';
 import { getDeckIcon } from '../data/deckIcons';
 import { UI_TEXTS } from '../data/uiTexts';
+
+// Última carga de cada aluno/curso: ao voltar para Games a página aparece na hora e atualiza por trás
+const pageCache = new Map();
 
 const sameTitle = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
 
@@ -49,41 +53,64 @@ export default function Flashcards() {
   const [completeModal, setCompleteModal] = useState(null); // { title, text }
   const loadedOnce = useRef(false);
 
+  // Recarrega quando muda o aluno, o curso, as favoritas ou a rodada da Daily Review
+  // (e depois de cada modo/jogo, no handleFinish). Games e flashcards ficam liberados para todos os planos.
+  const favoritesKey = (userData?.favoriteWords || []).join(',');
   useEffect(() => {
-    // Games e flashcards ficam liberados para todos os planos
     if (currentUser) loadData();
-  }, [currentUser, userData, activeCourse]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentUser?.uid, activeCourse, favoritesKey, reviewBatchesToday]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const cacheKey = currentUser ? `${currentUser.uid}_${activeCourse}` : null;
+
+  const applyData = (data) => {
+    setProgressById(data.progressById);
+    setScores(data.scores);
+    setGames(data.games);
+    setGlobalWords(data.words);
+    setStudentDecks(data.decks);
+  };
 
   const loadData = async () => {
-    // Só mostra "carregando" na primeira vez; depois atualiza por baixo (ex.: ao favoritar)
-    if (!loadedOnce.current) setLoading(true);
+    // Com cache, mostra na hora e atualiza por trás; sem cache, mostra "carregando"
+    const cached = pageCache.get(cacheKey);
+    if (cached) {
+      applyData(cached);
+      setLoading(false);
+    } else if (!loadedOnce.current) {
+      setLoading(true);
+    }
     try {
-      const q = query(collection(db, 'vocab_assignments'), where('studentId', '==', currentUser.uid));
-      const [wordsSnap, decksSnap, assignSnap, dueFlashcards, difficultFlashcards, progressSnap, myScores, gamesSnap] = await Promise.all([
-        getDocs(collection(db, 'vocabulary_global')),
-        getDocs(collection(db, 'decks')),
-        getDocs(q),
+      const [assignSnap, dueFlashcards, difficultFlashcards, progressSnap, myScores, gamesSnap] = await Promise.all([
+        getDocs(query(collection(db, 'vocab_assignments'), where('studentId', '==', currentUser.uid))),
         getDueFlashcards(),
         getDifficultFlashcards(),
         getDocs(collection(db, `users/${currentUser.uid}/flashcard_progress`)),
         getGameScores(),
-        getDocs(collection(db, 'games'))
+        getDocs(query(collection(db, 'games'), where('course', '==', activeCourse)))
       ]);
 
-      setProgressById(Object.fromEntries(progressSnap.docs.map(d => [d.id, d.data()])));
-      setScores(myScores);
-      setGames(gamesSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(g => inCourse(g, activeCourse) && PLAYERS[g.type] && playableItems(g).length >= 2));
+      const progressById = Object.fromEntries(progressSnap.docs.map(d => [d.id, d.data()]));
+      const assignments = assignSnap.docs.map(d => d.data());
 
-      // Só palavras e decks do curso ativo
-      const allWords = wordsSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(w => inCourse(w, activeCourse));
-      setGlobalWords(allWords);
+      // Só os decks atribuídos ao aluno (em vez da coleção inteira)
+      const deckSnaps = await Promise.all([...new Set(assignments.filter(a => a.type === 'deck').map(a => a.deckId))].filter(Boolean).map(id => getDoc(doc(db, 'decks', id))));
+      const allDecks = deckSnaps.filter(d => d.exists()).map(d => ({ id: d.id, ...d.data() })).filter(d => inCourse(d, activeCourse));
+
+      // Só as palavras que o aluno usa: dos decks, das palavras soltas, favoritas e da revisão
+      const neededIds = [
+        ...allDecks.flatMap(d => d.wordIds || []),
+        ...assignments.filter(a => a.type === 'words').flatMap(a => a.wordIds || []),
+        ...(userData?.favoriteWords || []),
+        ...dueFlashcards.map(df => df.wordId),
+        ...difficultFlashcards.map(df => df.wordId)
+      ];
+      const allWords = (await fetchByIds('vocabulary_global', neededIds)).filter(w => inCourse(w, activeCourse));
       const wordById = Object.fromEntries(allWords.map(w => [w.id, w]));
       const toWords = (ids) => (ids || []).map(id => wordById[id]).filter(Boolean);
 
-      const allDecks = decksSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(d => inCourse(d, activeCourse));
       const builtDecks = [];
       let customWords = [];
-      assignSnap.docs.map(d => d.data()).forEach(assign => {
+      assignments.forEach(assign => {
         if (assign.type === 'deck') {
           const deckData = allDecks.find(d => d.id === assign.deckId);
           if (deckData && !builtDecks.some(d => d.id === deckData.id)) {
@@ -124,7 +151,15 @@ export default function Flashcards() {
         });
       }
 
-      setStudentDecks(builtDecks);
+      const data = {
+        progressById,
+        scores: myScores,
+        games: gamesSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(g => PLAYERS[g.type] && playableItems(g).length >= 2),
+        words: allWords,
+        decks: builtDecks
+      };
+      pageCache.set(cacheKey, data);
+      applyData(data);
     } catch (err) {
       console.error(err);
     }
@@ -182,6 +217,7 @@ export default function Flashcards() {
 
     setPlay(null);
     setFinishing(false);
+    loadData();
     setView(deckId && deck.id !== 'daily_review_deck' ? 'deck' : 'list');
     if (isGoalReached) setShowGoalModal(true);
     else setCompleteModal({ title, text });

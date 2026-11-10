@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { wordStatus } from '../data/srs';
+import { fetchByIds } from '../services/firestoreHelpers';
 import { UI_TEXTS } from '../data/uiTexts';
 
 const STATUS_STYLE = {
@@ -28,14 +29,14 @@ export default function Glossary() {
   // Cada uma mostra a situação: nova, aprendendo ou dominada.
   const fetchGlossary = async () => {
     try {
-      const [assignSnap, decksSnap, vocabSnap, progressSnap] = await Promise.all([
+      const [assignSnap, progressSnap] = await Promise.all([
         getDocs(query(collection(db, 'vocab_assignments'), where('studentId', '==', currentUser.uid))),
-        getDocs(collection(db, 'decks')),
-        getDocs(collection(db, 'vocabulary_global')),
         getDocs(collection(db, `users/${currentUser.uid}/flashcard_progress`))
       ]);
 
-      const decks = Object.fromEntries(decksSnap.docs.map(d => [d.id, d.data()]));
+      // Só os decks atribuídos ao aluno
+      const deckIds = assignSnap.docs.map(d => d.data()).filter(a => a.type === 'deck').map(a => a.deckId);
+      const decks = Object.fromEntries((await fetchByIds('decks', deckIds)).map(d => [d.id, d]));
       const assignedIds = new Set();
       assignSnap.docs.forEach(d => {
         const a = d.data();
@@ -46,9 +47,8 @@ export default function Glossary() {
       progressSnap.docs.forEach(d => assignedIds.add(d.id));
       const progress = Object.fromEntries(progressSnap.docs.map(d => [d.id, d.data()]));
 
-      const matchedWords = vocabSnap.docs
-        .filter(d => assignedIds.has(d.id))
-        .map(d => ({ id: d.id, ...d.data() }))
+      // Só as palavras do aluno, em vez do vocabulário inteiro
+      const matchedWords = (await fetchByIds('vocabulary_global', [...assignedIds]))
         .filter(w => w.term && (w.course || 'en') === activeCourse)
         .map(w => ({ id: w.id, term: w.term, translation: w.translation, imageUrl: w.imageUrl, status: wordStatus(progress[w.id]) }));
 
