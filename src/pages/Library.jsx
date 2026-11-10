@@ -1,13 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getLevelLabel } from '../data/courses';
-import { db } from '../config/firebase';
-import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import EpisodePlayer from '../components/library/EpisodePlayer';
+import { getEpisodes, getCachedEpisodes } from '../services/libraryCache';
 
-let cachedEpisodesData = null;
-let lastFetchTime = 0;
 
 export default function Library() {
   const { userData, toggleLibraryFavorite, toggleLibraryProgress, syncLibraryLevels, activeCourse, activeCourseInfo } = useAuth();
@@ -18,29 +15,15 @@ export default function Library() {
   const [search, setSearch] = useState('');
   const [selectedEpisode, setSelectedEpisode] = useState(null);
   
-  const [episodes, setEpisodes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [episodes, setEpisodes] = useState(() => getCachedEpisodes() || []);
+  const [loading, setLoading] = useState(() => !getCachedEpisodes());
 
   useEffect(() => {
-    const fetchEpisodes = async () => {
-      // Use cache se tiver menos de 5 minutos
-      if (cachedEpisodesData && Date.now() - lastFetchTime < 300000) {
-        setEpisodes(cachedEpisodesData);
-        setLoading(false);
-        return;
-      }
-      try {
-        const snap = await getDocs(collection(db, 'library_episodes'));
-        const eps = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        cachedEpisodesData = eps;
-        lastFetchTime = Date.now();
-        setEpisodes(eps);
-      } catch (err) {
-        console.error(err);
-      }
-      setLoading(false);
-    };
-    fetchEpisodes();
+    // Episódios do cache compartilhado (a home e o menu já podem ter carregado)
+    getEpisodes()
+      .then(setEpisodes)
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
   }, []);
 
   // Read location state for global search selection

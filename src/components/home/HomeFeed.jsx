@@ -8,6 +8,7 @@ import { inCourse, getLevelLabel } from '../../data/courses';
 import { getLatestNews, articleUrl, newsSiteUrl } from '../../services/newsService';
 import { REVIEW_BATCH_SIZE } from '../../data/srs';
 import { fetchByIds } from '../../services/firestoreHelpers';
+import { getEpisodes } from '../../services/libraryCache';
 
 const pickRandom = (list) => (list.length ? list[Math.floor(Math.random() * list.length)] : null);
 
@@ -55,10 +56,10 @@ export default function HomeFeed({ onDueCount }) {
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const [latest, due, episodesSnap, challengesSnap] = await Promise.all([
+      const [latest, due, episodes, challengesSnap] = await Promise.all([
         getLatestNews(activeCourse, 3),
         getDueFlashcards().catch(() => []),
-        getDocs(collection(db, 'library_episodes')).catch(() => null),
+        getEpisodes().catch(() => []),
         getDocs(collection(db, 'voice_lab_challenges')).catch(() => null)
       ]);
       if (!alive) return;
@@ -72,7 +73,7 @@ export default function HomeFeed({ onDueCount }) {
       onDueCount?.(count);
 
       const doneEpisodes = userData?.libraryProgress || [];
-      setEpisode(pickRandom((episodesSnap?.docs || []).map(d => ({ id: d.id, ...d.data() })).filter(e => inCourse(e, activeCourse) && !doneEpisodes.includes(e.id))));
+      setEpisode(pickRandom(episodes.filter(e => inCourse(e, activeCourse) && !doneEpisodes.includes(e.id))));
 
       const doneChallenges = userData?.voiceLabProgress || [];
       setChallenge(pickRandom((challengesSnap?.docs || []).map(d => ({ id: d.id, ...d.data() })).filter(c => inCourse(c, activeCourse) && !doneChallenges.includes(c.id))));

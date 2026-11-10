@@ -6,6 +6,7 @@ import { db } from '../../config/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { COURSES } from '../../data/courses';
 import { UI_TEXTS } from '../../data/uiTexts';
+import { getEpisodes, preloadLibrary } from '../../services/libraryCache';
 
 export default function Navbar() {
   const { currentUser, userData, logout, setStreakGoal, userCourses, activeCourse, setActiveCourse } = useAuth();
@@ -43,10 +44,10 @@ export default function Navbar() {
       try {
         const [weeksSnap, libSnap] = await Promise.all([
           getDocs(query(collection(db, 'weeks'), where('studentId', '==', currentUser?.uid || ''))),
-          getDocs(collection(db, 'library_episodes'))
+          getEpisodes()
         ]);
         const weeks = weeksSnap.docs.map(d => ({ id: d.id, ...d.data(), searchType: 'week' }));
-        const libs = libSnap.docs.map(d => ({ id: d.id, ...d.data(), searchType: 'library' }));
+        const libs = libSnap.map(ep => ({ ...ep, searchType: 'library' }));
         setSearchData([...weeks, ...libs]);
       } catch (err) {
         console.error('Error fetching search data:', err);
@@ -185,6 +186,7 @@ export default function Navbar() {
                 cursor: 'pointer'
               }}
               onClick={() => navigate('/library')}
+              onMouseEnter={preloadLibrary}
             >
               {h.navLibrary} ▾
               {(location.pathname === '/library' || location.pathname === '/voice-lab') && (
@@ -385,7 +387,7 @@ export default function Navbar() {
           )}
         </div>
 
-        <button className="hamburger" onClick={() => setShowMenu(!showMenu)}>
+        <button className="hamburger" onClick={() => { if (!showMenu) preloadLibrary(); setShowMenu(!showMenu); }}>
           ☰
         </button>
       </div>
@@ -395,7 +397,7 @@ export default function Navbar() {
         <NavLink to="/" onClick={() => setShowMenu(false)}>{h.navHome}</NavLink>
         <NavLink to="/history" onClick={() => setShowMenu(false)}>{h.navHistory}</NavLink>
         <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>{h.navGames}</NavLink>
-        <NavLink to="/library" onClick={() => setShowMenu(false)}>Input Library</NavLink>
+        <NavLink to="/library" onClick={() => setShowMenu(false)}>{h.navLibraryMenu}</NavLink>
         <NavLink to="/voice-lab" onClick={() => setShowMenu(false)}>Voice Lab</NavLink>
         <NavLink to="/glossary" onClick={() => setShowMenu(false)}>{h.navGlossary}</NavLink>
         
