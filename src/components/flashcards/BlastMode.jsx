@@ -4,14 +4,22 @@ import { UI_TEXTS } from '../../data/uiTexts';
 import { shuffle } from '../../data/games';
 import GameHeader from '../games/GameHeader';
 
-const LANES = [14, 38, 62, 86];         // posição horizontal (%) dos asteroides
-const BASE_FALL_SECONDS = 9;           // tempo para cair no nível 1
-const LEVEL_GOAL = (level) => level * 50; // objetivo de pontos de cada nível
+const ASTEROIDS = 4;
+const SHIP_ZONE = 120;                                   // faixa de baixo reservada para a nave
+const SHIP_Y = 34;                                       // distância do centro do canhão até o fim do campo
+const BASE_SPEED = 42;                                   // px/s no nível 1 (devagar, como carrinho de bate-bate)
+const WAVE_SECONDS = (level) => Math.max(5, 11 * Math.pow(0.9, level - 1)); // tempo para responder cada palavra
+const LEVEL_GOAL = (level) => level * 50;               // objetivo de pontos de cada nível
 const LIVES = 3;
 
-// Blast (como o do Quizlet): a tradução aparece no topo e os asteroides caem com as opções.
-// Toque no certo: pontos + bônus de tempo, multiplicados pela sequência de acertos.
-// Errar ou deixar o certo cair custa uma vida e zera a sequência. Cada nível tem um objetivo de pontos.
+const randomVelocity = (speed) => {
+  const angle = Math.random() * Math.PI * 2;
+  return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
+};
+
+// Blast: a tradução aparece no topo e 4 asteroides com opções andam pela tela, batendo nas bordas
+// e uns nos outros (quando batem, voltam pela direção de onde vieram). Toque no certo: ele explode,
+// renasce em outro lugar e todos recebem as opções da próxima palavra. Errar ou o tempo acabar custa uma vida.
 export default function BlastMode({ deck, globalWords, onFinish }) {
   const { updateFlashcardProgress, activeCourse } = useAuth();
   const h = UI_TEXTS[activeCourse];
@@ -21,21 +29,59 @@ export default function BlastMode({ deck, globalWords, onFinish }) {
   const [total, setTotal] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
   const [lives, setLives] = useState(LIVES);
-  const [wave, setWave] = useState(null);       // { word, options: [{ text, lane, delay }], startedAt, id }
-  const [hit, setHit] = useState(null);         // { lane, ok, points }
-  const [overlay, setOverlay] = useState({ type: 'start' }); // start | levelDone | gameOver
-  const [shot, setShot] = useState(null);       // { x, y, id }: tiro da nave até o asteroide tocado
-  const [aim, setAim] = useState(0);            // ângulo do canhão (graus)
+  const [wave, setWave] = useState(null);   // { word, startedAt, id }
+  const [hit, setHit] = useState(null);     // { bodyId, ok, points, x, y }
+  const [overlay, setOverlay] = useState({ type: 'start' }); // start | levelStart | levelDone | gameOver
+  const [shot, setShot] = useState(null);   // { x, y, id }
+  const [aim, setAim] = useState(0);
+  const [, setFrame] = useState(0);         // redesenha a cada quadro da animação
+
   const fieldRef = useRef(null);
+  const size = useRef({ w: 0, h: 0 });
+  const bodies = useRef([]);                // { id, x, y, vx, vy, r, text, popping }
   const order = useRef(shuffle(deck.words));
   const turn = useRef(0);
+  const hitRef = useRef(null);
+  hitRef.current = hit;
 
-  const fallSeconds = Math.max(4, BASE_FALL_SECONDS * Math.pow(0.85, level - 1));
+  const waveSeconds = WAVE_SECONDS(level);
+  const speed = Math.min(110, BASE_SPEED * Math.pow(1.12, level - 1));
 
-  const translations = useMemo(() => {
+  const terms = useMemo(() => {
     const own = [...new Set(deck.words.map(w => w.term))];
-    return own.length >= 4 ? own : [...new Set([...own, ...globalWords.map(w => w.term)])];
+    return own.length >= ASTEROIDS ? own : [...new Set([...own, ...globalWords.map(w => w.term)])];
   }, [deck, globalWords]);
+
+  // Tamanho do campo: medido de novo a cada quadro (cobre redimensionar e girar o celular)
+  const measure = () => {
+    const rect = fieldRef.current?.getBoundingClientRect();
+    if (rect && rect.width > 0) size.current = { w: rect.width, h: rect.height };
+  };
+
+  const radius = () => Math.max(40, Math.min(54, size.current.w * 0.13));
+  const playHeight = () => size.current.h - SHIP_ZONE;
+
+  // Lugar livre para um asteroide nascer (sem encostar nos outros)
+  const freeSpot = (r, others) => {
+    const { w } = size.current;
+    for (let tries = 0; tries < 40; tries++) {
+      const x = r + Math.random() * Math.max(1, w - 2 * r);
+      const y = r + Math.random() * Math.max(1, playHeight() - 2 * r);
+      if (others.every(o => Math.hypot(o.x - x, o.y - y) > o.r + r + 8)) return { x, y };
+    }
+    return { x: w / 2, y: r };
+  };
+
+  const spawnAll = () => {
+    measure();
+    const r = radius();
+    const list = [];
+    for (let i = 0; i < ASTEROIDS; i++) {
+      const spot = freeSpot(r, list);
+      list.push({ id: i, ...spot, ...randomVelocity(speed), r, text: '', popping: false });
+    }
+    bodies.current = list;
+  };
 
   const newWave = () => {
     if (turn.current >= order.current.length) {
@@ -43,13 +89,80 @@ export default function BlastMode({ deck, globalWords, onFinish }) {
       turn.current = 0;
     }
     const word = order.current[turn.current++];
-    const wrong = shuffle(translations.filter(t => t !== word.term)).slice(0, 3);
-    const lanes = shuffle(LANES);
-    const options = shuffle([word.term, ...wrong]).map((text, i) => ({ text, lane: lanes[i], delay: i * 0.25 }));
+    const options = shuffle([word.term, ...shuffle(terms.filter(t => t !== word.term)).slice(0, ASTEROIDS - 1)]);
+    if (bodies.current.length !== ASTEROIDS) spawnAll();
+    bodies.current.forEach((b, i) => {
+      b.text = options[i] || '';
+      // Velocidade acompanha o nível
+      const current = Math.hypot(b.vx, b.vy) || 1;
+      b.vx = (b.vx / current) * speed;
+      b.vy = (b.vy / current) * speed;
+    });
     setHit(null);
     setShot(null);
-    setWave({ word, options, startedAt: Date.now(), id: Math.random() });
+    setWave({ word, startedAt: Date.now(), id: Math.random() });
   };
+
+  // Física: anda, bate nas bordas e uns nos outros
+  useEffect(() => {
+    if (overlay) return;
+    let raf;
+    let last = performance.now();
+    // Avança a física até "now" (chamado pelo laço de animação ou pela reserva)
+    const advance = (now) => {
+      const dt = Math.min(0.2, (now - last) / 1000); // limite evita saltos depois de pausas longas
+      last = now;
+      measure();
+      const { w } = size.current;
+      const bottom = playHeight();
+      const list = bodies.current;
+
+      list.forEach(b => {
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        if (b.x - b.r < 0) { b.x = b.r; b.vx = Math.abs(b.vx); }
+        if (b.x + b.r > w) { b.x = w - b.r; b.vx = -Math.abs(b.vx); }
+        if (b.y - b.r < 0) { b.y = b.r; b.vy = Math.abs(b.vy); }
+        if (b.y + b.r > bottom) { b.y = bottom - b.r; b.vy = -Math.abs(b.vy); }
+      });
+
+      for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+          const a = list[i];
+          const c = list[j];
+          if (a.popping || c.popping) continue;
+          const dx = c.x - a.x;
+          const dy = c.y - a.y;
+          const dist = Math.hypot(dx, dy) || 0.01;
+          const overlap = a.r + c.r - dist;
+          if (overlap <= 0) continue;
+          // Separa os dois para não grudarem
+          const nx = dx / dist;
+          const ny = dy / dist;
+          a.x -= nx * overlap / 2; a.y -= ny * overlap / 2;
+          c.x += nx * overlap / 2; c.y += ny * overlap / 2;
+          // Só inverte se estavam se aproximando: cada um volta pela direção de onde veio
+          const approaching = (c.vx - a.vx) * nx + (c.vy - a.vy) * ny < 0;
+          if (approaching) {
+            a.vx = -a.vx; a.vy = -a.vy;
+            c.vx = -c.vx; c.vy = -c.vy;
+          }
+        }
+      }
+
+      setFrame(f => (f + 1) % 1000000);
+    };
+    const loop = (now) => {
+      advance(now);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    // Reserva: se o navegador parar de entregar quadros de animação, a física segue por cronômetro
+    const fallback = setInterval(() => {
+      if (performance.now() - last > 150) advance(performance.now());
+    }, 50);
+    return () => { cancelAnimationFrame(raf); clearInterval(fallback); };
+  }, [overlay]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Telas de "Nível N / Objetivo" e "Nível concluído" somem sozinhas
   useEffect(() => {
@@ -77,69 +190,68 @@ export default function BlastMode({ deck, globalWords, onFinish }) {
     return true;
   };
 
-  const tap = (option, e) => {
-    if (!wave || hit) return;
-    // Mira e tiro: do centro da nave até o asteroide tocado
-    const field = fieldRef.current?.getBoundingClientRect();
-    const target = e?.currentTarget.getBoundingClientRect();
-    if (field && target) {
-      const x = target.left + target.width / 2 - field.left;
-      const y = target.top + target.height / 2 - field.top;
-      const shipX = field.width / 2;
-      const shipY = field.height - 34;
-      setAim(Math.atan2(x - shipX, shipY - y) * (180 / Math.PI));
-      setShot({ x: x - shipX, y: y - shipY, id: Math.random() });
-    }
-    const ok = option.text === wave.word.term;
+  // Tempo da palavra acabou: mostra a certa e perde uma vida
+  useEffect(() => {
+    if (!wave || overlay) return;
+    const timer = setTimeout(() => {
+      if (hitRef.current) return;
+      const correct = bodies.current.find(b => b.text === wave.word.term);
+      setHit({ bodyId: correct?.id, ok: false, timeout: true });
+      if (loseLife()) setTimeout(newWave, 900);
+    }, waveSeconds * 1000);
+    return () => clearTimeout(timer);
+  }, [wave, overlay]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const tap = (body) => {
+    if (!wave || hit || body.popping) return;
+    const ok = body.text === wave.word.term;
     updateFlashcardProgress(wave.word.id, ok ? 2 : 0);
+
+    // Mira e tiro: do canhão até o asteroide
+    const { w, h: fieldH } = size.current;
+    const shipX = w / 2;
+    const shipY = fieldH - SHIP_Y;
+    setAim(Math.atan2(body.x - shipX, shipY - body.y) * (180 / Math.PI));
+    setShot({ x: body.x - shipX, y: body.y - shipY, id: Math.random() });
+
     if (!ok) {
-      setHit({ lane: option.lane, ok: false });
-      if (loseLife()) setTimeout(newWave, 700);
+      setHit({ bodyId: body.id, ok: false });
+      if (loseLife()) setTimeout(newWave, 800);
       return;
     }
+
     const elapsed = (Date.now() - wave.startedAt) / 1000;
-    const timeBonus = Math.max(0, Math.round((1 - elapsed / fallSeconds) * 10));
+    const timeBonus = Math.max(0, Math.round((1 - elapsed / waveSeconds) * 10));
     const points = Math.round((5 + timeBonus) * multiplier);
     const nextLevelPoints = levelPoints + points;
-    setHit({ lane: option.lane, ok: true, points });
+    setHit({ bodyId: body.id, ok: true, points, x: body.x, y: body.y });
     setTotal(t => t + points);
     setMultiplier(m => Math.min(3, Math.round((m + 0.2) * 10) / 10));
-    if (nextLevelPoints >= LEVEL_GOAL(level)) {
-      setTimeout(() => {
+    body.popping = true;
+
+    // Explode e renasce em outro lugar com a próxima palavra
+    setTimeout(() => {
+      const others = bodies.current.filter(b => b.id !== body.id);
+      Object.assign(body, freeSpot(body.r, others), randomVelocity(speed), { popping: false });
+      if (nextLevelPoints >= LEVEL_GOAL(level)) {
         setWave(null);
         setOverlay({ type: 'levelDone', gained: nextLevelPoints });
         setLevel(level + 1);
         setLevelPoints(0);
-      }, 600);
-    } else {
-      setLevelPoints(nextLevelPoints);
-      setTimeout(newWave, 600);
-    }
+      } else {
+        setLevelPoints(nextLevelPoints);
+        newWave();
+      }
+    }, 550);
   };
 
-  // O asteroide certo chegou ao fim da tela sem ser atingido. Conta por cronômetro (e não pelo fim
-  // da animação) para funcionar mesmo quando o navegador pausa animações.
-  const hitRef = useRef(hit);
-  hitRef.current = hit;
-  useEffect(() => {
-    if (!wave || overlay) return;
-    const correct = wave.options.find(o => o.text === wave.word.term);
-    const timer = setTimeout(() => {
-      if (hitRef.current) return;
-      setHit({ lane: correct.lane, ok: false });
-      if (loseLife()) setTimeout(newWave, 500);
-    }, (fallSeconds + correct.delay) * 1000);
-    return () => clearTimeout(timer);
-  }, [wave, overlay]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const finish = () => onFinish({ score: total, total, blastScore: total });
-
   const streakBlocks = Math.round(((multiplier - 1) / 2) * 10); // ×1 = 0 blocos, ×3 = 10
+  const correctId = wave ? bodies.current.find(b => b.text === wave.word.term)?.id : null;
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto' }}>
       <style>{`
-        @keyframes blast-fall { from { top: -14%; } to { top: 104%; } }
         @keyframes blast-shot { from { transform: translate(-50%, -50%) translate(0, 0); opacity: 1; } to { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)); opacity: 0.9; } }
         @keyframes blast-ring { from { transform: translate(-50%, -50%) scale(0.4); opacity: 1; } to { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
         @keyframes blast-points { from { transform: translate(-50%, -50%); opacity: 1; } to { transform: translate(-50%, -150%); opacity: 0; } }
@@ -156,7 +268,7 @@ export default function BlastMode({ deck, globalWords, onFinish }) {
             radial-gradient(circle at 80% 8%, rgba(120,110,255,0.22), transparent 45%),
             linear-gradient(180deg, #0b0a24, #120f3a 60%, #17124a); }
         .blast-field::before { content: ''; position: absolute; width: 140%; aspect-ratio: 1; left: -95%; bottom: -95%; border-radius: 50%; border: 2px solid rgba(140,130,255,0.12); box-shadow: 0 0 60px rgba(120,110,255,0.08); pointer-events: none; }
-        .asteroid { position: absolute; transform: translate(-50%, -50%); width: 108px; height: 108px; border-radius: 47% 53% 51% 49% / 52% 46% 54% 48%; display: grid; place-items: center; text-align: center; padding: 12px; color: #fff; font-weight: 700; font-size: 0.86rem; line-height: 1.15; cursor: pointer; border: none; text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        .asteroid { position: absolute; transform: translate(-50%, -50%); border-radius: 47% 53% 51% 49% / 52% 46% 54% 48%; display: grid; place-items: center; text-align: center; padding: 10px; color: #fff; font-weight: 700; line-height: 1.15; cursor: pointer; border: none; text-shadow: 0 2px 6px rgba(0,0,0,0.5);
           background:
             radial-gradient(circle at 28% 30%, rgba(255,255,255,0.14) 0 9%, transparent 10%),
             radial-gradient(circle at 68% 26%, rgba(0,0,0,0.22) 0 7%, transparent 8%),
@@ -164,61 +276,55 @@ export default function BlastMode({ deck, globalWords, onFinish }) {
             radial-gradient(circle at 34% 74%, rgba(0,0,0,0.2) 0 8%, transparent 9%),
             radial-gradient(circle at 38% 34%, #7a70f0, #4c3fd1 52%, #2c2392);
           box-shadow: inset -8px -10px 0 rgba(0,0,0,0.22), inset 6px 6px 0 rgba(255,255,255,0.06), 0 0 22px rgba(110,100,255,0.35);
-          animation-name: blast-fall; animation-timing-function: linear; animation-fill-mode: both; transition: transform 0.35s, opacity 0.35s, box-shadow 0.2s; }
+          transition: opacity 0.35s, box-shadow 0.2s; }
         .asteroid:hover { box-shadow: inset -8px -10px 0 rgba(0,0,0,0.22), 0 0 0 3px rgba(255,255,255,0.35), 0 0 26px rgba(140,130,255,0.6); }
-        .asteroid.popped { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+        .asteroid.popped { opacity: 0; }
         .asteroid.wrong { box-shadow: 0 0 0 4px #ff6b81, 0 0 28px #ff4757; }
         .asteroid.reveal { box-shadow: 0 0 0 4px #2ed573, 0 0 28px #2ed573; }
       `}</style>
       <GameHeader title={`🚀 ${h.modeBlast}`} progress={`${'❤️'.repeat(lives)}${'🤍'.repeat(LIVES - lives)}`} onExit={() => (total > 0 ? finish() : onFinish({ earlyExit: true, studiedCount: 0 }))} exitLabel={h.exit} />
 
       <div style={{ borderRadius: 26, overflow: 'hidden', border: '1px solid rgba(140,130,255,0.25)', boxShadow: '0 20px 50px rgba(10,8,40,0.45)' }}>
-        {/* Palavra do momento + barra de tempo da onda */}
-        <div style={{ background: 'linear-gradient(180deg, #2a22a8, #211a8a)', color: '#fff', textAlign: 'center', padding: '20px 14px', fontSize: '1.5rem', fontWeight: 800, minHeight: 70, letterSpacing: '0.01em' }}>
+        {/* Palavra do momento + barra de tempo */}
+        <div style={{ background: 'linear-gradient(180deg, #2a22a8, #211a8a)', color: '#fff', textAlign: 'center', padding: '20px 14px', fontSize: '1.5rem', fontWeight: 800, minHeight: 70 }}>
           {wave && !overlay ? wave.word.translation : ''}
         </div>
         <div style={{ height: 5, background: 'rgba(255,255,255,0.12)' }}>
           {wave && !overlay && (
-            <div key={wave.id} style={{ height: '100%', background: '#F0E66E', animation: `blast-timer ${fallSeconds}s linear forwards`, animationPlayState: hit ? 'paused' : 'running' }} />
+            <div key={wave.id} style={{ height: '100%', background: '#F0E66E', animation: `blast-timer ${waveSeconds}s linear forwards`, animationPlayState: hit ? 'paused' : 'running' }} />
           )}
         </div>
 
         <div ref={fieldRef} className="blast-field">
-          {wave && !overlay && wave.options.map(o => {
-            const isHit = hit && hit.lane === o.lane;
-            const isCorrect = o.text === wave.word.term;
+          {wave && !overlay && bodies.current.map(b => {
             const classes = ['asteroid'];
-            if (isHit && hit.ok) classes.push('popped');
-            if (isHit && !hit.ok) classes.push('wrong');
-            if (hit && !hit.ok && isCorrect && !isHit) classes.push('reveal');
+            if (b.popping) classes.push('popped');
+            if (hit && !hit.ok && hit.bodyId === b.id && !hit.timeout) classes.push('wrong');
+            if (hit && !hit.ok && b.id === correctId) classes.push('reveal');
             return (
               <button
-                key={`${wave.id}-${o.lane}`}
+                key={b.id}
                 className={classes.join(' ')}
-                onClick={(e) => tap(o, e)}
-                style={{ left: `${o.lane}%`, animationDuration: `${fallSeconds}s`, animationDelay: `${o.delay}s`, animationPlayState: hit ? 'paused' : 'running' }}
+                onClick={() => tap(b)}
+                style={{ left: b.x, top: b.y, width: b.r * 2, height: b.r * 2, fontSize: b.text.length > 12 ? '0.72rem' : '0.86rem' }}
               >
-                {o.text}
+                {b.text}
               </button>
             );
           })}
 
-          {/* Tiro da nave até o asteroide */}
+          {/* Tiro do canhão até o asteroide */}
           {shot && !overlay && (
-            <span key={shot.id} style={{ position: 'absolute', left: '50%', bottom: 34, width: 10, height: 26, borderRadius: 99, background: 'linear-gradient(180deg, #ffffff, #9ee7ff)', boxShadow: '0 0 14px #9ee7ff', pointerEvents: 'none', '--tx': `${shot.x}px`, '--ty': `${shot.y + 34}px`, animation: 'blast-shot 0.22s ease-out forwards' }} />
+            <span key={shot.id} style={{ position: 'absolute', left: '50%', bottom: SHIP_Y, width: 10, height: 26, borderRadius: 99, background: 'linear-gradient(180deg, #ffffff, #9ee7ff)', boxShadow: '0 0 14px #9ee7ff', pointerEvents: 'none', '--tx': `${shot.x}px`, '--ty': `${shot.y + SHIP_Y}px`, animation: 'blast-shot 0.22s ease-out forwards' }} />
           )}
 
           {/* Explosão em anel com os pontos no meio */}
-          {hit?.ok && !overlay && (() => {
-            const left = `${hit.lane}%`;
-            const top = shot ? `calc(100% - 34px + ${shot.y}px)` : '45%';
-            return (
-              <>
-                <span style={{ position: 'absolute', left, top, width: 130, height: 130, borderRadius: '50%', border: '6px solid #5ee2ff', boxShadow: '0 0 30px #5ee2ff, inset 0 0 20px #5ee2ff', pointerEvents: 'none', animation: 'blast-ring 0.7s ease-out forwards' }} />
-                <span style={{ position: 'absolute', left, top, color: '#F0E66E', fontWeight: 900, fontSize: '1.7rem', pointerEvents: 'none', textShadow: '0 2px 10px rgba(0,0,0,0.6)', animation: 'blast-points 0.9s ease-out forwards' }}>+{hit.points}</span>
-              </>
-            );
-          })()}
+          {hit?.ok && !overlay && (
+            <>
+              <span style={{ position: 'absolute', left: hit.x, top: hit.y, width: 130, height: 130, borderRadius: '50%', border: '6px solid #5ee2ff', boxShadow: '0 0 30px #5ee2ff, inset 0 0 20px #5ee2ff', pointerEvents: 'none', animation: 'blast-ring 0.7s ease-out forwards' }} />
+              <span style={{ position: 'absolute', left: hit.x, top: hit.y, color: '#F0E66E', fontWeight: 900, fontSize: '1.7rem', pointerEvents: 'none', textShadow: '0 2px 10px rgba(0,0,0,0.6)', animation: 'blast-points 0.9s ease-out forwards' }}>+{hit.points}</span>
+            </>
+          )}
 
           {/* Nave-canhão */}
           <div style={{ position: 'absolute', left: '50%', bottom: -28, transform: 'translateX(-50%)', width: 124, height: 124, pointerEvents: 'none' }}>
