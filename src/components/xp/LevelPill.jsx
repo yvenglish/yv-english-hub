@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
-import { XP_VALUES, levelProgress } from '../../data/xp';
+import { XP_VALUES, levelProgress, boostFor, XP_BOOST } from '../../data/xp';
+import { studyDay } from '../../data/srs';
 import { FEATURES } from '../../data/features';
 
 // Ordem em que as fontes de XP aparecem na explicação
@@ -14,6 +15,8 @@ export default function LevelPill() {
   const h = UI_TEXTS[activeCourse];
   const [open, setOpen] = useState(false);
   const p = levelProgress(userData?.xp || 0);
+  const multiplier = boostFor(studyDay());
+  const boostEnd = XP_BOOST.until.split('-').reverse().slice(0, 2).join('/');
 
   return (
     <>
@@ -43,12 +46,15 @@ export default function LevelPill() {
             </div>
             <p style={{ color: 'var(--text)', fontSize: '0.9rem', fontWeight: 700, margin: '0 0 22px' }}>{h.xpToNext(p.toNext, p.level + 1)}</p>
 
+            {multiplier > 1 && (
+              <div style={{ margin: '0 0 18px', padding: '10px 14px', borderRadius: 14, background: 'linear-gradient(135deg, #F0C87A, #F09A4A)', color: '#2a1220', fontWeight: 800, fontSize: '0.9rem' }}>🔥 {h.xpBoost(multiplier, boostEnd)}</div>
+            )}
             <h3 style={{ textAlign: 'left', color: 'var(--text)', fontSize: '1rem', margin: '0 0 10px' }}>{h.xpHowTitle}</h3>
             <div style={{ display: 'grid', gap: 6, textAlign: 'left' }}>
               {SOURCES.map(s => (
                 <div key={s} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 12, background: 'var(--bg)', border: '1px solid var(--line)' }}>
                   <span style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{h.xpSources[s]}</span>
-                  <strong style={{ color: 'var(--amber)', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>+{XP_VALUES[s]} XP</strong>
+                  <strong style={{ color: 'var(--amber)', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>+{XP_VALUES[s] * multiplier} XP</strong>
                 </div>
               ))}
             </div>

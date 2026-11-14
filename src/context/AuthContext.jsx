@@ -1,11 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { auth, db } from '../config/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion, getCountFromServer } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion, getCountFromServer, increment } from 'firebase/firestore';
 import { BADGES } from '../data/badges';
 import { getUserCourses, COURSES } from '../data/courses';
 import { scheduleReview, DIFFICULT_LAPSES, studyDay, nextStreakGoal } from '../data/srs';
-import { applyXp } from '../data/xp';
+import { applyXp, welcomeBonus, levelFromXp } from '../data/xp';
 
 const AuthContext = createContext();
 
@@ -148,9 +148,47 @@ export function AuthProvider({ children }) {
   const dismissUnlockedBadge = useCallback(() => setUnlockedBadges(prev => prev.slice(1)), []);
 
   const pushXpEvent = (result) => {
-    if (result.gained > 0) setXpEvents(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, amount: result.gained, levelUp: result.levelUp }]);
+    if (result.gained > 0) setXpEvents(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, amount: result.gained, levelUp: result.levelUp, boosted: result.multiplier > 1 }]);
   };
   const dismissXpEvent = useCallback(() => setXpEvents(prev => prev.slice(1)), []);
+
+  // Bônus de boas-vindas do XP: uma vez por aluno, pelo histórico de antes do XP existir
+  const welcomeRunning = useRef(false);
+  useEffect(() => {
+    if (!currentUser || !userData || userData.role !== 'student' || userData.xpWelcome || welcomeRunning.current) return;
+    welcomeRunning.current = true;
+    const uid = currentUser.uid;
+    const docsOf = async (q) => { try { return (await getDocs(q)).docs; } catch (err) { console.warn(err); return []; } };
+    (async () => {
+      const dailyDocs = await docsOf(query(collection(db, 'daily_assignments'), where('studentId', '==', uid)));
+      const taskDocs = await docsOf(query(collection(db, 'submissions'), where('studentId', '==', uid)));
+      const bonus = welcomeBonus({
+        dailies: dailyDocs.filter(d => d.data().status === 'completed').length,
+        episodes: userData.libraryProgress || [],
+        extras: userData.completedExtraContents || [],
+        tasks: taskDocs.map(d => d.id),
+        voiceLab: (userData.voiceLabProgress || []).length,
+        goals: userData.goalsCompleted || 0,
+        records: userData.recordsCount || 0,
+        claimed: userData.xpClaimed || []
+      });
+      const xpWelcome = { amount: bonus.amount, parts: bonus.parts, date: new Date().toISOString() };
+      await setDoc(doc(db, 'users', uid), {
+        xpWelcome,
+        ...(bonus.amount > 0 ? { xp: increment(bonus.amount) } : {}),
+        ...(bonus.claims.length ? { xpClaimed: arrayUnion(...bonus.claims) } : {})
+      }, { merge: true });
+      let newXp = 0;
+      setUserData(prev => {
+        newXp = (prev.xp || 0) + bonus.amount;
+        return { ...prev, xp: newXp, xpWelcome, xpClaimed: [...(prev.xpClaimed || []), ...bonus.claims] };
+      });
+      if (bonus.amount > 0) {
+        const total = (userData.xp || 0) + bonus.amount;
+        setXpEvents(prev => [...prev, { id: `welcome-${uid}`, amount: bonus.amount, welcome: true, level: levelFromXp(newXp || total) }]);
+      }
+    })().catch(err => { console.error('Bônus de XP:', err); welcomeRunning.current = false; });
+  }, [currentUser, userData]);
 
   // XP de atividades que não contam para o streak (episódio da Biblioteca, conteúdo extra).
   // claim: identificador para dar o XP uma vez só (ex.: "lib:ID"), mesmo se o aluno desmarcar e marcar de novo.
