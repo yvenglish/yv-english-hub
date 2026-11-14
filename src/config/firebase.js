@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getMessaging } from "firebase/messaging";
+import { getMessaging, isSupported } from "firebase/messaging";
 
 export const firebaseConfig = {
   apiKey: "AIzaSyDcwGG7pZu_coWB2G_vtI99LurRCZijFVw",
@@ -22,9 +22,13 @@ export const db = initializeFirestore(app, {
 });
 export const storage = getStorage(app);
 
-// Só inicializa o messaging se estiver no navegador e se for suportado
-let messaging = null;
-if (typeof window !== 'undefined') {
-  messaging = getMessaging(app);
-}
-export { messaging };
+// Só inicializa o messaging se o navegador suportar (Safari fora do PWA, por exemplo, não suporta)
+let messagingPromise = null;
+export const getMessagingSafe = () => {
+  if (!messagingPromise) {
+    messagingPromise = (typeof window === 'undefined' ? Promise.resolve(false) : isSupported())
+      .then(ok => (ok ? getMessaging(app) : null))
+      .catch(() => null);
+  }
+  return messagingPromise;
+};

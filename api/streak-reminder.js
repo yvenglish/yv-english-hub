@@ -1,4 +1,4 @@
-import { adminDb, sendPushes } from './_lib/firebaseAdmin.js';
+import { adminDb, sendPushes, userTokens } from './_lib/firebaseAdmin.js';
 
 // Roda todo dia pelo Vercel Cron (ver vercel.json) e lembra quem ainda não estudou hoje.
 // Variáveis de ambiente na Vercel:
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   const targets = snap.docs
     .filter(d => {
       const u = d.data();
-      return u.fcmToken && (u.currentStreak || 0) > 0 && u.lastStreakDate !== today;
+      return userTokens(u).length > 0 && (u.currentStreak || 0) > 0 && u.lastStreakDate !== today;
     })
     .map(d => {
       const u = d.data();
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
       const days = u.currentStreak;
       return {
         ref: d.ref,
-        token: u.fcmToken,
+        tokens: userTokens(u),
         title: `🔥 Não perca seu streak${firstName ? `, ${firstName}` : ''}!`,
         body: `Você está com ${days} ${days === 1 ? 'dia' : 'dias'} seguidos. Faça uma atividade rápida hoje para manter.`
       };

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { visibleBadges, getBadgeText } from '../data/badges';
 import { UI_TEXTS } from '../data/uiTexts';
+import NotificationSettings from '../components/NotificationSettings';
 
 export default function Account() {
   const { userData, logout, activeCourse } = useAuth();
@@ -126,6 +127,10 @@ export default function Account() {
               })}
             </div>
           </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
+
+          <NotificationSettings />
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--line)' }} />
 

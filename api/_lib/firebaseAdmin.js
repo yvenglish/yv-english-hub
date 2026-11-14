@@ -20,21 +20,38 @@ const INVALID_TOKEN_CODES = [
   'messaging/invalid-argument'
 ];
 
-// Envia notificações só com "data" (o firebase-messaging-sw.js monta a notificação).
-// targets: [{ ref, token, title, body }]. Remove tokens que não valem mais.
+// Todos os tokens salvos do usuário (um por aparelho/navegador). fcmToken é o formato antigo.
+export const userTokens = (u = {}) => [...new Set([...(u.fcmTokens || []), u.fcmToken].filter(Boolean))];
+
+// Envia a notificação já pronta (o navegador mostra mesmo se o service worker estiver dormindo;
+// o iOS exige isso). targets: [{ ref, tokens, title, body }]. Remove tokens que não valem mais.
 export const sendPushes = async (targets) => {
-  if (targets.length === 0) return { sent: 0, failed: 0, removedTokens: 0 };
-  const result = await getMessaging().sendEach(targets.map(t => ({
-    token: t.token,
-    data: { title: t.title, body: t.body, link: APP_URL }
+  const messages = targets.flatMap(t => t.tokens.map(token => ({ target: t, token })));
+  if (messages.length === 0) return { sent: 0, failed: 0, removedTokens: 0 };
+  const result = await getMessaging().sendEach(messages.map(({ target, token }) => ({
+    token,
+    notification: { title: target.title, body: target.body },
+    data: { title: target.title, body: target.body, link: APP_URL },
+    webpush: {
+      notification: { icon: `${APP_URL}/logo.png` },
+      fcmOptions: { link: APP_URL }
+    }
   })));
 
-  const cleanups = [];
+  const dead = new Map(); // ref.path -> { ref, tokens }
   result.responses.forEach((r, i) => {
     if (!r.success && INVALID_TOKEN_CODES.includes(r.error?.code)) {
-      cleanups.push(targets[i].ref.update({ fcmToken: FieldValue.delete() }));
+      const { target, token } = messages[i];
+      const entry = dead.get(target.ref.path) || { ref: target.ref, tokens: [] };
+      entry.tokens.push(token);
+      dead.set(target.ref.path, entry);
     }
   });
+  const cleanups = [...dead.values()].map(({ ref, tokens }) => ref.update({
+    fcmTokens: FieldValue.arrayRemove(...tokens),
+    fcmToken: FieldValue.delete()
+  }));
   await Promise.all(cleanups);
-  return { sent: result.successCount, failed: result.failureCount, removedTokens: cleanups.length };
+  const errors = result.responses.filter(r => !r.success).map(r => r.error?.code);
+  return { sent: result.successCount, failed: result.failureCount, removedTokens: [...dead.values()].reduce((n, d) => n + d.tokens.length, 0), errors };
 };

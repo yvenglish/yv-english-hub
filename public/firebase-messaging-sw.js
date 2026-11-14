@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   if (payload.notification) return;
   const data = payload.data || {};
 
-  self.registration.showNotification(data.title || 'YV English Hub', {
+  self.registration.showNotification(data.title || 'YV Language Club', {
     body: data.body,
     icon: '/logo.png',
     data: { link: data.link || '/' }
@@ -31,7 +31,7 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const link = event.notification.data?.link || '/';
+  const link = event.notification.data?.link || event.notification.data?.FCM_MSG?.fcmOptions?.link || '/';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       const open = windowClients.find(c => 'focus' in c);

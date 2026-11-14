@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import InstallPrompt from './components/InstallPrompt';
 import BadgeToast from './components/BadgeToast';
 import StreakGoalCelebration from './components/StreakGoalCelebration';
+import NotificationSync from './components/NotificationSync';
 import { FEATURES } from './data/features';
 import Navbar from './components/layout/Navbar';
 import StudentLayout from './components/layout/StudentLayout';
@@ -71,6 +72,7 @@ function App() {
       <InstallPrompt />
       <BadgeToast />
       <StreakGoalCelebration />
+      <NotificationSync />
       <Suspense fallback={SplashContent}>
         <Routes>
           <Route path="/login" element={<Login />} />
