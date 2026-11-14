@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, 
 import { BADGES } from '../data/badges';
 import { getUserCourses, COURSES } from '../data/courses';
 import { scheduleReview, DIFFICULT_LAPSES, studyDay, nextStreakGoal } from '../data/srs';
+import { applyXp } from '../data/xp';
 
 const AuthContext = createContext();
 
@@ -16,6 +17,7 @@ export function AuthProvider({ children }) {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unlockedBadges, setUnlockedBadges] = useState([]); // fila de badges recém-conquistadas para o toast
+  const [xpEvents, setXpEvents] = useState([]); // fila de "+20 XP" / "Nível 5!" para o XpToast
   const [goalCelebration, setGoalCelebration] = useState(null); // { goal, next, streak } quando bate a meta de streak
   const [courseChoice, setCourseChoice] = useState(() => {
     try { return localStorage.getItem('yv_course'); } catch { return null; }
@@ -145,7 +147,25 @@ export function AuthProvider({ children }) {
 
   const dismissUnlockedBadge = useCallback(() => setUnlockedBadges(prev => prev.slice(1)), []);
 
-  const recordStudy = async (wordsCount, extraUpdates = {}) => {
+  const pushXpEvent = (result) => {
+    if (result.gained > 0) setXpEvents(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, amount: result.gained, levelUp: result.levelUp }]);
+  };
+  const dismissXpEvent = useCallback(() => setXpEvents(prev => prev.slice(1)), []);
+
+  // XP de atividades que não contam para o streak (episódio da Biblioteca, conteúdo extra).
+  // claim: identificador para dar o XP uma vez só (ex.: "lib:ID"), mesmo se o aluno desmarcar e marcar de novo.
+  const awardXp = async (actions, claim = null) => {
+    if (!currentUser || !userData) return;
+    if (claim && (userData.xpClaimed || []).includes(claim)) return;
+    const result = applyXp(userData, actions, getStudyDayStr());
+    if (result.gained === 0) return;
+    await setDoc(doc(db, 'users', currentUser.uid), { ...result.updates, ...(claim ? { xpClaimed: arrayUnion(claim) } : {}) }, { merge: true });
+    setUserData(prev => ({ ...prev, ...result.updates, ...(claim ? { xpClaimed: [...(prev.xpClaimed || []), claim] } : {}) }));
+    pushXpEvent(result);
+  };
+
+  // xp: { actions: ['daily', …], claim: 'task:ID' } — o XP é salvo junto com o streak
+  const recordStudy = async (wordsCount, extraUpdates = {}, xp = {}) => {
     if (!currentUser || !userData) return false;
     
     const todayStr = getStudyDayStr();
@@ -190,7 +210,13 @@ export function AuthProvider({ children }) {
       }
     }
 
+    const alreadyClaimed = xp.claim && (userData.xpClaimed || []).includes(xp.claim);
+    const xpActions = [...(alreadyClaimed ? [] : xp.actions || []), ...(streakGoalCompleted ? ['streak_goal'] : [])];
+    const xpResult = applyXp(userData, xpActions, todayStr);
+    const claimNow = xp.claim && !alreadyClaimed && xpResult.gained > 0;
+
     const updates = {
+      ...xpResult.updates,
       wordsStudiedToday: newWordsToday,
       lastStudyDate: todayStr,
       currentStreak: newStreak,
@@ -199,8 +225,9 @@ export function AuthProvider({ children }) {
       ...extraUpdates
     };
 
-    await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
-    setUserData(prev => ({ ...prev, ...updates }));
+    await setDoc(doc(db, 'users', currentUser.uid), claimNow ? { ...updates, xpClaimed: arrayUnion(xp.claim) } : updates, { merge: true });
+    setUserData(prev => ({ ...prev, ...updates, ...(claimNow ? { xpClaimed: [...(prev.xpClaimed || []), xp.claim] } : {}) }));
+    pushXpEvent(xpResult);
 
     const earnedBadges = await awardBadges({ ...userData, ...updates });
     if (streakGoalCompleted) setGoalCelebration({ goal: goalUpdates.goalReached.goal, next: goalUpdates.streakGoal, streak: newStreak });
@@ -220,7 +247,7 @@ export function AuthProvider({ children }) {
     } else {
       dailyStreak = 1;
     }
-    return recordStudy(3, { dailyStreak, lastDailyDate: todayStr });
+    return recordStudy(3, { dailyStreak, lastDailyDate: todayStr }, { actions: ['daily'] });
   };
 
   // Concede retroativamente as badges de nível para episódios já concluídos
@@ -280,6 +307,7 @@ export function AuthProvider({ children }) {
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData(prev => ({ ...prev, ...updates }));
     if (updates.libraryLevelsCompleted) await awardBadges({ ...userData, ...updates });
+    if (isMarking) await awardXp(['library_episode'], `lib:${episodeId}`);
   };
 
   const recordVoiceLabProgress = async (challengeId) => {
@@ -288,7 +316,7 @@ export function AuthProvider({ children }) {
     if (currentProg.includes(challengeId)) return; // Already completed
 
     // Salva o progresso junto com o streak; as badges são conferidas no recordStudy
-    const result = await recordStudy(1, { voiceLabProgress: [...currentProg, challengeId] });
+    const result = await recordStudy(1, { voiceLabProgress: [...currentProg, challengeId] }, { actions: ['voice_lab'] });
     return { earnedBadge: (result?.earnedBadges || []).length > 0 };
   };
 
@@ -360,7 +388,7 @@ export function AuthProvider({ children }) {
     const best = Math.max(score, previous);
     await setDoc(ref, { best, plays: (prev.plays || 0) + 1, lastScore: score, lastPlayed: new Date().toISOString() }, { merge: true });
     // Recordes batidos contam para as badges de recordista
-    await recordStudy(Math.max(1, score), isRecord ? { recordsCount: (userData?.recordsCount || 0) + 1 } : {});
+    await recordStudy(Math.max(1, score), isRecord ? { recordsCount: (userData?.recordsCount || 0) + 1 } : {}, { actions: isRecord ? ['game', 'record'] : ['game'] });
     return { isRecord, best, previous, firstPlay: previous === 0 };
   };
 
@@ -419,6 +447,9 @@ export function AuthProvider({ children }) {
     recordDailyCompletion,
     syncLibraryLevels,
     unlockedBadges,
+    xpEvents,
+    dismissXpEvent,
+    awardXp,
     goalCelebration,
     dismissGoalCelebration: () => setGoalCelebration(null),
     dismissUnlockedBadge,

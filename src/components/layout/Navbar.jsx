@@ -9,6 +9,7 @@ import { FEATURES } from '../../data/features';
 import { STREAK_GOALS } from '../../data/srs';
 import { UI_TEXTS } from '../../data/uiTexts';
 import { getEpisodes, preloadLibrary } from '../../services/libraryCache';
+import LevelPill from '../xp/LevelPill';
 
 export default function Navbar() {
   const { currentUser, userData, logout, setStreakGoal, userCourses, activeCourse, setActiveCourse } = useAuth();
@@ -319,6 +320,9 @@ export default function Navbar() {
             ))}
           </div>
         )}
+
+        {/* Nível (XP) */}
+        <LevelPill />
 
         {/* Círculo de Progresso */}
         <div onClick={() => setShowStreakModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', padding: '6px 16px 6px 6px', borderRadius: 99, border: '1px solid rgba(200, 136, 58, 0.3)', cursor: 'pointer', transition: '0.2s' }} className="hover-scale streak-pill-container">

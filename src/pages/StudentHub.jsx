@@ -13,7 +13,7 @@ import { pickDailyAssignment } from '../data/dailyRules';
 import { UI_TEXTS } from '../data/uiTexts';
 
 export default function StudentHub() {
-  const { currentUser, userData, logout, recordDailyCompletion, addWordToFlashcards, activeCourse, activeCourseInfo, reviewBatchesToday } = useAuth();
+  const { currentUser, userData, logout, recordDailyCompletion, addWordToFlashcards, activeCourse, activeCourseInfo, reviewBatchesToday, awardXp } = useAuth();
   const h = UI_TEXTS[activeCourse];
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -135,6 +135,7 @@ export default function StudentHub() {
       setLocalCompletedExtras(prev => 
         isCompleted ? prev.filter(id => id !== contentId) : [...prev, contentId]
       );
+      if (!isCompleted) await awardXp(['extra_content'], `extra:${contentId}`);
     } catch (err) { console.error(err); }
   };
 

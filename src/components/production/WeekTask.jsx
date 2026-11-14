@@ -130,7 +130,7 @@ export default function WeekTask({ week }) {
       };
       await setDoc(doc(db, 'submissions', week.id), payload);
       setSubmission(payload);
-      await recordStudy(1);
+      await recordStudy(1, {}, { actions: ['week_task'], claim: `task:${week.id}` });
     } catch (err) {
       console.error(err);
       alert(h.sendError);

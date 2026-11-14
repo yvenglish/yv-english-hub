@@ -211,7 +211,8 @@ export default function Flashcards() {
       text = `${mode === 'blast' ? h.blastTotal(result.score) : h.finalScore(result.score, result.total)} ${saved.isRecord ? h.newRecord : h.bestScore(saved.best)}`;
     } else {
       const studied = result.studiedCount ?? deck.words.length;
-      if (studied > 0) isGoalReached = (await recordStudy(studied)).goalJustReached;
+      // XP: rodada da Daily Review ou sessão de estudo comum
+      if (studied > 0) isGoalReached = (await recordStudy(studied, {}, { actions: [deck.id === 'daily_review_deck' ? 'review_round' : 'study'] })).goalJustReached;
       if (mode === 'cards') text = h.cardsDone(result.score, result.total);
       else if (result.score !== undefined) text = h.fcScore(result.score, result.total);
     }

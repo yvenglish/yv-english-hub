@@ -54,6 +54,12 @@
   }
 }
 
+/* Selo de nível: em telas estreitas mostra só o número */
+@media (max-width: 480px) {
+  .level-pill { padding: 4px !important; }
+  .level-pill-text { display: none !important; }
+}
+
 /* Floating Player */
 .floating-player {
   position: fixed !important;
