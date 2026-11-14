@@ -1,3 +1,5 @@
+import { FEATURES } from './features';
+
 // Catálogo de conquistas. A ordem aqui é a ordem de exibição em "Minhas Conquistas".
 // check(stats) recebe: streak, dailyStreak, wordsCount, voiceLabCount, libraryLevels
 export const BADGES = [
@@ -13,7 +15,7 @@ export const BADGES = [
   { id: 'library_easy', icon: '🌱', title: 'Easy', description: '1º episódio Easy', check: s => s.libraryLevels.includes('easy') || s.libraryLevels.includes('easy-peasy') },
   { id: 'library_medium', icon: '🌿', title: 'Medium', description: '1º episódio Medium', check: s => s.libraryLevels.includes('medium') },
   { id: 'library_hard', icon: '🌳', title: 'Hard', description: '1º episódio Hard', check: s => s.libraryLevels.includes('hard') },
-  { id: 'voice_lab_first', icon: '🎙️', title: 'Voice Lab', description: '1º desafio', check: s => s.voiceLabCount >= 1 },
+  { id: 'voice_lab_first', icon: '🎙️', title: 'Voice Lab', description: '1º desafio', feature: 'voiceLab', check: s => s.voiceLabCount >= 1 },
   { id: 'record_1', icon: '🏆', title: 'Recordista', description: '1º recorde batido', check: s => s.records >= 1 },
   { id: 'record_10', icon: '🥇', title: 'Imbatível', description: '10 recordes batidos', check: s => s.records >= 10 }
 ];
@@ -33,3 +35,6 @@ export const getBadgeText = (badge, course) => {
   const es = course === 'es' && BADGES_ES[badge.id];
   return es ? { title: es[0], description: es[1] } : { title: badge.title, description: badge.description };
 };
+
+// Badges visíveis para o aluno (some as de áreas desligadas em features.js)
+export const visibleBadges = () => BADGES.filter(b => !b.feature || FEATURES[b.feature]);

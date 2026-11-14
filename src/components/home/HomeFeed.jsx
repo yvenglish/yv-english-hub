@@ -9,6 +9,7 @@ import { getLatestNews, articleUrl, newsSiteUrl } from '../../services/newsServi
 import { REVIEW_BATCH_SIZE } from '../../data/srs';
 import { fetchByIds } from '../../services/firestoreHelpers';
 import { getEpisodes } from '../../services/libraryCache';
+import { FEATURES } from '../../data/features';
 
 const pickRandom = (list) => (list.length ? list[Math.floor(Math.random() * list.length)] : null);
 
@@ -60,7 +61,7 @@ export default function HomeFeed({ onDueCount }) {
         getLatestNews(activeCourse, 3),
         getDueFlashcards().catch(() => []),
         getEpisodes().catch(() => []),
-        getDocs(collection(db, 'voice_lab_challenges')).catch(() => null)
+        FEATURES.voiceLab ? getDocs(collection(db, 'voice_lab_challenges')).catch(() => null) : null
       ]);
       if (!alive) return;
       setNews(latest);

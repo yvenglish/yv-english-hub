@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { db } from '../../config/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { COURSES } from '../../data/courses';
+import { FEATURES } from '../../data/features';
 import { UI_TEXTS } from '../../data/uiTexts';
 import { getEpisodes, preloadLibrary } from '../../services/libraryCache';
 
@@ -217,12 +218,14 @@ export default function Navbar() {
                     Input Library
                   </div>
                 </NavLink>
-                <NavLink to="/voice-lab" style={{ textDecoration: 'none' }} onClick={() => setIsLibraryHovered(false)}>
-                  <div style={{ padding: '10px 16px', color: '#fff', borderRadius: 8, background: location.pathname === '/voice-lab' ? 'rgba(255,255,255,0.1)' : 'transparent', transition: '0.2s', cursor: 'pointer', fontWeight: 500, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = location.pathname === '/voice-lab' ? 'rgba(255,255,255,0.1)' : 'transparent'}>
-                    Voice Lab
-                    <span style={{ fontSize: '0.65rem', background: 'var(--plum)', padding: '2px 6px', borderRadius: 8, fontWeight: 'bold' }}>NOVO</span>
-                  </div>
-                </NavLink>
+                {FEATURES.voiceLab && (
+                  <NavLink to="/voice-lab" style={{ textDecoration: 'none' }} onClick={() => setIsLibraryHovered(false)}>
+                    <div style={{ padding: '10px 16px', color: '#fff', borderRadius: 8, background: location.pathname === '/voice-lab' ? 'rgba(255,255,255,0.1)' : 'transparent', transition: '0.2s', cursor: 'pointer', fontWeight: 500, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = location.pathname === '/voice-lab' ? 'rgba(255,255,255,0.1)' : 'transparent'}>
+                      Voice Lab
+                      <span style={{ fontSize: '0.65rem', background: 'var(--plum)', padding: '2px 6px', borderRadius: 8, fontWeight: 'bold' }}>NOVO</span>
+                    </div>
+                  </NavLink>
+                )}
               </div>
             )}
           </div>
@@ -398,7 +401,7 @@ export default function Navbar() {
         <NavLink to="/history" onClick={() => setShowMenu(false)}>{h.navHistory}</NavLink>
         <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>{h.navGames}</NavLink>
         <NavLink to="/library" onClick={() => setShowMenu(false)}>{h.navLibraryMenu}</NavLink>
-        <NavLink to="/voice-lab" onClick={() => setShowMenu(false)}>Voice Lab</NavLink>
+        {FEATURES.voiceLab && <NavLink to="/voice-lab" onClick={() => setShowMenu(false)}>Voice Lab</NavLink>}
         <NavLink to="/glossary" onClick={() => setShowMenu(false)}>{h.navGlossary}</NavLink>
         
         {/* Mobile Search Bar */}

@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { UI_TEXTS } from '../../data/uiTexts';
 
 export default function VoiceLabPlayer({ challenge, onBack }) {
-  const { recordVoiceLabProgress } = useAuth();
+  const { recordVoiceLabProgress, activeCourse } = useAuth();
+  const h = UI_TEXTS[activeCourse];
   const navigate = useNavigate();
   
   const lines = challenge.lines || [];
@@ -25,8 +27,21 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isPlayingOrig, setIsPlayingOrig] = useState(false);
   const [isPlayingRec, setIsPlayingRec] = useState(false);
+  const [audioError, setAudioError] = useState(false); // o áudio de exemplo não carregou (arquivo fora do ar ou vazio)
 
   const currentLine = lines[currentIndex];
+
+  const playOriginal = () => {
+    const el = originalAudioRef.current;
+    if (!el) return;
+    const result = el.play();
+    if (result?.catch) {
+      result.catch(err => {
+        // Navegador bloqueou o autoplay: não é erro do arquivo
+        if (err?.name !== 'NotAllowedError') setAudioError(true);
+      });
+    }
+  };
 
   useEffect(() => {
     // Reset state when line changes
@@ -37,11 +52,12 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
     setPlaybackRate(1);
     setIsPlayingOrig(false);
     setIsPlayingRec(false);
+    setAudioError(!currentLine?.audioUrl);
     
     // Auto play original audio on new line
     if (originalAudioRef.current && currentIndex < lines.length) {
       originalAudioRef.current.playbackRate = 1;
-      originalAudioRef.current.play().catch(() => {});
+      playOriginal();
     }
   }, [currentIndex]);
 
@@ -131,7 +147,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
     if (!originalAudioRef.current || !recordedAudioRef.current) return;
     
     originalAudioRef.current.playbackRate = 1;
-    originalAudioRef.current.play();
+    playOriginal();
     
     originalAudioRef.current.onended = () => {
       setTimeout(() => {
@@ -216,6 +232,8 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
             onPlay={() => setIsPlayingOrig(true)}
             onPause={() => setIsPlayingOrig(false)}
             onEnded={() => setIsPlayingOrig(false)}
+            onError={() => setAudioError(true)}
+            onCanPlay={() => setAudioError(false)}
             style={{ width: '100%', maxHeight: 350, borderRadius: 16, objectFit: 'cover', background: 'transparent', marginBottom: 10, display: status === 'listen' ? 'block' : 'none' }}
             controls={false}
           />
@@ -234,8 +252,16 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
               onPlay={() => setIsPlayingOrig(true)}
               onPause={() => setIsPlayingOrig(false)}
               onEnded={() => setIsPlayingOrig(false)}
+              onError={() => setAudioError(true)}
+              onCanPlay={() => setAudioError(false)}
             />
           </>
+        )}
+
+        {audioError && (
+          <div role="alert" style={{ padding: '14px 18px', borderRadius: 14, background: 'rgba(255,71,87,0.12)', border: '1px solid rgba(255,71,87,0.4)', color: '#ff8a96', fontWeight: 700, textAlign: 'center' }}>
+            {h.voiceAudioUnavailable}
+          </div>
         )}
 
         {/* Step 1: Listen & Reveal */}
@@ -292,7 +318,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
 
             <div style={{ display: 'flex', gap: 15, alignItems: 'center', justifyContent: 'center' }}>
               <button 
-                onClick={() => originalAudioRef.current?.play()}
+                onClick={playOriginal}
                 style={{ background: 'var(--purple)', color: '#fff', border: 'none', padding: '15px 30px', borderRadius: 99, fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', gap: 10, alignItems: 'center' }}
               >
                 {isPlayingOrig ? '🔊 Ouvindo...' : '▶️ Ouvir Cena'}
@@ -386,7 +412,7 @@ export default function VoiceLabPlayer({ challenge, onBack }) {
                 <div style={{ background: 'var(--bg)', padding: 20, borderRadius: 16, textAlign: 'center' }}>
                   <p style={{ color: 'var(--muted)', margin: '0 0 15px', fontSize: '0.9rem' }}>Áudio Original</p>
                   <button 
-                    onClick={() => { originalAudioRef.current.playbackRate = 1; originalAudioRef.current?.play(); }}
+                    onClick={() => { originalAudioRef.current.playbackRate = 1; playOriginal(); }}
                     style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', padding: '12px 20px', borderRadius: 8, width: '100%', cursor: 'pointer' }}
                   >
                     ▶️ Ouvir Cena

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import InstallPrompt from './components/InstallPrompt';
 import BadgeToast from './components/BadgeToast';
+import { FEATURES } from './data/features';
 import Navbar from './components/layout/Navbar';
 import StudentLayout from './components/layout/StudentLayout';
 
@@ -77,7 +78,7 @@ function App() {
             <Route path="/" element={<StudentHub />} />
             <Route path="/flashcards" element={<Flashcards />} />
             <Route path="/library" element={<Library />} />
-            <Route path="/voice-lab" element={<VoiceLab />} />
+            <Route path="/voice-lab" element={FEATURES.voiceLab ? <VoiceLab /> : <Navigate to="/" replace />} />
             <Route path="/glossary" element={<Glossary />} />
             <Route path="/history" element={<History />} />
           </Route>

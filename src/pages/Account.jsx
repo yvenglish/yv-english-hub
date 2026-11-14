@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { BADGES, getBadgeText } from '../data/badges';
+import { visibleBadges, getBadgeText } from '../data/badges';
 import { UI_TEXTS } from '../data/uiTexts';
 
 export default function Account() {
@@ -112,9 +112,9 @@ export default function Account() {
 
           {/* Badges / Conquistas */}
           <div>
-            <h3 style={{ margin: '0 0 20px', color: 'var(--text)', fontSize: '1.2rem' }}>{h.achievements} <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 500 }}>{(userData?.badges || []).filter(id => BADGES.some(b => b.id === id)).length}/{BADGES.length}</span></h3>
+            <h3 style={{ margin: '0 0 20px', color: 'var(--text)', fontSize: '1.2rem' }}>{h.achievements} <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 500 }}>{(userData?.badges || []).filter(id => visibleBadges().some(b => b.id === id)).length}/{visibleBadges().length}</span></h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 15 }}>
-              {BADGES.map(badge => {
+              {visibleBadges().map(badge => {
                 const owned = (userData?.badges || []).includes(badge.id);
                 return (
                   <div key={badge.id} title={owned ? h.badgeOwned : h.badgeLocked} style={{ background: 'var(--bg)', padding: 15, borderRadius: 16, textAlign: 'center', border: owned ? '1px solid var(--line)' : '1px dashed var(--line)', opacity: owned ? 1 : 0.4 }}>

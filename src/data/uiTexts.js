@@ -117,7 +117,7 @@ export const UI_TEXTS = {
     learnAllDone: 'Deck dominado! 🏅', learnAllDoneText: 'Você acertou todas as palavras deste deck. Elas vão voltar na Daily Review.',
     blastLevel: (n) => `Nível ${n}`, blastGoal: (p) => `Objetivo: ${p} pontos`, blastLevelDone: (n) => `Nível ${n} concluído`,
     blastTotal: (s) => `Pontuação total: ${s}`, blastStreak: 'Sequência', blastGameOver: 'Fim de jogo!', blastHint: 'Toque no asteroide com a resposta certa.',
-    glossNew: 'Nova', recordTitle: 'Novo recorde!', recordSubtitle: 'Você superou a sua melhor pontuação!', recordBefore: 'Antes', recordNow: 'Agora', recordGain: (d) => `+${d} pontos acima do recorde anterior`, glossLearning: 'Aprendendo', glossMastered: 'Dominada'
+    glossNew: 'Nova', voiceAudioUnavailable: '🔇 O áudio desta frase está indisponível no momento. Avise a teacher.', recordTitle: 'Novo recorde!', recordSubtitle: 'Você superou a sua melhor pontuação!', recordBefore: 'Antes', recordNow: 'Agora', recordGain: (d) => `+${d} pontos acima do recorde anterior`, glossLearning: 'Aprendendo', glossMastered: 'Dominada'
   },
   es: {
     eyebrow: 'Tu área personal',
@@ -227,6 +227,6 @@ export const UI_TEXTS = {
     learnAllDone: '¡Mazo dominado! 🏅', learnAllDoneText: 'Acertaste todas las palabras de este mazo. Volverán en el Repaso diario.',
     blastLevel: (n) => `Nivel ${n}`, blastGoal: (p) => `Objetivo: ${p} puntos`, blastLevelDone: (n) => `Nivel ${n} completado`,
     blastTotal: (s) => `Puntuación total: ${s}`, blastStreak: 'Racha', blastGameOver: '¡Fin del juego!', blastHint: 'Toca el asteroide con la respuesta correcta.',
-    glossNew: 'Nueva', recordTitle: '¡Nuevo récord!', recordSubtitle: '¡Superaste tu mejor puntuación!', recordBefore: 'Antes', recordNow: 'Ahora', recordGain: (d) => `+${d} puntos más que tu récord anterior`, glossLearning: 'Aprendiendo', glossMastered: 'Dominada'
+    glossNew: 'Nueva', voiceAudioUnavailable: '🔇 El audio de esta frase no está disponible ahora. Avisa a la profe.', recordTitle: '¡Nuevo récord!', recordSubtitle: '¡Superaste tu mejor puntuación!', recordBefore: 'Antes', recordNow: 'Ahora', recordGain: (d) => `+${d} puntos más que tu récord anterior`, glossLearning: 'Aprendiendo', glossMastered: 'Dominada'
   }
 };
