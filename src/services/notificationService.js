@@ -64,5 +64,7 @@ export const sendTestNotification = async () => {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
     body: JSON.stringify({ test: true })
   });
-  return res.ok ? res.json() : { sent: 0, error: res.status };
+  if (res.ok) return res.json();
+  const body = await res.json().catch(() => ({}));
+  return { sent: 0, error: body.error ? `${res.status}: ${body.error}` : res.status };
 };

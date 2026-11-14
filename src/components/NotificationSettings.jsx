@@ -26,8 +26,10 @@ export default function NotificationSettings() {
     setBusy(true); setMessage('');
     try {
       const r = await sendTestNotification();
-      setMessage(r.sent > 0 ? h.notifTestSent(r.sent) : h.notifTestFail);
-    } catch { setMessage(h.notifTestFail); }
+      // Detalhe técnico no fim para a teacher conseguir diagnosticar (código HTTP ou erro do FCM)
+      const detail = r.error ? `HTTP ${r.error}` : r.reason || (r.errors || []).filter(Boolean).join(', ');
+      setMessage(r.sent > 0 ? h.notifTestSent(r.sent) : `${h.notifTestFail}${detail ? ` (${detail})` : ''}`);
+    } catch (err) { setMessage(`${h.notifTestFail} (${err.message})`); }
     setBusy(false);
   };
 

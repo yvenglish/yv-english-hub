@@ -3,16 +3,23 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { getAuth } from 'firebase-admin/auth';
 
-// Usa a conta de serviço da variável FIREBASE_SERVICE_ACCOUNT (JSON em uma linha só)
+// Usa a conta de serviço da variável FIREBASE_SERVICE_ACCOUNT (JSON em uma linha só).
+// Se ela faltar ou estiver errada, as funções respondem com a mensagem em initError em vez de quebrar.
+export let initError = null;
 if (!getApps().length) {
-  initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+  try {
+    if (!process.env.FIREBASE_SERVICE_ACCOUNT) throw new Error('FIREBASE_SERVICE_ACCOUNT não configurada na Vercel');
+    initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+  } catch (err) {
+    initError = err instanceof SyntaxError ? 'FIREBASE_SERVICE_ACCOUNT inválida (não é um JSON válido)' : err.message;
+  }
 }
 
-export const adminDb = getFirestore();
-export const adminAuth = getAuth();
+export const adminDb = initError ? null : getFirestore();
+export const adminAuth = initError ? null : getAuth();
 export { FieldValue };
 
-export const APP_URL = process.env.APP_URL || 'https://yvenglishhub.com';
+export const APP_URL = process.env.APP_URL || 'https://yv-english-hub.vercel.app';
 
 const INVALID_TOKEN_CODES = [
   'messaging/registration-token-not-registered',

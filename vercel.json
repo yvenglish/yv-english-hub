@@ -18,6 +18,10 @@
   "crons": [
     {
       "path": "/api/streak-reminder",
+      "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/streak-reminder",
       "schedule": "0 23 * * *"
     }
   ]
