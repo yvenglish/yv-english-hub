@@ -315,7 +315,6 @@ export default function StudentHub() {
          if (recordDailyCompletion) {
            const result = await recordDailyCompletion(); // Conta para o streak e para a sequência de Dailies
            isGoalReached = result?.goalJustReached || false;
-           if (result?.streakGoalCompleted) setStreakGoalAchieved(true);
          }
          
          if (isGoalReached) {

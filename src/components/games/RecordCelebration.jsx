@@ -6,7 +6,7 @@ const COLORS = ['#F0E66E', '#F09A4A', '#D96745', '#8B5A9E', '#2ed573', '#5ee2ff'
 const DURATION_MS = 4500;
 
 // Chuva de confete em tela cheia (canvas). Para sozinha depois de alguns segundos.
-function Confetti() {
+export function Confetti() {
   const canvasRef = useRef(null);
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordRe
 import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion, getCountFromServer } from 'firebase/firestore';
 import { BADGES } from '../data/badges';
 import { getUserCourses, COURSES } from '../data/courses';
-import { scheduleReview, DIFFICULT_LAPSES, studyDay } from '../data/srs';
+import { scheduleReview, DIFFICULT_LAPSES, studyDay, nextStreakGoal } from '../data/srs';
 
 const AuthContext = createContext();
 
@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unlockedBadges, setUnlockedBadges] = useState([]); // fila de badges recém-conquistadas para o toast
+  const [goalCelebration, setGoalCelebration] = useState(null); // { goal, next, streak } quando bate a meta de streak
   const [courseChoice, setCourseChoice] = useState(() => {
     try { return localStorage.getItem('yv_course'); } catch { return null; }
   });
@@ -129,6 +130,7 @@ export function AuthProvider({ children }) {
       wordsCount,
       voiceLabCount: (data.voiceLabProgress || []).length,
       libraryLevels: data.libraryLevelsCompleted || [],
+      goals: data.goalsCompleted || 0,
       records: data.recordsCount || 0
     };
     const earned = BADGES.filter(b => !owned.includes(b.id) && b.check(stats));
@@ -146,24 +148,16 @@ export function AuthProvider({ children }) {
   const recordStudy = async (wordsCount, extraUpdates = {}) => {
     if (!currentUser || !userData) return false;
     
-    const now = new Date();
-    const today = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-    today.setHours(0,0,0,0);
-    const todayStr = today.toISOString().split('T')[0];
-    
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-    
-    const dayBeforeYesterday = new Date(today);
-    dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
-    const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString().split('T')[0];
+    const todayStr = getStudyDayStr();
+    const yesterdayStr = getStudyDayStr(-1);
+    const dayBeforeYesterdayStr = getStudyDayStr(-2);
 
     let newWordsToday = userData.wordsStudiedToday || 0;
     let newStreak = userData.currentStreak || 0;
     let newStreakDate = userData.lastStreakDate || null;
     let goalJustReached = false;
     let streakGoalCompleted = false;
+    const goalUpdates = {};
 
     // Reset words count if it's a new day
     if (userData.lastStudyDate !== todayStr) {
@@ -183,9 +177,16 @@ export function AuthProvider({ children }) {
         newStreak = 1;
       }
 
+      // Meta batida quando o streak chega ou passa da meta, uma vez por sequência.
+      // Depois disso a meta sobe sozinha para o próximo degrau (3 → 7 → 14…).
       const targetGoal = userData.streakGoal || 3;
-      if (newStreak === targetGoal) {
+      const streakStart = getStudyDayStr(-(newStreak - 1));
+      const alreadyCounted = userData.goalReached?.goal === targetGoal && userData.goalReached?.streakStart === streakStart;
+      if (newStreak >= targetGoal && !alreadyCounted) {
         streakGoalCompleted = true;
+        goalUpdates.goalReached = { goal: targetGoal, streakStart };
+        goalUpdates.goalsCompleted = (userData.goalsCompleted || 0) + 1;
+        goalUpdates.streakGoal = nextStreakGoal(targetGoal);
       }
     }
 
@@ -194,6 +195,7 @@ export function AuthProvider({ children }) {
       lastStudyDate: todayStr,
       currentStreak: newStreak,
       lastStreakDate: newStreakDate,
+      ...goalUpdates,
       ...extraUpdates
     };
 
@@ -201,6 +203,7 @@ export function AuthProvider({ children }) {
     setUserData(prev => ({ ...prev, ...updates }));
 
     const earnedBadges = await awardBadges({ ...userData, ...updates });
+    if (streakGoalCompleted) setGoalCelebration({ goal: goalUpdates.goalReached.goal, next: goalUpdates.streakGoal, streak: newStreak });
 
     return { goalJustReached, streakGoalCompleted, newStreak, earnedBadges };
   };
@@ -234,11 +237,8 @@ export function AuthProvider({ children }) {
 
   const setStreakGoal = async (goal) => {
     if (!currentUser || !userData) return;
-    const updates = {
-      streakGoal: goal,
-      currentStreak: 0,
-      lastStreakDate: null
-    };
+    // Trocar a meta mantém o streak; se a nova meta já foi alcançada, ela conta no próximo dia de estudo
+    const updates = { streakGoal: goal };
     await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
     setUserData(prev => ({ ...prev, ...updates }));
   };
@@ -419,6 +419,8 @@ export function AuthProvider({ children }) {
     recordDailyCompletion,
     syncLibraryLevels,
     unlockedBadges,
+    goalCelebration,
+    dismissGoalCelebration: () => setGoalCelebration(null),
     dismissUnlockedBadge,
     toggleLibraryFavorite,
     toggleFavoriteWord,

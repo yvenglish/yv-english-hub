@@ -71,3 +71,7 @@ export const studyDay = (date = new Date(), offsetDays = 0) => {
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
+
+// Metas de streak (dias seguidos). Ao bater uma meta, a próxima sobe sozinha para o degrau seguinte.
+export const STREAK_GOALS = [3, 7, 14, 21, 30, 60, 90, 180, 365];
+export const nextStreakGoal = (goal) => STREAK_GOALS.find(g => g > goal) || goal + 30;

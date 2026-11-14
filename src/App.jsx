@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import InstallPrompt from './components/InstallPrompt';
 import BadgeToast from './components/BadgeToast';
+import StreakGoalCelebration from './components/StreakGoalCelebration';
 import { FEATURES } from './data/features';
 import Navbar from './components/layout/Navbar';
 import StudentLayout from './components/layout/StudentLayout';
@@ -69,6 +70,7 @@ function App() {
     <BrowserRouter>
       <InstallPrompt />
       <BadgeToast />
+      <StreakGoalCelebration />
       <Suspense fallback={SplashContent}>
         <Routes>
           <Route path="/login" element={<Login />} />
