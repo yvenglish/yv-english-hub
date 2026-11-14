@@ -61,3 +61,13 @@ export const wordStatus = (progress) => {
   if (!progress) return 'new';
   return (progress.repetitions || 0) >= 2 ? 'mastered' : 'learning';
 };
+
+// "Dia de estudo" no horário do aluno: o dia só vira às 6h da manhã (estudar de madrugada conta para o dia anterior).
+// Aceita uma data (ex.: quando um Daily foi concluído) e um deslocamento em dias (-1 = ontem).
+export const studyDay = (date = new Date(), offsetDays = 0) => {
+  const d = new Date(new Date(date).getTime() - 6 * 60 * 60 * 1000);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + offsetDays);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};

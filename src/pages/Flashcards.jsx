@@ -13,6 +13,7 @@ import BlastMode from '../components/flashcards/BlastMode';
 import DeckPage from '../components/deck/DeckPage';
 import GamesSection from '../components/games/GamesSection';
 import { PLAYERS } from '../components/games/players';
+import RecordCelebration from '../components/games/RecordCelebration';
 import { inCourse } from '../data/courses';
 import { REVIEW_BATCH_SIZE, wordStatus } from '../data/srs';
 import { playableItems, shuffle } from '../data/games';
@@ -51,6 +52,7 @@ export default function Flashcards() {
   const [finishing, setFinishing] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [completeModal, setCompleteModal] = useState(null); // { title, text }
+  const [recordParty, setRecordParty] = useState(null);     // { score, previous } quando bate um recorde
   const loadedOnce = useRef(false);
 
   // Recarrega quando muda o aluno, o curso, as favoritas ou a rodada da Daily Review
@@ -193,6 +195,7 @@ export default function Flashcards() {
     let title = h.fcReviewDone;
     let text = h.fcReviewDone;
     let isGoalReached = false;
+    let celebrate = null;
 
     const isScored = ['blast', 'listen', 'hangman', 'game'].includes(mode);
     if (result.earlyExit) {
@@ -203,6 +206,7 @@ export default function Flashcards() {
       const key = mode === 'game' ? game.id : `${mode}_${deck.id}`;
       const saved = await saveGameScore(key, result.score);
       setScores(prev => ({ ...prev, [key]: { ...prev[key], best: saved.best } }));
+      if (saved.isRecord) celebrate = { score: result.score, previous: saved.previous };
       title = h.gameOver;
       text = `${mode === 'blast' ? h.blastTotal(result.score) : h.finalScore(result.score, result.total)} ${saved.isRecord ? h.newRecord : h.bestScore(saved.best)}`;
     } else {
@@ -219,7 +223,9 @@ export default function Flashcards() {
     setFinishing(false);
     loadData();
     setView(deckId && deck.id !== 'daily_review_deck' ? 'deck' : 'list');
-    if (isGoalReached) setShowGoalModal(true);
+    // Recorde batido ganha a festa (confete + troféu) no lugar do aviso comum
+    if (celebrate) setRecordParty(celebrate);
+    else if (isGoalReached) setShowGoalModal(true);
     else setCompleteModal({ title, text });
   };
 
@@ -280,6 +286,17 @@ export default function Flashcards() {
           <p style={{ color: 'var(--muted)', marginBottom: 30 }}>{h.streakBefore} <strong>{userData?.currentStreak || 0} {h.days}</strong>{h.streakAfter}</p>
           {modalButtons(() => setShowGoalModal(false))}
         </>)}
+
+        {recordParty && (
+          <RecordCelebration
+            score={recordParty.score}
+            previous={recordParty.previous}
+            primaryLabel={h.fcKeepStudying}
+            onPrimary={() => setRecordParty(null)}
+            secondaryLabel={h.fcBackHome}
+            onSecondary={() => { setRecordParty(null); navigate('/'); }}
+          />
+        )}
 
         {completeModal && modal('var(--plum)', '🎉', completeModal.title, 'var(--plum)', <>
           <p style={{ color: 'var(--text)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: 30 }}>{completeModal.text}</p>

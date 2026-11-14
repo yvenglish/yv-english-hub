@@ -4,17 +4,12 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordRe
 import { doc, getDoc, setDoc, getDocs, collection, query, limit, where, addDoc, updateDoc, arrayUnion, getCountFromServer } from 'firebase/firestore';
 import { BADGES } from '../data/badges';
 import { getUserCourses, COURSES } from '../data/courses';
-import { scheduleReview, DIFFICULT_LAPSES } from '../data/srs';
+import { scheduleReview, DIFFICULT_LAPSES, studyDay } from '../data/srs';
 
 const AuthContext = createContext();
 
 // Dia de estudo com virada às 6h (offsetDays = -1 para ontem)
-const getStudyDayStr = (offsetDays = 0) => {
-  const day = new Date(Date.now() - 6 * 60 * 60 * 1000);
-  day.setHours(0, 0, 0, 0);
-  day.setDate(day.getDate() + offsetDays);
-  return day.toISOString().split('T')[0];
-};
+const getStudyDayStr = (offsetDays = 0) => studyDay(new Date(), offsetDays);
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
@@ -133,7 +128,8 @@ export function AuthProvider({ children }) {
       dailyStreak: data.dailyStreak || 0,
       wordsCount,
       voiceLabCount: (data.voiceLabProgress || []).length,
-      libraryLevels: data.libraryLevelsCompleted || []
+      libraryLevels: data.libraryLevelsCompleted || [],
+      records: data.recordsCount || 0
     };
     const earned = BADGES.filter(b => !owned.includes(b.id) && b.check(stats));
     if (earned.length === 0) return [];
@@ -358,11 +354,14 @@ export function AuthProvider({ children }) {
     const ref = doc(db, `users/${currentUser.uid}/game_scores`, gameId);
     const snap = await getDoc(ref);
     const prev = snap.exists() ? snap.data() : { best: 0, plays: 0 };
-    const isRecord = score > (prev.best || 0);
-    const best = Math.max(score, prev.best || 0);
+    const previous = prev.best || 0;
+    // Recorde = superou uma pontuação anterior (a primeira partida só define o recorde, sem festa)
+    const isRecord = previous > 0 && score > previous;
+    const best = Math.max(score, previous);
     await setDoc(ref, { best, plays: (prev.plays || 0) + 1, lastScore: score, lastPlayed: new Date().toISOString() }, { merge: true });
-    await recordStudy(Math.max(1, score));
-    return { isRecord, best };
+    // Recordes batidos contam para as badges de recordista
+    await recordStudy(Math.max(1, score), isRecord ? { recordsCount: (userData?.recordsCount || 0) + 1 } : {});
+    return { isRecord, best, previous, firstPlay: previous === 0 };
   };
 
   const getGameScores = async () => {

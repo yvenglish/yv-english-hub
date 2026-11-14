@@ -13,7 +13,9 @@ export const BADGES = [
   { id: 'library_easy', icon: '🌱', title: 'Easy', description: '1º episódio Easy', check: s => s.libraryLevels.includes('easy') || s.libraryLevels.includes('easy-peasy') },
   { id: 'library_medium', icon: '🌿', title: 'Medium', description: '1º episódio Medium', check: s => s.libraryLevels.includes('medium') },
   { id: 'library_hard', icon: '🌳', title: 'Hard', description: '1º episódio Hard', check: s => s.libraryLevels.includes('hard') },
-  { id: 'voice_lab_first', icon: '🎙️', title: 'Voice Lab', description: '1º desafio', check: s => s.voiceLabCount >= 1 }
+  { id: 'voice_lab_first', icon: '🎙️', title: 'Voice Lab', description: '1º desafio', check: s => s.voiceLabCount >= 1 },
+  { id: 'record_1', icon: '🏆', title: 'Recordista', description: '1º recorde batido', check: s => s.records >= 1 },
+  { id: 'record_10', icon: '🥇', title: 'Imbatível', description: '10 recordes batidos', check: s => s.records >= 10 }
 ];
 
 // Título e descrição em espanhol para o curso ES
@@ -23,7 +25,8 @@ const BADGES_ES = {
   daily_3: ['Diario x3', 'Contenido diario 3 días seguidos'], daily_7: ['Diario x7', 'Contenido diario 7 días seguidos'],
   words_100: ['100 palabras', '100 palabras estudiadas'],
   library_easy: ['Fácil', '1.er episodio Fácil'], library_medium: ['Medio', '1.er episodio Medio'], library_hard: ['Difícil', '1.er episodio Difícil'],
-  voice_lab_first: ['Voice Lab', '1.er desafío']
+  voice_lab_first: ['Voice Lab', '1.er desafío'],
+  record_1: ['Récord', '1.er récord superado'], record_10: ['Imbatible', '10 récords superados']
 };
 
 export const getBadgeText = (badge, course) => {

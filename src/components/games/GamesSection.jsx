@@ -7,6 +7,7 @@ import { inCourse, getLevelLabel } from '../../data/courses';
 import { GAME_TYPES, GAME_LEVELS, playableItems } from '../../data/games';
 import { cardStyle } from './gameUi';
 import { PLAYERS } from './players';
+import RecordCelebration from './RecordCelebration';
 
 // "Mais jogos": jogos do curso que não pertencem a um deck do aluno (os de deck ficam na página do deck).
 // onPlayingChange avisa a página quando um jogo abre/fecha (para esconder os decks).
@@ -57,6 +58,10 @@ export default function GamesSection({ onPlayingChange, excludeIds = [] }) {
   };
 
   const typeLabel = (type) => ({ word_guess: h.gameTypeWordGuess, image: h.gameTypeImage, sentence_builder: h.gameTypeSentence, listen: h.gameTypeListen }[type]);
+
+  if (playing && result?.isRecord) {
+    return <RecordCelebration score={result.score} previous={result.previous} primaryLabel={h.playAgain} onPrimary={() => open(playing)} secondaryLabel={h.backToGames} onSecondary={close} />;
+  }
 
   if (playing && result) {
     return (

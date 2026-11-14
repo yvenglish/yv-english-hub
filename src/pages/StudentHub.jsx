@@ -8,6 +8,8 @@ import { requestNotificationPermission } from '../services/notificationService';
 import WeekTask from '../components/production/WeekTask';
 import HomeFeed from '../components/home/HomeFeed';
 import { inCourse } from '../data/courses';
+import { studyDay } from '../data/srs';
+import { pickDailyAssignment } from '../data/dailyRules';
 import { UI_TEXTS } from '../data/uiTexts';
 
 export default function StudentHub() {
@@ -144,28 +146,21 @@ export default function StudentHub() {
       const allAssignments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const assignments = allAssignments.filter(a => inCourse(a, activeCourse));
       
-      const today = new Date().toISOString().split('T')[0];
-      const valid = assignments.filter(a => a.scheduledDate <= today);
-      valid.sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
-
-      const pendingList = valid.filter(a => a.status === 'pending');
-      const pending = pendingList.length > 0 ? pendingList[0] : null;
+      // Regra do dia (ver dailyRules.js): um Daily por dia, ou todos os agendados para hoje
+      const today = studyDay();
+      const { target, pendingTodayCount, needsAutopilot } = pickDailyAssignment(assignments, today);
 
       const currentAssig = dailyAssignmentRef.current;
       if (!forceNext && currentAssig && currentAssig.status === 'completed') {
-         setHasNextPending(pendingList.length > 0);
-         return;
+        setHasNextPending(pendingTodayCount > 0);
+        return;
       }
-      
-      let targetAssignment = null;
-      
-      if (pending) {
-        targetAssignment = pending;
-      } else {
+
+      let targetAssignment = needsAutopilot ? null : target;
+
+      if (needsAutopilot) {
         // --- AUTO-PILOT ENGINE ---
-        const completedToday = valid.find(a => a.scheduledDate === today && a.status === 'completed');
-        
-        if (!completedToday && planName !== 'Foundation') {
+        if (planName !== 'Foundation') {
            // Auto-Pilot: Fetch bank items
            const bankSnap = await getDocs(collection(db, 'daily_bank'));
            const allBankItems = bankSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(item => inCourse(item, activeCourse));
@@ -186,11 +181,11 @@ export default function StudentHub() {
                };
                const newDoc = await addDoc(collection(db, 'daily_assignments'), autoPayload);
                targetAssignment = { id: newDoc.id, ...autoPayload };
+           } else {
+             targetAssignment = target; // banco sem conteúdo novo: mostra o último feito
            }
-        } else if (completedToday) {
-           targetAssignment = completedToday;
-        } else if (valid.length > 0) {
-           targetAssignment = valid[valid.length - 1]; // most recent completed
+        } else {
+          targetAssignment = target; // último Daily feito
         }
       }
 
