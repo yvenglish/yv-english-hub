@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { UI_TEXTS } from '../../data/uiTexts';
 import { Confetti } from '../games/RecordCelebration';
 import Flag from '../Flag';
+import FlightPath from '../journey/FlightPath';
 
 // "+25 XP" flutuando no topo a cada ganho; ao subir de nível, um cartão com confete.
 export default function XpToast() {
@@ -39,6 +40,19 @@ export default function XpToast() {
           <h2 style={{ margin: '0 0 6px', fontFamily: '"Playfair Display", serif', fontSize: '2rem', color: '#F0C87A' }}>{event.welcome ? h.xpWelcomeTitle : cityOnly ? h.jrCityArrived(event.city.name) : h.xpLevelUp(level)}</h2>
           <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)' }}>{event.welcome ? h.xpWelcomeText(event.amount, level) : cityOnly ? `+${event.amount} XP · ${h.jrCityArrivedText}` : `+${event.amount} XP · ${h.xpLevelUpText}`}</p>
           {event.city && !cityOnly && <p style={{ margin: '10px 0 0', color: '#F0C87A', fontWeight: 800 }}>✈️ {h.jrCityArrived(event.city.name)}</p>}
+          {event.city?.from && (
+            <div style={{ marginTop: 16 }}>
+              <svg viewBox="0 0 260 60" style={{ width: '100%', overflow: 'visible' }} aria-hidden="true">
+                <path d="M20 40 Q130 0 240 40" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" strokeDasharray="2 8" strokeLinecap="round" />
+                <circle cx="20" cy="40" r="5" fill="rgba(255,255,255,0.6)" />
+                <circle cx="240" cy="40" r="6" fill="#F0C87A" />
+                <FlightPath name="hop" p0={[20, 40]} p1={[130, 0]} p2={[240, 40]} duration={1600} delay={300} size={22} trailColor="#F0C87A" trailWidth={2.5} />
+              </svg>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.7)' }}>
+                <span>{event.city.from}</span><span style={{ color: '#F0C87A' }}>{event.city.name}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

@@ -146,10 +146,17 @@ export function AuthProvider({ children }) {
     if (journey && result.updates?.xp != null) {
       const before = cityState(journey, result.updates.xp - result.gained, activeCourse);
       const after = cityState(journey, result.updates.xp, activeCourse);
-      if (after.cityIndex > before.cityIndex) city = { name: after.cityName, code: after.country.code };
+      if (after.cityIndex > before.cityIndex) city = { name: after.cityName, from: before.cityName, code: after.country.code };
     }
     setXpEvents(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, amount: result.gained, levelUp: result.levelUp, boosted: result.multiplier > 1, city }]);
   };
+
+  // Guarda o que o aluno já viu da viagem (para cada animação aparecer uma vez só)
+  const markJourneySeen = useCallback(async (course, seen) => {
+    if (!currentUser) return;
+    await setDoc(doc(db, 'users', currentUser.uid), { journeySeen: { [course]: seen } }, { merge: true });
+    setUserData(prev => ({ ...prev, journeySeen: { ...(prev?.journeySeen || {}), [course]: seen } }));
+  }, [currentUser]);
 
   // Primeira visita à viagem do curso atual: começa no primeiro país
   const startJourney = useCallback(async () => {
@@ -495,6 +502,7 @@ export function AuthProvider({ children }) {
     unlockedBadges,
     xpEvents,
     startJourney,
+    markJourneySeen,
     dismissXpEvent,
     awardXp,
     goalCelebration,

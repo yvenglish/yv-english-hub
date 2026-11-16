@@ -60,6 +60,29 @@
   .level-pill-text { display: none !important; }
 }
 
+/* ===== Viagem: animações (carimbo, voos, avião) ===== */
+@keyframes stamp-slam {
+  0% { transform: scale(2.8) rotate(calc(var(--tilt) - 14deg)); opacity: 0; }
+  55% { transform: scale(0.9) rotate(var(--tilt)); opacity: 1; }
+  70% { transform: scale(1.04) rotate(var(--tilt)); }
+  100% { transform: scale(1) rotate(var(--tilt)); opacity: 0.9; }
+}
+.stamp-slam { animation: stamp-slam 0.7s cubic-bezier(.2,.8,.3,1) 0.35s both; }
+@keyframes paper-thud { 0%, 100% { transform: rotate(-2deg) translateY(0); } 50% { transform: rotate(-2deg) translateY(5px) scale(0.99); } }
+.paper-thud { animation: paper-thud 0.25s ease-out 0.72s; }
+@keyframes cloud-drift { from { transform: translateX(110vw); } to { transform: translateX(-40vw); } }
+.sky-cloud { position: absolute; left: 0; background: rgba(255,255,255,0.85); border-radius: 999px; filter: blur(1px); animation: cloud-drift linear infinite; }
+.sky-cloud::before, .sky-cloud::after { content: ''; position: absolute; background: inherit; border-radius: 50%; }
+.sky-cloud::before { width: 55%; height: 160%; left: 15%; bottom: 30%; }
+.sky-cloud::after { width: 40%; height: 130%; right: 12%; bottom: 25%; }
+@keyframes plane-bob { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-5px) rotate(3deg); } }
+.plane-bob { display: inline-block; animation: plane-bob 2.2s ease-in-out infinite; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.fade-up { animation: fade-up 0.5s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .stamp-slam, .paper-thud, .sky-cloud, .plane-bob, .fade-up, .jr-stop.fill-anim::before, .jr-plane-land { animation: none !important; }
+}
+
 /* Floating Player */
 .floating-player {
   position: fixed !important;
