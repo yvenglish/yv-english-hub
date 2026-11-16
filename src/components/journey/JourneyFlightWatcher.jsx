@@ -4,32 +4,44 @@ import { UI_TEXTS } from '../../data/uiTexts';
 import { cityState, countryAt, getJourney } from '../../data/journey';
 import FlightAnimation from './FlightAnimation';
 
-// Voo internacional assim que o aluno abre o hub depois de a teacher trocar o país dele.
-// Aparece uma vez por troca: depois de mostrar, o app guarda em journeySeen que esse voo já foi visto.
+// Voos que aparecem assim que o aluno abre o hub (uma vez cada):
+//   - troca de país feita pela teacher: carimbo do país anterior + voo até o novo;
+//   - primeira entrada depois da chegada da viagem: voo de boas-vindas saindo do Brasil até o primeiro país.
 export default function JourneyFlightWatcher() {
-  const { userData, activeCourse, markJourneySeen } = useAuth();
+  const { userData, activeCourse, startJourney, markJourneySeen, markJourneyIntro } = useAuth();
   const [flight, setFlight] = useState(null);
   const checked = useRef(null);
   const journey = getJourney(userData, activeCourse);
+  const isStudent = userData && userData.role !== 'master';
+
+  // Quem ainda não tem viagem neste curso começa agora (para o voo de boas-vindas ter destino)
+  useEffect(() => { if (isStudent && !journey) startJourney(); }, [isStudent, journey, startJourney]);
 
   useEffect(() => {
-    if (!journey || userData?.role === 'master') return;
+    if (!isStudent || !journey) return;
     const key = `${activeCourse}:${journey.current.startedAt}`;
     if (checked.current === key) return;
     checked.current = key;
 
+    const h = UI_TEXTS[activeCourse];
     const seen = userData?.journeySeen?.[activeCourse];
+    const introSeen = !!userData?.journeyIntro?.[activeCourse];
     const past = journey.past || [];
-    if (past.length === 0 || seen?.startedAt === journey.current.startedAt) return;
+    const to = { country: countryAt(activeCourse, journey.current.countryIndex), topic: journey.current.topic };
+    const hops = cityState(journey, userData?.xp || 0, activeCourse).hops;
 
-    const last = past[past.length - 1];
-    setFlight({
-      from: { ...last, country: countryAt(activeCourse, last.countryIndex), index: past.length - 1 },
-      to: { country: countryAt(activeCourse, journey.current.countryIndex), topic: journey.current.topic }
-    });
-    markJourneySeen(activeCourse, { startedAt: journey.current.startedAt, hops: cityState(journey, userData?.xp || 0, activeCourse).hops });
-  }, [journey, activeCourse, userData, markJourneySeen]);
+    if (past.length > 0 && seen?.startedAt !== journey.current.startedAt) {
+      const last = past[past.length - 1];
+      setFlight({ intro: false, to, from: { ...last, country: countryAt(activeCourse, last.countryIndex), index: past.length - 1 } });
+    } else if (!introSeen) {
+      setFlight({ intro: true, to, from: { country: { name: h.jrHome, code: 'br' } } });
+    } else {
+      return;
+    }
+    markJourneySeen(activeCourse, { startedAt: journey.current.startedAt, hops });
+    if (!introSeen) markJourneyIntro(activeCourse);
+  }, [isStudent, journey, activeCourse, userData, markJourneySeen, markJourneyIntro]);
 
   if (!flight) return null;
-  return <FlightAnimation h={UI_TEXTS[activeCourse]} from={flight.from} to={flight.to} onDone={() => setFlight(null)} />;
+  return <FlightAnimation h={UI_TEXTS[activeCourse]} from={flight.from} to={flight.to} intro={flight.intro} onDone={() => setFlight(null)} />;
 }

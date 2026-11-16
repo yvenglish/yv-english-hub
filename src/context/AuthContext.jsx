@@ -165,6 +165,13 @@ export function AuthProvider({ children }) {
     setUserData(prev => ({ ...prev, journeySeen: { ...(prev?.journeySeen || {}), [course]: seen } }));
   }, [currentUser]);
 
+  // Voo de boas-vindas à viagem já visto neste curso (aparece uma vez para cada aluno)
+  const markJourneyIntro = useCallback(async (course) => {
+    if (!currentUser) return;
+    await setDoc(doc(db, 'users', currentUser.uid), { journeyIntro: { [course]: true } }, { merge: true });
+    setUserData(prev => ({ ...prev, journeyIntro: { ...(prev?.journeyIntro || {}), [course]: true } }));
+  }, [currentUser]);
+
   // Primeira visita à viagem do curso atual: começa no primeiro país
   const startJourney = useCallback(async () => {
     if (!currentUser) return;
@@ -510,6 +517,7 @@ export function AuthProvider({ children }) {
     xpEvents,
     startJourney,
     markJourneySeen,
+    markJourneyIntro,
     dismissXpEvent,
     awardXp,
     goalCelebration,

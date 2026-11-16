@@ -10,8 +10,9 @@ const FLIGHT_MS = 3000;
 // Voo internacional: 1) o país que terminou ganha o carimbo no passaporte; 2) o avião cruza o céu até o
 // novo país; 3) chegada com o novo tema. Tocar na tela pula para o fim.
 // from: { country, topic, startedAt, endedAt, citiesVisited, index }  to: { country, topic }
-export default function FlightAnimation({ from, to, h, onDone }) {
-  const [stage, setStage] = useState('stamp');
+// intro: boas-vindas à viagem (sai do Brasil, sem carimbo, com a explicação de como funciona)
+export default function FlightAnimation({ from, to, h, onDone, intro = false }) {
+  const [stage, setStage] = useState(intro ? 'flight' : 'stamp');
 
   useEffect(() => {
     if (stage === 'stamp') { const t = setTimeout(() => setStage('flight'), STAMP_MS); return () => clearTimeout(t); }
@@ -39,7 +40,7 @@ export default function FlightAnimation({ from, to, h, onDone }) {
 
       {stage === 'flight' && (
         <div className="fade-up" style={{ width: 'min(520px, 100%)', textAlign: 'center', color: '#fff' }}>
-          <p style={{ margin: '0 0 6px', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '0.8rem', color: '#ffd7a8' }}>{h.jrIntlTitle}</p>
+          <p style={{ margin: '0 0 6px', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '0.8rem', color: '#ffd7a8' }}>{intro ? h.jrIntroTitle : h.jrIntlTitle}</p>
           <svg viewBox="0 0 400 230" style={{ width: '100%', overflow: 'visible' }} aria-hidden="true">
             <path d={curvePath(...ARC)} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="3" strokeDasharray="2 10" strokeLinecap="round" />
             <FlightPath name="intl" p0={ARC[0]} p1={ARC[1]} p2={ARC[2]} duration={FLIGHT_MS * 0.85} size={34} halo />
@@ -56,9 +57,10 @@ export default function FlightAnimation({ from, to, h, onDone }) {
       {stage === 'arrive' && (
         <div className="fade-up" style={{ width: 'min(380px, 100%)', textAlign: 'center', padding: '32px 24px', borderRadius: 28, background: 'rgba(20,12,40,0.88)', border: '2px solid #ffd7a8', boxShadow: '0 30px 70px rgba(0,0,0,0.45)', color: '#fff' }}>
           <Flag code={to.country.code} size={60} style={{ marginBottom: 14 }} />
-          <p style={{ margin: '0 0 4px', fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '0.75rem', color: '#ffd7a8' }}>{h.jrNewDestination}</p>
+          <p style={{ margin: '0 0 4px', fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '0.75rem', color: '#ffd7a8' }}>{intro ? h.jrFirstDestination : h.jrNewDestination}</p>
           <h2 style={{ margin: '0 0 8px', fontFamily: '"Playfair Display", serif', fontSize: '2.2rem' }}>{to.country.name}</h2>
-          <p style={{ margin: '0 0 22px', color: 'rgba(255,255,255,0.85)' }}>{h.jrTopic}: <strong>{to.topic || h.jrTopicTbd}</strong></p>
+          <p style={{ margin: intro ? '0 0 10px' : '0 0 22px', color: 'rgba(255,255,255,0.85)' }}>{h.jrTopic}: <strong>{to.topic || h.jrTopicTbd}</strong></p>
+          {intro && <p style={{ margin: '0 0 22px', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', lineHeight: 1.5 }}>{h.jrIntroText}</p>}
           <button onClick={onDone} style={{ width: '100%', padding: 15, borderRadius: 999, border: 'none', background: '#ffd7a8', color: '#2a1220', fontWeight: 900, fontSize: '1.05rem', cursor: 'pointer' }}>{h.jrExplore}</button>
         </div>
       )}
