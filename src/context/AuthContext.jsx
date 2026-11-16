@@ -6,6 +6,7 @@ import { BADGES } from '../data/badges';
 import { getUserCourses, COURSES } from '../data/courses';
 import { scheduleReview, DIFFICULT_LAPSES, studyDay, nextStreakGoal } from '../data/srs';
 import { applyXp, welcomeBonus, levelFromXp } from '../data/xp';
+import { newJourney, getJourney, cityState } from '../data/journey';
 
 const AuthContext = createContext();
 
@@ -138,8 +139,25 @@ export function AuthProvider({ children }) {
   const dismissUnlockedBadge = useCallback(() => setUnlockedBadges(prev => prev.slice(1)), []);
 
   const pushXpEvent = (result) => {
-    if (result.gained > 0) setXpEvents(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, amount: result.gained, levelUp: result.levelUp, boosted: result.multiplier > 1 }]);
+    if (!(result.gained > 0)) return;
+    // Chegou numa cidade nova da viagem?
+    let city = null;
+    const journey = getJourney(userData, activeCourse);
+    if (journey && result.updates?.xp != null) {
+      const before = cityState(journey, result.updates.xp - result.gained, activeCourse);
+      const after = cityState(journey, result.updates.xp, activeCourse);
+      if (after.cityIndex > before.cityIndex) city = { name: after.cityName, code: after.country.code };
+    }
+    setXpEvents(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, amount: result.gained, levelUp: result.levelUp, boosted: result.multiplier > 1, city }]);
   };
+
+  // Primeira visita à viagem do curso atual: começa no primeiro país
+  const startJourney = useCallback(async () => {
+    if (!currentUser) return;
+    const journey = newJourney(0);
+    await setDoc(doc(db, 'users', currentUser.uid), { journey: { [activeCourse]: journey } }, { merge: true });
+    setUserData(prev => ({ ...prev, journey: { ...(prev?.journey || {}), [activeCourse]: journey } }));
+  }, [currentUser, activeCourse]);
   const dismissXpEvent = useCallback(() => setXpEvents(prev => prev.slice(1)), []);
 
   // Bônus de boas-vindas do XP: uma vez por aluno, pelo histórico de antes do XP existir
@@ -476,6 +494,7 @@ export function AuthProvider({ children }) {
     syncLibraryLevels,
     unlockedBadges,
     xpEvents,
+    startJourney,
     dismissXpEvent,
     awardXp,
     goalCelebration,

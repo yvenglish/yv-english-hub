@@ -12,6 +12,7 @@ import { createStudent } from '../services/studentService';
 import ProductionAdminTab from '../components/admin/ProductionAdminTab';
 import GamesAdminTab from '../components/admin/GamesAdminTab';
 import LeadsAdminTab from '../components/admin/LeadsAdminTab';
+import JourneyAdmin from '../components/admin/JourneyAdmin';
 import { TASK_TYPES } from '../data/production';
 import { COURSES, inCourse, getUserCourses } from '../data/courses';
 import { SUGGESTED_DECK_ICONS, getDeckIcon } from '../data/deckIcons';
@@ -1085,6 +1086,7 @@ export default function AdminHub() {
                     <label style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Dia de Vencimento da Mensalidade</label>
                     <input type="number" min="1" max="31" placeholder="Ex: 5" value={editingStudent.dueDate || ''} onChange={e => setEditingStudent({...editingStudent, dueDate: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text)' }} />
                   </div>
+                  <JourneyAdmin key={editingStudent.id} student={editingStudent} onChange={setEditingStudent} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', gap: 10 }}>
                         <button onClick={async () => { await updateDoc(doc(db, 'users', editingStudent.id), { name: editingStudent.name, plan: editingStudent.plan, active: editingStudent.active, dueDate: editingStudent.dueDate || null, courses: getUserCourses(editingStudent) }); setEditingStudent(null); fetchStudents(); }} style={{ padding: '10px 20px', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>

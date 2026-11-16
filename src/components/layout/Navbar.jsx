@@ -376,6 +376,7 @@ export default function Navbar() {
                   style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', color: 'var(--text)', padding: '8px 15px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '0.9rem' }}
                 >👤 {h.navAccount}
               </button>
+              <button onClick={() => { navigate('/viagem'); setShowMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', color: 'var(--text)', padding: '8px 15px', width: '100%', textAlign: 'left', cursor: 'pointer', fontSize: '0.9rem' }}>✈️ {h.jrKicker}</button>
               <button 
                   onClick={() => {
                     navigate('/glossary');
@@ -403,6 +404,7 @@ export default function Navbar() {
       {/* Mobile Menu */}
       <div className={`mobile-menu ${showMenu ? 'open' : ''}`}>
         <NavLink to="/" onClick={() => setShowMenu(false)}>{h.navHome}</NavLink>
+        <NavLink to="/viagem" onClick={() => setShowMenu(false)}>{h.navJourney}</NavLink>
         <NavLink to="/history" onClick={() => setShowMenu(false)}>{h.navHistory}</NavLink>
         <NavLink to="/flashcards" onClick={() => setShowMenu(false)}>{h.navGames}</NavLink>
         <NavLink to="/library" onClick={() => setShowMenu(false)}>{h.navLibraryMenu}</NavLink>

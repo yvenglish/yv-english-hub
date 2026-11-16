@@ -1,3 +1,4 @@
+import JourneyCard from './JourneyCard';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
@@ -100,6 +101,8 @@ export default function HomeFeed({ onDueCount }) {
           </button>
         </section>
       )}
+
+      <JourneyCard />
 
       {hasFeed ? (
     <section className="section-block">
