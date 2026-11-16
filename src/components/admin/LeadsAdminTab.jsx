@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { auth } from '../../config/firebase';
+import { collection, getDocs, query, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 
-// Pedidos de diagnóstico gratuito que chegam pelo formulário do site.
-// Leitura e escrita passam por /api/lead (só a teacher), não direto pelo Firestore.
+// Pedidos de diagnóstico gratuito que chegam pelo formulário do site (coleção "leads").
+// As regras do Firestore deixam qualquer pessoa criar um pedido, mas só a teacher ler e atualizar.
 
 const STATUSES = [
   { id: 'novo', label: 'Novo', color: '#C8883A', bg: '#FFF4E3' },
@@ -20,17 +21,21 @@ const LANG_FILTERS = [
   { id: 'Inglês e Espanhol', label: 'Os dois' }
 ];
 
-const api = async (method, body) => {
-  const idToken = await auth.currentUser.getIdToken();
-  const res = await fetch('/api/lead', {
-    method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-    body: body ? JSON.stringify(body) : undefined
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Erro ${res.status}`);
-  return data;
+const loadLeads = async () => {
+  const snap = await getDocs(query(collection(db, 'leads'), orderBy('createdAt', 'desc'), limit(500)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
+
+const saveLead = async (id, patch) => {
+  const now = new Date().toISOString();
+  const data = { ...patch, updatedAt: now };
+  if (patch.status) data[`statusAt.${patch.status}`] = now;
+  await updateDoc(doc(db, 'leads', id), data);
+};
+
+const friendlyError = (err) => (err?.code === 'permission-denied'
+  ? 'sem permissão. Confira se as regras de "leads" foram publicadas no Firebase Console.'
+  : err?.message || 'erro desconhecido');
 
 const formatDate = (iso) => {
   if (!iso) return '';
@@ -150,11 +155,10 @@ export default function LeadsAdminTab({ setLoading }) {
     setLoading(true);
     setError('');
     try {
-      const data = await api('GET');
-      setLeads(data.leads || []);
+      setLeads(await loadLeads());
     } catch (err) {
       console.error(err);
-      setError(err.message);
+      setError(friendlyError(err));
     }
     setLoading(false);
   };
@@ -165,10 +169,10 @@ export default function LeadsAdminTab({ setLoading }) {
     const before = leads;
     setLeads(ls => ls.map(l => (l.id === id ? { ...l, ...patch } : l)));
     try {
-      await api('PATCH', { id, ...patch });
+      await saveLead(id, patch);
     } catch (err) {
       setLeads(before);
-      alert(`Não foi possível salvar: ${err.message}`);
+      alert(`Não foi possível salvar: ${friendlyError(err)}`);
     }
   };
 
