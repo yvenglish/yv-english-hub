@@ -11,6 +11,7 @@ import AdminModal from '../components/admin/AdminModal';
 import { createStudent } from '../services/studentService';
 import ProductionAdminTab from '../components/admin/ProductionAdminTab';
 import GamesAdminTab from '../components/admin/GamesAdminTab';
+import LeadsAdminTab from '../components/admin/LeadsAdminTab';
 import { TASK_TYPES } from '../data/production';
 import { COURSES, inCourse, getUserCourses } from '../data/courses';
 import { SUGGESTED_DECK_ICONS, getDeckIcon } from '../data/deckIcons';
@@ -28,6 +29,7 @@ const DECK_GAME_MODES = [
 const ADMIN_TAB_LABELS = {
   analytics: 'Analytics',
   students: 'Alunos',
+  diagnosticos: 'Diagnósticos',
   'correções': 'Correções',
   weeks: 'Semanas',
   daily: 'Daily Content',
@@ -991,7 +993,7 @@ export default function AdminHub() {
         </div>
 
         <div className="admin-main-tabs">
-          {['analytics', 'students', 'correções', 'weeks', 'daily', 'vocabulary', 'games', 'library', 'voice-lab', 'extra'].map(tab => (
+          {['analytics', 'students', 'diagnosticos', 'correções', 'weeks', 'daily', 'vocabulary', 'games', 'library', 'voice-lab', 'extra'].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '10px 20px', whiteSpace: 'nowrap', borderRadius: 999, border: activeTab === tab ? 'none' : '1px solid var(--line)', background: activeTab === tab ? 'var(--plum)' : 'transparent', color: activeTab === tab ? '#fff' : 'var(--text)', cursor: 'pointer', fontWeight: 800, textTransform: 'capitalize' }}>
               {ADMIN_TAB_LABELS[tab]}
             </button>
@@ -1822,6 +1824,7 @@ export default function AdminHub() {
           <ExtraContentAdminTab setLoading={setLoading} students={students} adminCourse={adminCourse} />
         )}
         {activeTab === 'games' && <GamesAdminTab setLoading={setLoading} adminCourse={adminCourse} decks={decks} vocabWords={vocabWords} />}
+        {activeTab === 'diagnosticos' && <LeadsAdminTab setLoading={setLoading} />}
         {activeTab === 'correções' && <ProductionAdminTab setLoading={setLoading} adminCourse={adminCourse} />}
       </main>
 
