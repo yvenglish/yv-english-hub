@@ -84,21 +84,11 @@ export function AuthProvider({ children }) {
           // Update lastLogin tracking
           await setDoc(docRef, { lastLogin: new Date().toISOString() }, { merge: true });
         } else {
-          // Se o documento não existir, verifica se é o primeiro usuário do sistema
-          const q = query(collection(db, 'users'), limit(1));
-          const usersSnap = await getDocs(q);
-          
-          if (usersSnap.empty) {
-            // Primeiro usuário a logar no sistema ganha Admin (Master)
-            const masterData = { role: 'master', name: 'Yasmin (Admin)', plan: 'Master', email: user.email, active: true };
-            await setDoc(docRef, masterData);
-            setUserData(masterData);
-          } else {
-            // Demais usuários viram alunos normais
-            const studentData = { role: 'student', name: 'Novo Aluno', plan: 'Foundation', email: user.email, active: true };
-            await setDoc(docRef, studentData);
-            setUserData(studentData);
-          }
+          // Conta sem cadastro (ex.: criada direto no Firebase): vira aluno.
+          // As regras do Firestore só deixam criar o próprio cadastro como aluno (nunca como admin).
+          const studentData = { role: 'student', name: 'Novo Aluno', plan: 'Foundation', email: user.email, active: true };
+          await setDoc(docRef, studentData);
+          setUserData(studentData);
         }
       } else {
         setUserData(null);

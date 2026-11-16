@@ -1,0 +1,171 @@
+rules_version = '2';
+
+// =====================================================================
+// Regras do Firestore do YV English Hub
+// Publicar em: Firebase Console → Firestore Database → Regras → Publicar
+// (este arquivo é a cópia de referência; só vale depois de publicado lá)
+//
+// Resumo:
+//  - A teacher (users/{uid}.role == 'master') pode tudo.
+//  - Aluno logado lê o conteúdo do curso e lê/grava só os PRÓPRIOS dados.
+//  - Ninguém consegue se promover a admin nem mudar plano, cursos ou status da conta.
+//  - Formulário do site (sem login) só cria pedidos em "leads".
+//  - As funções da Vercel (api/) usam a conta de serviço e não passam por estas regras.
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function isTeacher() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && get(/databases/$(database)/documents/users/$(uid())).data.role == 'master';
+    }
+    // O documento já existente pertence a quem está logado
+    function ownsExisting() { return signedIn() && resource.data.studentId == uid(); }
+    // O documento que está sendo gravado pertence a quem está logado
+    function ownsIncoming() { return signedIn() && request.resource.data.studentId == uid(); }
+    // Só estes campos mudaram nesta gravação
+    function onlyChanges(fields) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields); }
+
+    // ---------------------------------------------------------------
+    // Cadastro dos usuários
+    // ---------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isTeacher() || (signedIn() && uid() == userId);
+
+      // Conta sem cadastro cria o próprio, sempre como aluno ativo
+      allow create: if isTeacher()
+        || (signedIn() && uid() == userId
+            && request.resource.data.role == 'student'
+            && request.resource.data.active == true);
+
+      // Aluno atualiza o próprio progresso, mas não os campos que só a teacher controla
+      allow update: if isTeacher()
+        || (signedIn() && uid() == userId
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                 .hasAny(['role', 'plan', 'active', 'dueDate', 'courses', 'email', 'name', 'createdAt']));
+
+      allow delete: if isTeacher();
+
+      // Progresso dos flashcards e recordes dos jogos: só o próprio aluno (e a teacher)
+      match /flashcard_progress/{wordId} {
+        allow read, write: if isTeacher() || (signedIn() && uid() == userId);
+      }
+      match /game_scores/{gameId} {
+        allow read, write: if isTeacher() || (signedIn() && uid() == userId);
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Conteúdo do curso: qualquer aluno logado lê, só a teacher edita
+    // ---------------------------------------------------------------
+    match /library_episodes/{id} {
+      allow read: if signedIn();
+      allow write: if isTeacher();
+    }
+    match /voice_lab_challenges/{id} {
+      allow read: if signedIn();
+      allow write: if isTeacher();
+    }
+    match /games/{id} {
+      allow read: if signedIn();
+      allow write: if isTeacher();
+    }
+    match /decks/{id} {
+      allow read: if signedIn();
+      allow write: if isTeacher();
+    }
+    match /daily_bank/{id} {
+      allow read: if signedIn();
+      allow write: if isTeacher();
+    }
+    match /extra_contents/{id} {
+      allow read: if signedIn();
+      allow write: if isTeacher();
+    }
+
+    // Vocabulário global: aluno pode acrescentar palavras salvas no Daily Content
+    match /vocabulary_global/{id} {
+      allow read: if signedIn();
+      allow create: if isTeacher()
+        || (signedIn()
+            && request.resource.data.createdBy == uid()
+            && request.resource.data.source == 'daily_content');
+      allow update, delete: if isTeacher();
+    }
+
+    // ---------------------------------------------------------------
+    // Dados de cada aluno
+    // ---------------------------------------------------------------
+
+    // Semanas: o aluno só vê as próprias
+    match /weeks/{id} {
+      allow read: if isTeacher() || ownsExisting();
+      allow write: if isTeacher();
+    }
+
+    // Daily Content agendado: aluno vê os seus, o Auto-Pilot cria/remove, e ele responde
+    match /daily_assignments/{id} {
+      allow read: if isTeacher() || ownsExisting();
+      allow create: if isTeacher() || ownsIncoming();
+      allow update: if isTeacher()
+        || (ownsExisting() && onlyChanges(['studentAnswers', 'status', 'completedAt', 'score', 'totalQuestions']));
+      allow delete: if isTeacher() || ownsExisting();
+    }
+
+    // Palavras e decks atribuídos: aluno vê os seus e acrescenta palavras à própria lista
+    match /vocab_assignments/{id} {
+      allow read: if isTeacher() || ownsExisting();
+      allow create: if isTeacher() || ownsIncoming();
+      allow update: if isTeacher() || (ownsExisting() && onlyChanges(['wordIds']));
+      allow delete: if isTeacher();
+    }
+
+    // Tarefas de produção (texto/áudio): aluno envia a sua; só a teacher corrige
+    match /submissions/{weekId} {
+      allow get: if isTeacher() || resource == null || ownsExisting();
+      allow list: if isTeacher() || ownsExisting();
+      allow create, update: if isTeacher()
+        || (ownsIncoming()
+            && request.resource.data.status == 'submitted'
+            && request.resource.data.keys().hasOnly(['weekId', 'weekTitle', 'course', 'studentId', 'studentName',
+                 'prompt', 'type', 'text', 'audioUrl', 'audioPath', 'status', 'submittedAt'])
+            && (resource == null || resource.data.studentId == uid()));
+      allow delete: if isTeacher();
+    }
+
+    // ---------------------------------------------------------------
+    // Pedidos de diagnóstico do formulário do site
+    // ---------------------------------------------------------------
+    match /leads/{leadId} {
+      // Formulário (sem login): só pode CRIAR um pedido novo, com campos e tamanhos controlados.
+      allow create: if
+        request.resource.data.keys().hasOnly(['nome', 'whatsapp', 'whatsappDigits', 'email', 'idioma', 'nivel',
+          'objetivo', 'dificuldades', 'periodo', 'dias', 'plano', 'idiomaDoSite', 'status', 'notes', 'createdAt', 'updatedAt'])
+        && request.resource.data.nome is string && request.resource.data.nome.size() >= 2 && request.resource.data.nome.size() <= 80
+        && request.resource.data.whatsapp is string && request.resource.data.whatsapp.size() <= 30
+        && request.resource.data.whatsappDigits is string && request.resource.data.whatsappDigits.size() >= 10 && request.resource.data.whatsappDigits.size() <= 16
+        && request.resource.data.email is string && request.resource.data.email.size() <= 120
+        && request.resource.data.idioma in ['Inglês', 'Espanhol', 'Inglês e Espanhol']
+        && request.resource.data.nivel is string && request.resource.data.nivel.size() <= 40
+        && request.resource.data.objetivo is list && request.resource.data.objetivo.size() <= 10
+        && request.resource.data.dificuldades is list && request.resource.data.dificuldades.size() <= 10
+        && request.resource.data.periodo is list && request.resource.data.periodo.size() <= 10
+        && request.resource.data.dias is list && request.resource.data.dias.size() <= 10
+        && request.resource.data.plano is string && request.resource.data.plano.size() <= 40
+        && request.resource.data.idiomaDoSite in ['pt', 'es']
+        && request.resource.data.status == 'novo'
+        && request.resource.data.notes == ''
+        && request.resource.data.createdAt is string && request.resource.data.createdAt.size() <= 30
+        && request.resource.data.updatedAt is string && request.resource.data.updatedAt.size() <= 30;
+
+      // Só a teacher vê, atualiza e apaga.
+      allow read, update, delete: if isTeacher();
+    }
+
+    // Qualquer outra coleção fica fechada (não existe mais a regra "logado pode tudo").
+  }
+}
