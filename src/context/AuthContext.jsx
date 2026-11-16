@@ -146,7 +146,14 @@ export function AuthProvider({ children }) {
     if (journey && result.updates?.xp != null) {
       const before = cityState(journey, result.updates.xp - result.gained, activeCourse);
       const after = cityState(journey, result.updates.xp, activeCourse);
-      if (after.cityIndex > before.cityIndex) city = { name: after.cityName, from: before.cityName, code: after.country.code };
+      if (after.hops > before.hops) {
+        city = { name: after.cityName, from: before.cityName, code: after.country.code, fromIndex: before.cityIndex, toIndex: after.cityIndex, cities: after.country.cities, revisit: after.revisit };
+        // Se o voo internacional desse país já foi visto, registra a cidade nova como vista também
+        const seen = userData?.journeySeen?.[activeCourse];
+        if (!(journey.past || []).length || seen?.startedAt === journey.current.startedAt) {
+          markJourneySeen(activeCourse, { startedAt: journey.current.startedAt, hops: after.hops });
+        }
+      }
     }
     setXpEvents(prev => [...prev, { id: `${Date.now()}-${Math.random()}`, amount: result.gained, levelUp: result.levelUp, boosted: result.multiplier > 1, city }]);
   };

@@ -6,19 +6,16 @@ import { CITY_XP, cityState, countryAt, getJourney } from '../data/journey';
 import Flag from '../components/Flag';
 import Plane from '../components/journey/Plane';
 import Stamp from '../components/journey/Stamp';
-import FlightAnimation from '../components/journey/FlightAnimation';
 
 // "Minha viagem": país atual (tema), cidades até o próximo país, próximo destino e o passaporte com os carimbos.
-// Animações (uma vez cada, o app lembra o que o aluno já viu em journeySeen):
-//   - voo internacional + carimbo quando a teacher liberou um tema novo;
-//   - voo nacional (o trecho se pinta e o avião pousa) quando o aluno chegou numa cidade nova.
+// Voo nacional (o trecho se pinta e o avião pousa) quando o aluno chegou numa cidade nova desde a última visita.
+// O voo internacional aparece ao abrir o hub (JourneyFlightWatcher), não aqui.
 export default function Journey() {
   const { userData, activeCourse, startJourney, markJourneySeen } = useAuth();
   const h = UI_TEXTS[activeCourse];
   const navigate = useNavigate();
   const journey = getJourney(userData, activeCourse);
   const xp = userData?.xp || 0;
-  const [intl, setIntl] = useState(false);
   const [arrivedFrom, setArrivedFrom] = useState(null); // índice da cidade de onde o avião decolou
   const checked = useRef(null);
 
@@ -28,12 +25,18 @@ export default function Journey() {
   // Decide uma vez por visita qual animação mostrar e registra o que foi visto
   useEffect(() => {
     if (!journey || checked.current === activeCourse) return;
-    checked.current = activeCourse;
     const seen = userData?.journeySeen?.[activeCourse];
-    const city = cityState(journey, xp, activeCourse).cityIndex;
-    if (seen && seen.startedAt !== journey.current.startedAt && (journey.past || []).length > 0) setIntl(true);
-    else if (seen && seen.startedAt === journey.current.startedAt && city > (seen.cityIndex ?? city)) setArrivedFrom(seen.cityIndex);
-    markJourneySeen(activeCourse, { startedAt: journey.current.startedAt, cityIndex: city });
+    // Troca de país ainda não vista: quem mostra o voo e registra é o JourneyFlightWatcher
+    if ((journey.past || []).length > 0 && seen?.startedAt !== journey.current.startedAt) return;
+    checked.current = activeCourse;
+    const now = cityState(journey, xp, activeCourse);
+    const seenHops = seen?.hops ?? seen?.cityIndex;
+    if (seen && seenHops != null && now.hops > seenHops) {
+      // Voou desde a última visita: pinta os trechos até a cidade atual (se deu a volta, só o último trecho)
+      const from = seenHops % now.country.cities.length;
+      setArrivedFrom(from < now.cityIndex ? from : now.cityIndex - 1);
+    }
+    markJourneySeen(activeCourse, { startedAt: journey.current.startedAt, hops: now.hops });
   }, [journey, activeCourse, xp, userData, markJourneySeen]);
 
   if (!journey) return null;
@@ -44,7 +47,6 @@ export default function Journey() {
   const nextTopic = journey.upcoming?.[0]?.topic;
   const pastList = journey.past || [];
   const past = pastList.map((p, i) => ({ ...p, i })).reverse();
-  const lastPast = pastList[pastList.length - 1];
   const flying = arrivedFrom !== null;
 
   return (
@@ -70,14 +72,6 @@ export default function Journey() {
         }
       `}</style>
 
-      {intl && lastPast && (
-        <FlightAnimation
-          h={h}
-          from={{ ...lastPast, country: countryAt(activeCourse, lastPast.countryIndex), index: pastList.length - 1 }}
-          to={{ country: state.country, topic: current.topic }}
-          onDone={() => setIntl(false)}
-        />
-      )}
 
       <main style={{ maxWidth: 900, margin: '0 auto', padding: '32px 16px 80px', fontFamily: '"Inter", sans-serif' }}>
         <button onClick={() => navigate('/')} style={{ background: 'transparent', border: 'none', color: 'var(--muted)', cursor: 'pointer', marginBottom: 16, fontWeight: 'bold' }}>← {h.navHome}</button>
@@ -105,7 +99,7 @@ export default function Journey() {
 
           <div className="jr-route" style={{ position: 'relative' }}>
             {state.country.cities.map((city, i) => {
-              const status = i < state.cityIndex ? 'done' : i === state.cityIndex ? 'here' : 'todo';
+              const status = i === state.cityIndex ? 'here' : i < state.cityIndex || state.allVisited ? 'done' : 'todo';
               // Voo nacional: os trechos entre a cidade de partida e a atual se pintam em sequência
               const animated = flying && i > arrivedFrom && i <= state.cityIndex;
               const delay = animated ? `${(i - arrivedFrom - 1) * 0.8}s` : '0s';
@@ -130,7 +124,8 @@ export default function Journey() {
             <div style={{ height: 10, borderRadius: 99, background: 'rgba(255,255,255,0.15)', overflow: 'hidden', marginBottom: 8 }}>
               <div style={{ width: `${state.pct}%`, height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, #F0C87A, #F09A4A)', transition: 'width 1s ease-out' }} />
             </div>
-            <p style={{ margin: 0, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{state.done ? h.jrDone : h.jrToNext(state.toNext, state.nextCityName)}</p>
+            <p style={{ margin: 0, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{state.nextIsRevisit ? h.jrToBack(state.toNext, state.nextCityName) : h.jrToNext(state.toNext, state.nextCityName)}</p>
+            {state.allVisited && <p style={{ margin: '6px 0 0', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>{h.jrDone}</p>}
           </div>
         </section>
 

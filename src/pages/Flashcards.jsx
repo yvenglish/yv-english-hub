@@ -259,7 +259,7 @@ export default function Flashcards() {
   };
 
   const modal = (border, emoji, titleText, titleColor, body) => (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+    <div data-result-modal style={{ position: 'fixed', inset: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
       <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 450, borderRadius: 28, border: `1px solid ${border}`, textAlign: 'center', padding: '50px 40px' }}>
         <span style={{ fontSize: '5rem', display: 'block', margin: '0 auto 15px' }}>{emoji}</span>
         <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.3rem', color: titleColor, marginBottom: 15, lineHeight: 1.1 }}>{titleText}</h2>

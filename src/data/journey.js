@@ -26,9 +26,10 @@ export const ROUTES = {
   ]
 };
 
-// XP acumulado (desde a chegada no país) para chegar em cada cidade: +200, +250, +300, +350, +400.
-// Com um dia de estudo normal (~60 XP) o país inteiro leva umas 4 semanas.
-export const CITY_XP = [0, 200, 450, 750, 1100, 1500];
+// XP para ir de uma cidade à próxima, crescente: 25, 50, 75, 100, 125 (acumulado desde a chegada no país).
+// O país inteiro leva 375 XP: uns 6 dias de estudo normal (~60 XP por dia).
+const CITY_STEPS = [25, 50, 75, 100, 125];
+export const CITY_XP = CITY_STEPS.reduce((acc, step) => [...acc, acc[acc.length - 1] + step], [0]);
 
 const routeOf = (course) => ROUTES[course] || ROUTES.en;
 
@@ -46,24 +47,38 @@ export const newJourney = (startXp = 0) => ({
 
 export const getJourney = (userData, course) => userData?.journey?.[course] || null;
 
-// Em que cidade o aluno está, com o XP total dele
+// Depois da última cidade o aluno não fica parado: continua voando e volta às cidades que já visitou,
+// em ordem (1ª, 2ª…), até a teacher liberar o próximo país. Cada volta custa REVISIT_XP.
+// O país só muda pela teacher (releaseNext); o XP sozinho nunca troca de país.
+export const REVISIT_XP = 125;
+
+// Em que cidade o aluno está, com o XP total dele.
+// hops: quantos voos ele já fez dentro do país (só cresce, mesmo quando volta a cidades visitadas).
 export const cityState = (journey, xp = 0, course = 'en') => {
   const current = journey?.current || newJourney().current;
   const country = countryAt(course, current.countryIndex);
+  const n = country.cities.length;
+  const last = CITY_XP[CITY_XP.length - 1];
   const inCountry = Math.max(0, xp - (current.startXp || 0));
-  let cityIndex = 0;
-  while (cityIndex + 1 < CITY_XP.length && inCountry >= CITY_XP[cityIndex + 1]) cityIndex += 1;
-  const done = cityIndex === CITY_XP.length - 1;
-  const from = CITY_XP[cityIndex];
-  const to = done ? from : CITY_XP[cityIndex + 1];
+  let hops = 0;
+  while (hops + 1 < CITY_XP.length && inCountry >= CITY_XP[hops + 1]) hops += 1;
+  if (hops === CITY_XP.length - 1) hops += Math.floor((inCountry - last) / REVISIT_XP);
+  const reachedAt = hops < CITY_XP.length - 1 ? CITY_XP[hops] : last + (hops - (CITY_XP.length - 1)) * REVISIT_XP;
+  const nextAt = hops + 1 < CITY_XP.length ? CITY_XP[hops + 1] : reachedAt + REVISIT_XP;
+  const cityIndex = hops % n;
+  const nextIndex = (hops + 1) % n;
   return {
     country,
+    hops,
     cityIndex,
     cityName: country.cities[cityIndex],
-    nextCityName: done ? null : country.cities[cityIndex + 1],
-    toNext: done ? 0 : to - inCountry,
-    pct: done ? 100 : Math.floor(((inCountry - from) / (to - from)) * 100),
-    done
+    nextIndex,
+    nextCityName: country.cities[nextIndex],
+    toNext: nextAt - inCountry,
+    pct: Math.floor(((inCountry - reachedAt) / (nextAt - reachedAt)) * 100),
+    allVisited: hops >= n - 1,     // já conhece todas as cidades do país
+    revisit: hops >= n,            // está numa cidade que já tinha visitado
+    nextIsRevisit: hops + 1 >= n   // o próximo voo volta a uma cidade conhecida
   };
 };
 
@@ -77,7 +92,7 @@ export const releaseNext = (journey, xp, course, next = null) => {
   const j = journey || newJourney(0);
   const upcoming = [...(j.upcoming || [])];
   const target = next || upcoming.shift() || { topic: '', tags: [] };
-  const visited = cityState(j, xp, course).cityIndex + 1;
+  const visited = Math.min(cityState(j, xp, course).hops + 1, countryAt(course, j.current?.countryIndex || 0).cities.length);
   return {
     current: { countryIndex: (j.current?.countryIndex || 0) + 1, topic: target.topic.trim(), tags: cleanTags(target.tags), startedAt: new Date().toISOString(), startXp: xp },
     past: [...(j.past || []), { ...j.current, endedAt: new Date().toISOString(), citiesVisited: visited }],

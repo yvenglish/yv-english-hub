@@ -72,7 +72,7 @@ export default function RecordCelebration({ score, previous, primaryLabel, onPri
   const h = UI_TEXTS[activeCourse];
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 2500, display: 'grid', placeItems: 'center', padding: 20, background: 'radial-gradient(circle at 50% 35%, rgba(255,214,90,0.55), rgba(217,103,69,0.35) 35%, rgba(20,10,30,0.92) 75%)', backdropFilter: 'blur(6px)' }}>
+    <div data-result-modal style={{ position: 'fixed', inset: 0, zIndex: 2500, display: 'grid', placeItems: 'center', padding: 20, background: 'radial-gradient(circle at 50% 35%, rgba(255,214,90,0.55), rgba(217,103,69,0.35) 35%, rgba(20,10,30,0.92) 75%)', backdropFilter: 'blur(6px)' }}>
       <style>{`
         @keyframes record-trophy { 0%, 100% { transform: translateY(0) rotate(-6deg) scale(1); } 50% { transform: translateY(-14px) rotate(6deg) scale(1.08); } }
         @keyframes record-in { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }

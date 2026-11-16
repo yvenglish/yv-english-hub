@@ -24,7 +24,7 @@ export default function JourneyCard() {
           <span style={{ display: 'block', height: 6, marginTop: 6, borderRadius: 99, background: 'var(--line)', overflow: 'hidden', maxWidth: 360 }}>
             <span style={{ display: 'block', width: `${state.pct}%`, height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, #F0C87A, #F09A4A)' }} />
           </span>
-          <span style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{state.done ? h.jrDoneShort : h.jrToNext(state.toNext, state.nextCityName)}</span>
+          <span style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{state.nextIsRevisit ? h.jrToBack(state.toNext, state.nextCityName) : h.jrToNext(state.toNext, state.nextCityName)}</span>
         </span>
         <span style={{ background: 'var(--amber)', color: '#fff', padding: '10px 18px', borderRadius: 99, fontWeight: 800, whiteSpace: 'nowrap' }}>{h.jrHomeCta}</span>
       </button>

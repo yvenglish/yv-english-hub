@@ -796,7 +796,7 @@ export default function StudentHub() {
         </div>
       )}
       {showGoalModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <div data-result-modal style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 450, borderRadius: 28, overflow: 'hidden', position: 'relative', border: '1px solid #FF5A1E', textAlign: 'center', padding: '50px 40px', boxShadow: '0 20px 60px rgba(255, 90, 30, 0.2)' }}>
             <span style={{ fontSize: '5rem', display: 'block', margin: '0 auto 15px', animation: 'bounce 1s infinite' }}>{streakGoalAchieved ? '🏆' : '🔥'}</span>
             <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: '#FF5A1E', marginBottom: 15, lineHeight: 1.1 }}>
@@ -816,7 +816,7 @@ export default function StudentHub() {
       )}
 
       {showCompleteModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <div data-result-modal style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(20, 10, 20, 0.85)', backdropFilter: 'blur(12px)', zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <div style={{ background: 'var(--paper)', width: '100%', maxWidth: 450, borderRadius: 28, overflow: 'hidden', position: 'relative', border: '1px solid var(--plum)', textAlign: 'center', padding: '50px 40px', boxShadow: '0 20px 60px rgba(138, 124, 255, 0.2)' }}>
             <span style={{ fontSize: '5rem', display: 'block', margin: '0 auto 15px', animation: 'bounce 1s infinite' }}>🎉</span>
             <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: '2.5rem', color: 'var(--plum)', marginBottom: 15, lineHeight: 1.1 }}>{h.dailyFinished}</h2>

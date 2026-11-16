@@ -90,7 +90,7 @@ export default function JourneyAdmin({ student, onChange }) {
         <Flag code={state.country.code} size={30} />
         <div style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
           <strong>{state.country.name}</strong> · {state.cityName} (cidade {state.cityIndex + 1} de {CITY_XP.length})
-          <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{xp} XP no total · {state.done ? 'visitou todas as cidades' : `faltam ${state.toNext} XP para ${state.nextCityName}`}</div>
+          <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>{xp} XP no total · {state.allVisited ? 'já visitou todas as cidades, voando entre elas · ' : ''}faltam {state.toNext} XP para {state.nextCityName}</div>
         </div>
       </div>
 

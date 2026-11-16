@@ -6,6 +6,7 @@ import BadgeToast from './components/BadgeToast';
 import StreakGoalCelebration from './components/StreakGoalCelebration';
 import NotificationSync from './components/NotificationSync';
 import XpToast from './components/xp/XpToast';
+import JourneyFlightWatcher from './components/journey/JourneyFlightWatcher';
 import { FEATURES } from './data/features';
 import Navbar from './components/layout/Navbar';
 import StudentLayout from './components/layout/StudentLayout';
@@ -76,6 +77,7 @@ function App() {
       <StreakGoalCelebration />
       <NotificationSync />
       <XpToast />
+      <JourneyFlightWatcher />
       <Suspense fallback={SplashContent}>
         <Routes>
           <Route path="/login" element={<Login />} />

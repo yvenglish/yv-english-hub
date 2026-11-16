@@ -9,7 +9,7 @@ export default function StreakGoalCelebration() {
   const h = UI_TEXTS[activeCourse];
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 2500, display: 'grid', placeItems: 'center', padding: 20, background: 'radial-gradient(circle at 50% 35%, rgba(255,120,40,0.55), rgba(217,103,69,0.35) 35%, rgba(20,10,30,0.92) 75%)', backdropFilter: 'blur(6px)' }}>
+    <div data-result-modal style={{ position: 'fixed', inset: 0, zIndex: 2500, display: 'grid', placeItems: 'center', padding: 20, background: 'radial-gradient(circle at 50% 35%, rgba(255,120,40,0.55), rgba(217,103,69,0.35) 35%, rgba(20,10,30,0.92) 75%)', backdropFilter: 'blur(6px)' }}>
       <style>{`
         @keyframes goal-flame { 0%, 100% { transform: scale(1) rotate(-4deg); } 50% { transform: scale(1.15) rotate(4deg); } }
         @keyframes goal-in { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
