@@ -20,6 +20,25 @@ export default function Navbar() {
   const [showMenu, setShowMenu] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const streakGoal = userData?.streakGoal || 3;
+
+  // Seletor de curso (EN/ES) dentro dos menus: só para quem faz mais de um idioma
+  const courseSwitch = (dark) => userCourses.length > 1 && (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: dark ? '4px 0' : '8px 15px' }}>
+      <span style={{ color: dark ? '#fff' : 'var(--text)', fontSize: dark ? '1.1rem' : '0.95rem', fontWeight: 500 }}>{h.navCourse}</span>
+      <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 99, background: dark ? 'rgba(255,255,255,0.06)' : 'var(--bg)', border: dark ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--line)' }}>
+        {userCourses.map(c => (
+          <button
+            key={c}
+            onClick={() => { setActiveCourse(c); setShowMenu(false); }}
+            title={COURSES[c].label}
+            style={{ padding: '6px 12px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 800, background: activeCourse === c ? 'var(--amber)' : 'transparent', color: activeCourse === c ? '#fff' : dark ? '#fff' : 'var(--text)' }}
+          >
+            {COURSES[c].short}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
   const streakProgress = Math.min(((userData?.currentStreak || 0) / streakGoal) * 100, 100);
 
   // Search State
@@ -305,22 +324,6 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Seletor de curso: só aparece para quem faz mais de um idioma */}
-        {userCourses.length > 1 && (
-          <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 99, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            {userCourses.map(c => (
-              <button
-                key={c}
-                onClick={() => setActiveCourse(c)}
-                title={COURSES[c].label}
-                style={{ padding: '6px 10px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 800, background: activeCourse === c ? 'var(--amber)' : 'transparent', color: '#fff' }}
-              >
-                {COURSES[c].short}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Nível (XP) */}
         <LevelPill />
 
@@ -368,6 +371,8 @@ export default function Navbar() {
               zIndex: 1001,
               animation: 'fadeIn 0.2s'
             }}>
+              {courseSwitch(false)}
+              {userCourses.length > 1 && <div style={{ height: 1, background: 'var(--line)', margin: '5px 0' }} />}
               <button 
                   onClick={() => {
                     navigate('/account');
@@ -470,8 +475,9 @@ export default function Navbar() {
         </div>
 
         <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
+        {courseSwitch(true)}
         <button onClick={() => { navigate('/account'); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{h.navAccount}</button>
-        <button onClick={() => { toggleTheme(); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{(theme === 'dark' ? h.lightMode : h.darkMode).replace(/^S+s/, '')}</button>
+        <button onClick={() => { toggleTheme(); setShowMenu(false); }} style={{ background: 'transparent', color: '#fff', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{(theme === 'dark' ? h.lightMode : h.darkMode).replace(/^\S+\s/, '')}</button>
         <button onClick={() => { handleLogout(); setShowMenu(false); }} style={{ background: 'transparent', color: 'var(--amber)', border: 'none', textAlign: 'left', fontSize: '1.1rem', fontWeight: 500 }}>{h.navLogout}</button>
       </div>
 

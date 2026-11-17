@@ -54,6 +54,18 @@
   }
 }
 
+/* Telas médias (notebook pequeno, tablet deitado): selos de nível e streak sem texto para a barra caber */
+@media (max-width: 1180px) {
+  .level-pill-text, .streak-pill-text { display: none !important; }
+  .level-pill, .streak-pill-container { padding: 4px !important; }
+}
+
+/* Busca da barra encolhe em telas médias (abaixo de 768px ela vai para o menu) */
+@media (max-width: 1000px) { .navbar .search-input { width: 130px !important; } }
+@media (max-width: 860px) { .navbar .search-input { width: 90px !important; } }
+@media (max-width: 820px) { .navbar .search-input { width: 70px !important; } }
+@media (min-width: 769px) and (max-width: 900px) { .navbar { padding: 0 20px !important; } .navbar .nav-left { gap: 22px !important; } .navbar .nav-actions-container { gap: 12px !important; } }
+
 /* Selo de nível: em telas estreitas mostra só o número */
 @media (max-width: 480px) {
   .level-pill { padding: 4px !important; }
